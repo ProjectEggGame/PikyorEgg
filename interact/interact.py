@@ -1,10 +1,12 @@
+from typing import overload
+
 import pygame
 from utils import utils
 from utils.error import InvalidOperationException
 
 
-class Point:
-	def __init__(self, x: int | float = 0, y: int | float = 0):
+class Vector:
+	def __init__(self, x: float = 0, y: float = 0):
 		"""
 		屏幕上的点，或世界上的点。方块采用整数，其余采用浮点
 		:param x: 横坐标，相对左上角。
@@ -13,7 +15,7 @@ class Point:
 		self.x = x
 		self.y = y
 	
-	def set(self, x_or_pos: tuple[int, int] | int, y_or_None: int = None) -> None:
+	def set(self, x_or_pos: tuple[float, float] | float, y_or_None: float = None) -> None:
 		"""
 		重设坐标。可以直接传入一个唯一参数set((x, y))元组，也可以传入两个参数set(x, y)
 		"""
@@ -23,6 +25,29 @@ class Point:
 		else:
 			self.x = x_or_pos
 			self.y = y_or_None
+	
+	def add(self, x, y) -> 'Vector':
+		self.x += x
+		self.y += y
+		return self
+	
+	def clone(self) -> 'Vector':
+		return Vector(self.x, self.y)
+	
+	def getTuple(self) -> tuple[float, float]:
+		return self.x, self.y
+	
+	def __add__(self, other: 'Vector') -> 'Vector':
+		return Vector(self.x + other.x, self.y + other.y)
+	
+	def __sub__(self, other: 'Vector') -> 'Vector':
+		return Vector(self.x - other.x, self.y - other.y)
+	
+	def __eq__(self, other: 'Vector') -> bool:
+		return self.x == other.x and self.y == other.y
+	
+	def __str__(self) -> str:
+		return f'Vector({self.x:.2f}, {self.y:.2f})'
 
 
 class Status:
@@ -39,27 +64,23 @@ class Status:
 		设置状态。应当仅在main.py的mainThread中调用。用于激活事件
 		:param status: 设置为的值
 		"""
-		self._presentStatus = status
-		if status:
+		if status != self._presentStatus:
 			self._shouldDeal = True
-	
-	def deal(self) -> bool:
-		"""
-		查看是否需要处理时调用
-		:returns 如果需要处理，则返回True，随后将状态置为False
-		"""
-		if self._shouldDeal:
-			self._shouldDeal = False
-			return True
-		else:
-			return False
+			self._presentStatus = status
 	
 	def peek(self) -> bool:
 		"""
 		需要处理时调用。
 		:returns 如果需要处理，则返回True，但是不重置状态
 		"""
-		return self._shouldDeal
+		return self._presentStatus
+	
+	def deal(self) -> bool:
+		if self._shouldDeal:
+			self._shouldDeal = False
+			return self._presentStatus
+		else:
+			return False
 	
 	def __str__(self) -> str:
 		return f'{self.name}: {self._presentStatus}'
@@ -129,24 +150,21 @@ class GameSettings:
 
 
 KEY_COUNT = 256
-mouse: Point = Point(0, 0)
+mouse: Vector = Vector(0, 0)
 left: Status = Status('MouseLeft')
 middle: Status = Status('MouseMiddle')
 right: Status = Status('MouseRight')
 scroll: ScrollStatus = ScrollStatus()
-keys: list[Status | None] = [Status('')] * KEY_COUNT
-specialKeys: list[Status | None] = [Status('')] * KEY_COUNT
+keys: list[Status | None] = [Status('ERROR_KEY')] * KEY_COUNT
+specialKeys: list[Status | None] = [keys[0]] * KEY_COUNT
 for i in pygame.__dict__:
 	if not i.startswith('K_'):
 		continue
 	j = getattr(pygame, i)
 	if j <= KEY_COUNT:
-		keys[j].name = i[2:]
+		keys[j] = Status(i[2:])
 	else:
-		specialKeys[j & (KEY_COUNT - 1)].name = i[2:]
-utils.debug(f'keys长度{len(keys)}')
-
-print(f'break {hex(pygame.K_BREAK)} pause {hex(pygame.K_PAUSE)}')
+		specialKeys[j & (KEY_COUNT - 1)] = Status(i[2:])
 
 
 def onKey(event) -> None:

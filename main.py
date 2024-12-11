@@ -3,6 +3,7 @@ import pygame
 from threading import Thread
 from interact import interact
 from render.renderer import renderer
+from render.resource import resourceManager
 from utils import utils
 from utils.game import game
 
@@ -16,13 +17,19 @@ def renderThread():
 	utils.info("渲染线程启动")
 	global lastRender
 	global nowRender
+	count = 0
+	lastCount = time.perf_counter_ns()
 	while game.running:
 		nowRender = time.perf_counter_ns()
-		if nowRender - lastRender >= 1000:
-			game.render((nowRender - lastTick) / 50_000)
-			lastRender = nowRender
-		else:
-			time.sleep(0.001)
+		if renderer.dealMapScaleChange():
+			resourceManager.changeMapScale(renderer.getMapScale())
+		game.render((nowRender - lastTick) / 50_000)
+		lastRender = nowRender
+		count += 1
+		if nowRender - lastCount >= 1_000_000_000:
+			utils.info(f"{count}帧/秒")
+			count = 0
+			lastCount = nowRender
 	utils.info("渲染线程退出")
 
 
@@ -34,27 +41,41 @@ def gameThread():
 		nowTick = time.perf_counter_ns()
 		if nowTick - lastTick >= 50_000:
 			game.tick()
+			# test
+			if interact.keys[pygame.K_w].peek():
+				renderer.getCamera().add(0, -0.04)
+			if interact.keys[pygame.K_a].peek():
+				renderer.getCamera().add(-0.04, 0)
+			if interact.keys[pygame.K_s].peek():
+				renderer.getCamera().add(0, 0.04)
+			if interact.keys[pygame.K_d].peek():
+				renderer.getCamera().add(0.04, 0)
+			# test
 			lastTick = nowTick
 		else:
 			time.sleep(0.001)
 	utils.info("游戏线程退出")
 
 
+#########################
+#         主线程         #
+#########################
 def mainThread():
 	SCREEN_FLAGS = pygame.RESIZABLE
 	info = pygame.display.Info()
 	pygame.display.set_caption("捡蛋")
 	screen = pygame.display.set_mode((info.current_w / 2, info.current_h / 2), SCREEN_FLAGS)
 	renderer.setScreen(screen)
+	renderer.setMapScale(min(info.current_w / 20, info.current_h / 15))
 	gt: Thread = Thread(name="GameThread", target=gameThread)
 	rt: Thread = Thread(name="RenderThread", target=renderThread)
 	gt.start()
 	rt.start()
 	utils.info("主线程启动")
+	del info
 	while game.running:
 		try:
 			for event in pygame.event.get():
-				utils.info(event)
 				match event.type:
 					case pygame.QUIT:
 						game.running = False
@@ -76,21 +97,21 @@ def mainThread():
 						interact.onMouse(event)
 						break
 					case pygame.VIDEORESIZE:
-						renderer.setSize(event.size)
+						renderer.setMapScale(min(event.size[0] / 20, event.size[1] / 15))
 						renderer.setScreen(pygame.display.set_mode(event.size, SCREEN_FLAGS))
 						pygame.display.update()
 						break
-			pygame.event.clear()
 		except Exception as e:
 			utils.printException(e)
 			game.running = False
 			break
-	pygame.display.quit()
 	utils.info("主线程退出")
 	if gt.is_alive():
 		gt.join()
 	if rt.is_alive():
 		rt.join()
+	pygame.display.quit()
+
 
 #########################
 #                       #

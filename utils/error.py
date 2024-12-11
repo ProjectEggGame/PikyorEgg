@@ -22,3 +22,12 @@ class IllegalStatusException(Exception):
 	"""
 	def __init__(self, message: str) -> None:
 		super().__init__(message)
+
+
+class CodeBasedException(Exception):
+	"""
+	代码逻辑的异常
+	"""
+	def __init__(self, message: str, code: int) -> None:
+		super().__init__(message)
+		self.code: int = code

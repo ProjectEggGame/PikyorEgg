@@ -1,6 +1,6 @@
 from pygame import Surface
 
-from interact.interact import Point
+from interact.interact import Vector
 from render.resource import Resource
 
 
@@ -11,7 +11,7 @@ class Renderable:
 	def __init__(self, texture: Resource | None):
 		self._texture = texture
 	
-	def render(self, screen: Surface, delta: float, at: Point | None) -> None:
+	def render(self, screen: Surface, delta: float, at: Vector | None) -> None:
 		"""
 		渲染时调用
 		:param screen: pygame提供的屏幕
@@ -20,7 +20,7 @@ class Renderable:
 		"""
 		pass
 	
-	def passRender(self, screen: Surface, delta: float, at: Point | None = None) -> None:
+	def passRender(self, screen: Surface, delta: float, at: Vector | None = None) -> None:
 		"""
 		用于内部调用，尽可能地避免重写。重写时必须调用父类方法
 		"""

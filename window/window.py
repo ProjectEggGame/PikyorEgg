@@ -1,6 +1,6 @@
 from pygame import Surface
 
-from interact.interact import Point
+from interact.interact import Vector
 from render.renderable import Renderable
 from render.resource import Resource
 from window.widget import Widget
@@ -21,7 +21,7 @@ class Window(Renderable):
 		if self._texture is not None:
 			self._texture.render(screen, delta, (1 - self._width) / 2, (1 - self._height) / 2, self._width, self._height)
 		
-	def passRender(self, screen: Surface, delta: float, at: Point | None = None) -> None:
+	def passRender(self, screen: Surface, delta: float, at: Vector | None = None) -> None:
 		self.renderBackground(screen, delta)
 		for widget in self._widgets:
 			widget.passRender(screen, delta)

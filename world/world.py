@@ -4,7 +4,7 @@ from pygame import Surface
 
 from block.block import Block, GrassBlock
 from entity.entity import Entity
-from interact.interact import Point
+from interact.interact import Vector
 from render.renderable import Renderable
 
 
@@ -13,19 +13,32 @@ class World(Renderable):
 		super().__init__(None)
 		self._id: int = worldID
 		self._entityList: list[Entity] = []
-		self._ground: list[Block] = [GrassBlock(Point(0, 0))]  # test code
+		self._ground: list[list[Block | None]] = [[None] * 20, [None] * 20, [None] * 20, [None] * 20, [None] * 20, [None] * 20, [None] * 20, [None] * 20, [None] * 20, [None] * 20, [None] * 20, [None] * 20, [None] * 20, [None] * 20, [None] * 20, [None] * 20, [None] * 20, [None] * 20, [None] * 20, [None] * 20]
 	
 	def tick(self) -> None:
 		for e in self._entityList:
 			e.tick()
-		for b in self._ground:
-			b.tick()
+		for bl in self._ground:
+			for b in bl:
+				if b is None:
+					continue
+				b.tick()
 	
-	def render(self, screen: Surface, delta: float, at: Point | None) -> None:
-		for b in self._ground:
-			b.render(screen, delta, at)
+	def render(self, screen: Surface, delta: float, at: Vector | None) -> None:
+		for bl in self._ground:
+			for b in bl:
+				if b is None:
+					continue
+				b.render(screen, delta, at)
 		for e in self._entityList:
 			e.render(screen, delta, at)
+	
+	def generateDefaultWorld() -> 'World':
+		w: World = World(-1)
+		for i in range(len(w._ground)):
+			for j in range(len(w._ground[0])):
+				w._ground[i][j] = GrassBlock(Vector(i, j))
+		return w
 
 
 def generateRandom(seed_or_random=None) -> random.Random:
