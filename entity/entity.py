@@ -95,3 +95,4 @@ class Player(Entity):
 		if interact.keys[pygame.K_d].peek():
 			v.add(1, 0)
 		self.setVelocity(v.normalize().multiply(self._maxSpeed))
+		

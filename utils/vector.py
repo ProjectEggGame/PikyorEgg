@@ -284,6 +284,7 @@ class BlockVector:
 				result: Vector = direction.clone().multiply(0.5 / abs(relative.y))
 				if -0.5 < result.x < 0.5:
 					return result
+			return None
 			raise InvalidOperationException(f'不应当运行到此处，请检查代码问题。{start = }, {direction = }, {relative = }, {dc = }')
 		else:
 			if -0.5 < relative.x < 0.5:  # 在上下方

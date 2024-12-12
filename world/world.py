@@ -86,40 +86,19 @@ class World(Renderable):
 		directionFix: Vector = direction.directionalClone().multiply(width + 1).add(1, 1)
 		checkEnd: BlockVector = start.clone().add(direction.normalize().multiply(length)).add(directionFix).getBlockVector()
 		checkStart: BlockVector = start.clone().subtract(directionFix).getBlockVector()
-		modifiedStartPoint: Vector = start.clone().subtract(0.5, 0.5)
 		present_y: int = checkStart.y
 		utils.info(f"{start}: {str(checkStart)} -> {str(checkEnd)}")
 		for i in range(checkStart.x, checkEnd.x, direction.directionalCloneBlock().x if direction.directionalCloneBlock().x != 0 else 1):
 			has_y: bool = False
 			for j in range(checkStart.y, checkEnd.y, direction.directionalCloneBlock().y if direction.directionalCloneBlock().y != 0 else 1):
 				blockPos: BlockVector = BlockVector(i, j)
-				relative: Vector = blockPos.getVector().subtract(modifiedStartPoint)
-				if relative.dot(direction) < 0:
-					continue
-				nearestOffset: Vector = relative.pointVerticalTo(direction)
-				verticalPoint: Vector = nearestOffset + relative
-				if verticalPoint.length() <= length:  # 距离内
-					if nearestOffset.x == 0 and nearestOffset.y == 0:
-						if (block := self._ground.get(blockPos)) is not None:
-							result.append((block, blockPos.getHitPoint(modifiedStartPoint, verticalPoint)))
-							self.setBlockAt(blockPos, ErrorBlock(blockPos))
-						has_y = True
-						present_y = j
-						continue
-					if blockPos.contains(blockPos.getVector().add(0.5, 0.5).add(nearestOffset).subtract(nearestOffset.clone().normalize().multiply(width))):
-						if (block := self._ground.get(blockPos)) is not None:
-							result.append((block, blockPos.getHitPoint(modifiedStartPoint, verticalPoint)))
-							self.setBlockAt(blockPos, ErrorBlock(blockPos))
-						has_y = True
-						present_y = j
-						continue
-				if blockPos.contains(blockPos.getVector().add(modifiedStartPoint)):  # 末端包含
-					if (block := self._ground.get(blockPos)) is not None:
-						result.append((block, blockPos.getHitPoint(modifiedStartPoint, verticalPoint)))
-						self.setBlockAt(blockPos, ErrorBlock(blockPos))
+				hitResult: Vector | None = blockPos.getHitPoint(start, direction)
+				if hitResult is not None and hitResult.length() < length:
+					result.append((self._ground[blockPos] or blockPos, hitResult))
+					if self._ground[blockPos] is not None:
+						self._ground[blockPos] = ErrorBlock(blockPos)
 					has_y = True
 					present_y = j
-					continue
 				if has_y:
 					break
 		return result
