@@ -1,11 +1,17 @@
 import time
+
+import numba
 import pygame
 from threading import Thread
+
+from entity.entity import Player
 from interact import interact
+
 from render.renderer import renderer
 from render.resource import resourceManager
 from utils import utils
 from utils.game import game
+from world.world import World
 
 nowRender = time.perf_counter_ns()
 lastRender = nowRender
@@ -20,40 +26,57 @@ def renderThread():
 	count = 0
 	lastCount = time.perf_counter_ns()
 	while game.running:
-		nowRender = time.perf_counter_ns()
-		if renderer.dealMapScaleChange():
-			resourceManager.changeMapScale(renderer.getMapScale())
-		game.render((nowRender - lastTick) / 50_000)
-		lastRender = nowRender
-		count += 1
-		if nowRender - lastCount >= 1_000_000_000:
-			utils.info(f"{count}帧/秒")
-			count = 0
-			lastCount = nowRender
+		try:
+			nowRender = time.perf_counter_ns()
+			if nowRender - lastCount >= 1_000_000_000:
+				# utils.info(f"{count}帧/秒")
+				count = 0
+				lastCount = nowRender
+			if nowRender - lastRender >= 5_000_000:
+				if renderer.dealMapScaleChange():
+					resourceManager.changeMapScale()
+				game.render((nowRender - lastTick) / 49_000_000)
+				lastRender = nowRender
+				count += 1
+			else:
+				time.sleep(0.0001)
+				pass
+		except Exception as e:
+			utils.printException(e)
+			game.running = False
+			break
 	utils.info("渲染线程退出")
 
 
 def gameThread():
 	utils.info("游戏线程启动")
+	# test
+	game.mainWorld = World.generateDefaultWorld()
+	player: Player = Player()
+	game.mainWorld.addPlayer(player)
+	renderer.cameraAt(player)
+	# test
+	count = 0
+	lastCount = time.perf_counter_ns()
 	global lastTick
 	global nowTick
 	while game.running:
-		nowTick = time.perf_counter_ns()
-		if nowTick - lastTick >= 50_000:
-			game.tick()
-			# test
-			if interact.keys[pygame.K_w].peek():
-				renderer.getCamera().add(0, -0.04)
-			if interact.keys[pygame.K_a].peek():
-				renderer.getCamera().add(-0.04, 0)
-			if interact.keys[pygame.K_s].peek():
-				renderer.getCamera().add(0, 0.04)
-			if interact.keys[pygame.K_d].peek():
-				renderer.getCamera().add(0.04, 0)
-			# test
-			lastTick = nowTick
-		else:
-			time.sleep(0.001)
+		try:
+			nowTick = time.perf_counter_ns()
+			if nowTick - lastTick >= 45_000_000:
+				game.tick()
+				lastTick = nowTick
+				count += 1
+			if nowRender - lastCount >= 1_000_000_000:
+				# utils.info(f"{count}tick/秒")
+				count = 0
+				lastCount = nowRender
+			else:
+				time.sleep(0.0001)
+		except Exception as e:
+			utils.printException(e)
+			game.running = False
+			break
 	utils.info("游戏线程退出")
 
 

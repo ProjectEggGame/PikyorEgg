@@ -1,51 +1,46 @@
-from typing import overload
+from typing import overload, TYPE_CHECKING, Union
 
 from pygame import Surface
-
-from entity.entity import Entity
-from interact.interact import Vector
-from item.item import Item
-from render.renderer import renderer
-from render.resource import Resource, resourceManager
+from render.resource import resourceManager
 from utils.element import Element
-from text import Description
-from utils.error import InvalidOperationException, CodeBasedException
+from utils.game import game
+from utils.error import InvalidOperationException, neverCall
+from utils.text import Description
+
+if TYPE_CHECKING:
+	from entity.entity import Entity
+	from utils.vector import Vector, BlockVector
+	from render.resource import Texture
 
 
 class Block(Element):
-	def __init__(self, name: str, description: Description, position: Vector, texture: Resource):
+	def __init__(self, name: str, description: 'Description', position: 'BlockVector', texture: 'Texture'):
 		super().__init__(name, description, texture)
-		self._position: Vector = position
+		self._position: 'BlockVector' = position.clone()
 	
 	def tick(self) -> None:
 		pass
 	
-	def render(self, screen: Surface, delta: float, at: Vector | None) -> None:
-		renderer.push()
-		renderer.offset(20, 20)
-		self.getTexture().renderAtMap(screen, self._position)
-		renderer.pop()
+	def passTick(self) -> None:
+		self.tick()
+		pass
 	
-	@overload
-	def canPass(self) -> bool:
-		"""
-		必须重写。志当前方块上是否允许实体经过
-		"""
-		raise CodeBasedException(f"{type(self)}.canPass未重写")
+	def render(self, screen: Surface, delta: float, at: 'Vector | None') -> None:
+		self.getTexture().renderAsBlock(screen, self._position.getVector())
 	
-	@overload
-	def canPass(self, entity: Entity) -> bool:
+	def canPass(self, entity: Union['Entity', None] = None) -> bool:
 		"""
 		必须重写。标志当前挡块是否允许特定实体通过
 		:param entity: 要检测的实体
 		"""
-		return self.canPass()
+		neverCall(f"{type(self)}.canPass未重写")
+		return True
 	
-	def canPass(self, *args) -> None:
-		"""
-		如果你调用了这个函数，请检查参数类型是否正确
-		"""
-		raise InvalidOperationException(f"canPass调用类型错误。接受到的类型：{type(args)}")
+	def getPosition(self) -> 'Vector':
+		return self._position.getVector()
+	
+	def getBlockPosition(self) -> 'BlockVector':
+		return self._position.clone()
 
 
 class ElementHolder:
@@ -93,16 +88,17 @@ class ElementHolder:
 			return True
 		else:
 			return False
-		
-		
+
+
 class Ground(Block):
 	"""
 	类地面方块
 	"""
-	def __init__(self, name: str, description: Description, position: Vector, texture: Resource):
+	
+	def __init__(self, name: str, description: 'Description', position: 'BlockVector', texture: 'Texture'):
 		super().__init__(name, description, position, texture)
 	
-	def canPass(self) -> bool:
+	def canPass(self, entity: Union['Entity', None] = None) -> bool:
 		return True
 
 
@@ -110,13 +106,29 @@ class Wall(Block, ElementHolder):
 	"""
 	类墙方块
 	"""
-	def __init__(self, name: str, description: Description, position: Vector, texture: Resource):
+	
+	def __init__(self, name: str, description: 'Description', position: 'BlockVector', texture: 'Texture'):
 		super().__init__(name, description, position, texture)
 	
-	def canPass(self) -> bool:
+	def canPass(self, entity: Union['Entity', None] = None) -> bool:
 		return False
 
 
 class GrassBlock(Ground, ElementHolder):
-	def __init__(self, position: Vector):
-		super().__init__("Grass Block", Description(["\\#FF4BAB25青色的草地"]), position, resourceManager.getOrNew('block/grass'))
+	def __init__(self, position: 'BlockVector'):
+		super().__init__("草地", Description(["\\#FF4BAB25青色的草地"]), position, resourceManager.getOrNew('block/grass'))
+
+
+class PathBlock(Ground, ElementHolder):
+	def __init__(self, position: 'BlockVector'):
+		super().__init__("草陉", Description(["\\#FF4BAB25土黄色的道路"]), position, resourceManager.getOrNew('block/path'))
+	
+	def render(self, screen: Surface, delta: float, at: 'Vector | None') -> None:
+		if game.mainWorld is not None:
+			pass
+		self.getTexture().renderAsBlock(screen, self._position.getVector())
+
+
+class ErrorBlock(Ground):
+	def __init__(self, position: 'BlockVector'):
+		super().__init__("错误方块", Description(["\\#FFEE0000错误方块"]), position, resourceManager.getOrNew('no_texture'))

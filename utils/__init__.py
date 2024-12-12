@@ -27,7 +27,7 @@ class Utils:
 	def error(self, *args, sep=' ', end='\n') -> None:
 		self._output('[IKUN] [ERROR] ', *args, sep=sep, end=end, file=stderr)
 	
-	def traceStack(self, e: Exception) -> None:
+	def traceStack(self, e: Exception, msg: str | None = None) -> None:
 		"""
 		建议改为调用printException()
 		:param e: 被抛出的错误
@@ -61,6 +61,10 @@ class Utils:
 			count -= 3
 			result.append(f'  [Previous line repeated {count} more time{"s" if count > 1 else ""}]\n')
 		self._lock.acquire()
+		if msg is not None:
+			print(f'[IKUN] [ERROR] {msg}', file=stderr)
+		else:
+			print('[IKUN] [WARN]  Stack trace:', file=stderr)
 		for line in result:
 			print(line, file=stderr, end='')
 		self._lock.release()
@@ -70,8 +74,7 @@ class Utils:
 		抛出错误时调用
 		:param e: 被抛出的错误
 		"""
-		self.error(f'[{type(e).__name__}] {str(e)}!! when running code:')
-		self.traceStack(e)
+		self.traceStack(e, f'[{type(e).__name__}] {str(e)}!! when running code:')
 
 
 utils: Utils = Utils()

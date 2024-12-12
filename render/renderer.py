@@ -1,9 +1,12 @@
 from collections import deque
+from typing import Union, TYPE_CHECKING
 
-import pygame.transform
-from pygame import Surface, Rect
+if TYPE_CHECKING:
+	from entity.entity import Entity
 
-from interact.interact import Vector
+import pygame
+from pygame import Surface
+from utils.vector import Vector
 from utils.error import IllegalStatusException, InvalidOperationException
 from utils.sync import SynchronizedStorage
 
@@ -22,7 +25,7 @@ class RenderStack:
 			self.offset = other.offset
 			self.scale = other.scale
 			self.padding = other.padding
-		
+
 
 class Renderer:
 	def __init__(self):
@@ -30,11 +33,13 @@ class Renderer:
 		self._screen: Surface | None = None
 		self._canvas: Surface | None = None
 		self._size: tuple[float, float] = (0, 0)
+		self._canvasSize: Vector = Vector()
 		self._is4to3: bool = False
 		self._isRendering = False
 		self._renderStack: deque[RenderStack] = deque[RenderStack]()
 		self._renderStack.append(RenderStack())
 		self._camera: SynchronizedStorage[Vector] = SynchronizedStorage[Vector](Vector(10.0, 10.0))
+		self._cameraAt: Union['Entity', None] = None
 		self._mapScale: float = 16.0  # 方块基本是16px
 		self._scaleChanged: bool = True
 		self._offset: Vector = Vector(0, 0)
@@ -45,7 +50,7 @@ class Renderer:
 		检查渲染器状态是否良好
 		"""
 		return self._canvas is not None and self._screen is not None
-
+	
 	def setScreen(self, screen: Surface) -> None:
 		"""
 		设置屏幕Surface
@@ -66,19 +71,33 @@ class Renderer:
 				self._offset = Vector(0, (self._size[1] - float(self._size[0]) / 16 * 9) / 2)
 			else:
 				self._offset = Vector(0, 0)
-		self._canvas = Surface((self._size[0] - self._offset.x - self._offset.x, self._size[1] - self._offset.y - self._offset.y))
+		self._canvasSize = Vector(self._size[0], self._size[1]).subtract(self._offset).subtract(self._offset)
+		self._canvas = Surface(self._canvasSize.getTuple())
 		self._updateOffset()
 	
-	def begin(self) -> None:
+	def cameraAt(self, entity: 'Entity') -> 'Entity':
+		e = self._cameraAt
+		self._cameraAt = entity
+		return e
+	
+	def begin(self, delta: float) -> None:
+		"""
+		仅在game.render中调用
+		"""
 		if self._isRendering:
 			raise IllegalStatusException("尝试开始绘制，但是绘制已经开始。")
 		self._isRendering = True
-		self._camera.applyNew(self._camera.getNew().clone())
+		if self._cameraAt is None:
+			self._camera.applyNew(self._camera.getNew().clone())
+		else:
+			self._camera.get().set(self._cameraAt.getPosition() + self._cameraAt.getVelocity() * delta)
+			self._camera.getNew().set(self._camera.get().clone())
+		self._screen.fill(0)
 		self._canvas.fill(0)
-		
+	
 	def _updateOffset(self) -> None:
 		self._presentOffset = self._offset + self._renderStack[-1].offset
-				
+	
 	def end(self) -> None:
 		"""
 		只在渲染帧结束时调用
@@ -91,7 +110,7 @@ class Renderer:
 		if len(self._renderStack) != 1:
 			raise IllegalStatusException("渲染帧结束时有栈没有弹出。请检查是否缺失了renderer.pop()")
 		self._isRendering = False
-		
+	
 	def assertRendering(self) -> None:
 		"""
 		该函数可能抛出错误。这个错误不应被手动捕捉，因为抛出这个错误说明是代码逻辑上出现了问题。一些操作应当在渲染时进行，但是在非渲染时刻进行了这一操作，就会报错
@@ -110,8 +129,8 @@ class Renderer:
 			return
 		raise InvalidOperationException('操作需要在非渲染时进行。当前正在渲染。')
 	
-	def getSize(self) -> tuple[float, float]:
-		return self._size
+	def getSize(self) -> Vector:
+		return self._canvasSize
 	
 	def getCanvas(self) -> Surface:
 		return self._canvas
@@ -122,7 +141,7 @@ class Renderer:
 	def getCamera(self) -> Vector:
 		return self._camera.getNew()
 	
-	def render(self, src: Surface, dst: Surface, sx: int, sy: int, sw: int, sh: int, dx: int, dy: int, dw: int | None = None, dh: int | None = None) -> None:
+	def render(self, src: Surface, dst: Surface, sx: int | float, sy: int | float, sw: int | float, sh: int | float, dx: int | float, dy: int | float, dw: int | float | None = None, dh: int | float | None = None) -> None:
 		"""
 		渲染目标。以下全部是int类型的px单位
 		:param src: 源Surface
@@ -144,19 +163,22 @@ class Renderer:
 			scaled = pygame.transform.scale(src, (dw * self._renderStack[-1].scale, dh * self._renderStack[-1].scale))
 			dst.blit(scaled, (self._presentOffset.x + dx, self._presentOffset.y + dy))
 	
-	def renderAtMap(self, src: Surface, dst: Surface, mapPoint: Vector) -> None:
+	def renderAtMap(self, src: Surface, dst: Surface, mapPoint: Vector, fromPos: Vector | None = None, fromSize: Vector | None = None) -> None:
 		"""
-		按地图的方式渲染目标，会忽略margin，会考虑camera。以下全部是int类型的px单位
-		:param src:
-		:param dst:
-		:param mapPoint:
-		:return:
+		按地图的方式渲染目标，会忽略margin，会考虑camera
 		"""
 		self.assertRendering()
-		dst.blit(src, (
-			self._size[0] / 2 + (mapPoint.x - self._camera.get().x) * self._mapScale,
-			self._size[1] / 2 + (mapPoint.y - self._camera.get().y) * self._mapScale
-		))
+		if fromPos is None or fromSize is None:
+			dst.blit(src, self._canvasSize.clone().multiply(0.5).add((mapPoint - self._camera.get()).subtract(0.5, 0.5).multiply(self._mapScale)).getTuple())
+		else:
+			dst.blit(src, self._canvasSize.clone().multiply(0.5).add((mapPoint + fromPos - self._camera.get()).subtract(0.5, 0.5).multiply(self._mapScale)).getTuple(), (fromPos.x, fromPos.y, fromSize.x, fromSize.y))
+	
+	def renderAsBlock(self, src: Surface, dst: Surface, mapPoint: Vector, fromPos: Vector | None = None, fromSize: Vector | None = None):
+		self.assertRendering()
+		if fromPos is None or fromSize is None:
+			dst.blit(src, self._canvasSize.clone().multiply(0.5).add((mapPoint - self._camera.get()).multiply(self._mapScale)).getTuple())
+		else:
+			dst.blit(src, self._canvasSize.clone().multiply(0.5).add((mapPoint + fromPos - self._camera.get()).multiply(self._mapScale)).getTuple(), (fromPos.x, fromPos.y, fromSize.x, fromSize.y))
 	
 	def push(self) -> None:
 		self.assertRendering()
@@ -172,11 +194,11 @@ class Renderer:
 		self.assertRendering()
 		self._renderStack[-1].scale = scl
 		self._updateOffset()
-
+	
 	def setMapScale(self, scl: float) -> None:
 		self._mapScale = scl
 		self._scaleChanged = True
-		
+	
 	def getMapScale(self) -> float:
 		return self._mapScale
 	
@@ -191,7 +213,7 @@ class Renderer:
 		else:
 			return False
 	
-	def mapScaleSurface(self, s: Surface, size_x: int | None = None, size_y: int | None = None) -> Surface:
+	def mapScaleSurface(self, s: Surface, size_x: int | float | None = None, size_y: int | float | None = None) -> Surface:
 		"""
 		应用地图缩放
 		:param s: 要缩放的surface
@@ -207,13 +229,17 @@ class Renderer:
 	def uiScaleSurface(self, s: Surface) -> Surface:
 		return pygame.transform.scale(s, (self._renderStack[-1].scale * s.get_size()[0], self._renderStack[-1].scale * s.get_size()[1]))
 	
-	def padding(self, pad: int) -> None:
+	def padding(self, pad: int | float) -> None:
 		self.assertRendering()
 		self._renderStack[-1].padding = pad
 	
-	def offset(self, x: int, y: int) -> None:
+	def offset(self, x: int | float, y: int | float) -> None:
 		self.assertRendering()
 		self._renderStack[-1].offset = x, y
 	
+	def modifyOffset(self, x: int | float, y: int | float) -> None:
+		self.assertRendering()
+		self._renderStack[-1].offset.add(x, y)
+
 
 renderer: Renderer = Renderer()

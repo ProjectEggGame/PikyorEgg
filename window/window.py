@@ -1,13 +1,13 @@
 from pygame import Surface
 
-from interact.interact import Vector
+from utils.vector import Vector
 from render.renderable import Renderable
-from render.resource import Resource
+from render.resource import Texture
 from window.widget import Widget
 
 
 class Window(Renderable):
-	def __init__(self, width: float, height: float, title: str, texture: Resource | None = None):
+	def __init__(self, width: float, height: float, title: str, texture: Texture | None = None):
 		super().__init__(texture)
 		self._width: float = width
 		self._height: float = height

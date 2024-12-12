@@ -1,8 +1,10 @@
 import enum
+from typing import TYPE_CHECKING
 
-from render.resource import Resource
+if TYPE_CHECKING:
+	from render.resource import Texture
+	from utils.text import Description
 from utils.element import Element
-from text import Description
 
 
 class Breakable:
@@ -105,7 +107,7 @@ class FoodLike:
 
 
 class Item(Element):
-	def __init__(self, name: str, description: Description, texture: Resource):
+	def __init__(self, name: str, description: 'Description', texture: 'Texture'):
 		"""
 		:param name: 物品名称
 		:param description: 物品描述，字符串列表
@@ -116,7 +118,7 @@ class Item(Element):
 
 
 class Weapon(Item, WeaponLike):
-	def __init__(self, name: str, description: Description, texture: Resource):
+	def __init__(self, name: str, description: 'Description', texture: 'Texture'):
 		"""
 		:param name: 武器名称
 		:param description: 武器描述，字符串列表

@@ -1,14 +1,13 @@
 from pygame import Surface
-
-from interact.interact import Vector
-from render.resource import Resource
+from utils.vector import Vector
+from render.resource import Texture
 
 
 class Renderable:
 	"""
 	所有能渲染的东西都继承这个类，game.py:class Game除外
 	"""
-	def __init__(self, texture: Resource | None):
+	def __init__(self, texture: Texture | None):
 		self._texture = texture
 	
 	def render(self, screen: Surface, delta: float, at: Vector | None) -> None:
@@ -26,5 +25,5 @@ class Renderable:
 		"""
 		self.render(screen, delta, at)
 		
-	def getTexture(self) -> Resource:
+	def getTexture(self) -> Texture:
 		return self._texture

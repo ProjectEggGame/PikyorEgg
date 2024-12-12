@@ -1,16 +1,18 @@
 """
 这里相当于游戏资源管理器。所有的游戏资源（列表）都在这里。
 """
-
 from render.renderer import renderer
+from utils import utils
 from utils.error import NullPointerException
-from window.window import Window
-from world.world import World
+from typing import TYPE_CHECKING
+if TYPE_CHECKING:
+	from world.world import World
+	from window.window import Window
 
 
 class Game:
 	def __init__(self):
-		self.mainWorld: World | None = World.generateDefaultWorld()
+		self.mainWorld: World | None = None
 		self.running: bool = True
 		self.tickCount: int = 0
 		self.window: Window | None = None
@@ -25,7 +27,10 @@ class Game:
 		"""
 		if not renderer.ready():
 			raise NullPointerException('当前screen为None。')
-		renderer.begin()
+		if delta > 1:
+			# utils.warn(f'{delta = :.3f}')
+			delta = 1
+		renderer.begin(delta)
 		if self.mainWorld is not None:
 			self.mainWorld.passRender(renderer.getCanvas(), delta)
 		renderer.push()

@@ -28,6 +28,9 @@ class CodeBasedException(Exception):
 	"""
 	代码逻辑的异常
 	"""
-	def __init__(self, message: str, code: int) -> None:
+	def __init__(self, message: str) -> None:
 		super().__init__(message)
-		self.code: int = code
+
+
+def neverCall(message: str | None = None):
+	raise CodeBasedException(message or "调用了不应调用的函数重载，请检查参数类型是否错误。")

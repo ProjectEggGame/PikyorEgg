@@ -1,12 +1,10 @@
-from pygame import Surface
-
 from render.renderable import Renderable
-from render.resource import Resource
-from text import Description
+from render.resource import Texture
+from utils.text import Description
 
 
 class Element(Renderable):
-	def __init__(self, name: str, description: Description, texture: Resource):
+	def __init__(self, name: str, description: Description, texture: Texture):
 		super().__init__(texture)
 		self.name = name
 		self.description = description

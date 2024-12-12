@@ -1,53 +1,8 @@
-from typing import overload
-
 import pygame
+
 from utils import utils
 from utils.error import InvalidOperationException
-
-
-class Vector:
-	def __init__(self, x: float = 0, y: float = 0):
-		"""
-		屏幕上的点，或世界上的点。方块采用整数，其余采用浮点
-		:param x: 横坐标，相对左上角。
-		:param y: 纵坐标，相对左上角
-		"""
-		self.x = x
-		self.y = y
-	
-	def set(self, x_or_pos: tuple[float, float] | float, y_or_None: float = None) -> None:
-		"""
-		重设坐标。可以直接传入一个唯一参数set((x, y))元组，也可以传入两个参数set(x, y)
-		"""
-		if x_or_pos is tuple:
-			self.x = x_or_pos[0]
-			self.y = x_or_pos[1]
-		else:
-			self.x = x_or_pos
-			self.y = y_or_None
-	
-	def add(self, x, y) -> 'Vector':
-		self.x += x
-		self.y += y
-		return self
-	
-	def clone(self) -> 'Vector':
-		return Vector(self.x, self.y)
-	
-	def getTuple(self) -> tuple[float, float]:
-		return self.x, self.y
-	
-	def __add__(self, other: 'Vector') -> 'Vector':
-		return Vector(self.x + other.x, self.y + other.y)
-	
-	def __sub__(self, other: 'Vector') -> 'Vector':
-		return Vector(self.x - other.x, self.y - other.y)
-	
-	def __eq__(self, other: 'Vector') -> bool:
-		return self.x == other.x and self.y == other.y
-	
-	def __str__(self) -> str:
-		return f'Vector({self.x:.2f}, {self.y:.2f})'
+from utils.vector import Vector
 
 
 class Status:
@@ -165,6 +120,7 @@ for i in pygame.__dict__:
 		keys[j] = Status(i[2:])
 	else:
 		specialKeys[j & (KEY_COUNT - 1)] = Status(i[2:])
+del i, j
 
 
 def onKey(event) -> None:
