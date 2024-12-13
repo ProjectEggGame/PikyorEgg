@@ -28,19 +28,18 @@ def renderThread():
 	while game.running:
 		try:
 			nowRender = time.perf_counter_ns()
-			if nowRender - lastCount >= 1_000_000_000:
-				# utils.info(f"{count}帧/秒")
-				count = 0
-				lastCount = nowRender
 			if nowRender - lastRender >= 5_000_000:
 				if renderer.dealMapScaleChange():
 					resourceManager.changeMapScale()
-				game.render((nowRender - lastTick) / 49_000_000)
+				game.render((nowRender - lastTick) / 60_000_000)
 				lastRender = nowRender
 				count += 1
 			else:
 				time.sleep(0.0001)
-				pass
+			if nowRender - lastCount >= 1_000_000_000:
+				utils.info(f"{count}帧/秒")
+				count = 0
+				lastCount = nowRender
 		except Exception as e:
 			utils.printException(e)
 			game.running = False

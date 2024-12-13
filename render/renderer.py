@@ -1,6 +1,8 @@
 from collections import deque
 from typing import Union, TYPE_CHECKING
 
+from utils import utils
+
 if TYPE_CHECKING:
 	from entity.entity import Entity
 

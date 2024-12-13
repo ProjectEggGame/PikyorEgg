@@ -1,9 +1,6 @@
+import math
 import random
 from typing import Union, TYPE_CHECKING
-
-import numba
-
-from utils import utils
 
 if TYPE_CHECKING:
 	from entity.entity import Entity, Player
@@ -82,23 +79,22 @@ class World(Renderable):
 		:param width: 循迹宽度，默认0
 		:return: 元组列表，距离小到大排序。如果方块为None，则第一参数为方块向量，否则为方块；第二参数是起始点方向向的命中点（没有宽度偏移）
 		"""
+		if math.isclose(direction.x, 0) and math.isclose(direction.y, 0):
+			return []
 		result: list[tuple[Block | BlockVector, Vector]] = []
-		directionFix: Vector = direction.directionalClone().multiply(width + 1).add(1, 1)
+		dcb: BlockVector = direction.directionalCloneBlock()
+		directionFix: Vector = direction.directionalClone().multiply(width + 2)
 		checkEnd: BlockVector = start.clone().add(direction.normalize().multiply(length)).add(directionFix).getBlockVector()
 		checkStart: BlockVector = start.clone().subtract(directionFix).getBlockVector()
-		present_y: int = checkStart.y
-		utils.info(f"{start}: {str(checkStart)} -> {str(checkEnd)}")
-		for i in range(checkStart.x, checkEnd.x, direction.directionalCloneBlock().x if direction.directionalCloneBlock().x != 0 else 1):
+		for i in [checkStart.x] if dcb.x == 0 else range(checkStart.x - dcb.x, checkEnd.x + dcb.x, dcb.x):
 			has_y: bool = False
-			for j in range(checkStart.y, checkEnd.y, direction.directionalCloneBlock().y if direction.directionalCloneBlock().y != 0 else 1):
+			for j in [checkStart.y] if dcb.y == 0 else range(checkStart.y - dcb.y, checkEnd.y + dcb.y, dcb.y):
 				blockPos: BlockVector = BlockVector(i, j)
 				hitResult: Vector | None = blockPos.getHitPoint(start, direction)
 				if hitResult is not None and hitResult.length() < length:
-					result.append((self._ground[blockPos] or blockPos, hitResult))
-					if self._ground[blockPos] is not None:
-						self._ground[blockPos] = ErrorBlock(blockPos)
+					result.append((self._ground[blockPos] if blockPos in self._ground.keys() else blockPos.clone(), hitResult.clone()))
+					self._ground[blockPos] = PathBlock(blockPos.clone())
 					has_y = True
-					present_y = j
 				if has_y:
 					break
 		return result

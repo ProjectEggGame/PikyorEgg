@@ -30,6 +30,8 @@ class Game:
 		if delta > 1:
 			# utils.warn(f'{delta = :.3f}')
 			delta = 1
+		if delta < 0:
+			delta = 0
 		renderer.begin(delta)
 		if self.mainWorld is not None:
 			self.mainWorld.passRender(renderer.getCanvas(), delta)

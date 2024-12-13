@@ -1,3 +1,4 @@
+import math
 from typing import Union
 
 from utils import utils
@@ -88,21 +89,21 @@ class Vector:
 		return self.x, self.y
 	
 	def getBlockVector(self) -> 'BlockVector':
-		return BlockVector(int(self.x), int(self.y))
+		return BlockVector(math.floor(self.x), math.floor(self.y))
 	
 	def directionalCloneBlock(self) -> 'BlockVector':
 		"""
 		查看方向性。对于x和y，如果大于0，修改为1；如果小于0，修改为-1；否则修改为0
 		:return:
 		"""
-		return BlockVector(0 if self.x == 0 else 1 if self.x > 0 else -1, 0 if self.y == 0 else 1 if self.y > 0 else -1)
+		return BlockVector(0 if self.x == 0 else (1 if self.x > 0 else -1), 0 if self.y == 0 else (1 if self.y > 0 else -1))
 	
 	def directionalClone(self) -> 'Vector':
 		"""
 		查看方向性。对于x和y，如果大于0，修改为1；如果小于0，修改为-1；否则修改为0
 		:return:
 		"""
-		return Vector(0 if self.x == 0 else 1 if self.x > 0 else -1, 0 if self.y == 0 else 1 if self.y > 0 else -1)
+		return Vector(0 if self.x == 0 else (1 if self.x > 0 else -1), 0 if self.y == 0 else (1 if self.y > 0 else -1))
 	
 	def pointVerticalTo(self, line: 'Vector') -> 'Vector':
 		"""
@@ -116,6 +117,35 @@ class Vector:
 			return Vector(0, 0)
 		d.x, d.y = d.y, -d.x
 		return d.multiply(length)
+	
+	def extendX(self, x: float) -> 'Vector':
+		"""
+		更改x的值，并等比放大向量
+		:param x: 目标x
+		:return: 自身。如果self.x == 0且x != 0则直接返回自身，不做扩展
+		"""
+		if math.isclose(self.x, 0):
+			if x != 0:
+				utils.warn(f'扩展向量的零值。{self}: {x = }')
+				raise 1
+			return self
+		self.y = self.y / self.x * x
+		self.x = x
+		return self
+	
+	def extendY(self, y: float) -> 'Vector':
+		"""
+		更改y的值，并等比放大向量
+		:param y: 目标y
+		:return: 自身。如果self.y == 0则直接返回自身，不做扩展
+		"""
+		if math.isclose(self.y, 0) :
+			if y != 0:
+				utils.warn(f'扩展向量的零值。{self}: {y = }')
+			return self
+		self.x = self.x / self.y * y
+		self.y = y
+		return self
 	
 	def __len__(self) -> float:
 		return float(self.x ** 2 + self.y ** 2) ** 0.5
@@ -136,10 +166,10 @@ class Vector:
 		return self.x == other.x and self.y == other.y
 	
 	def __str__(self) -> str:
-		return f'Vector({self.x:.2f}, {self.y:.2f})'
+		return f'Vector({self.x:.3f}, {self.y:.3f})'
 	
 	def __repr__(self) -> str:
-		return f'Vector({self.x:.2f}, {self.y:.2f})'
+		return f'Vector({self.x:.3f}, {self.y:.3f})'
 
 
 class BlockVector:
@@ -260,7 +290,7 @@ class BlockVector:
 		检查方块是否包含目标点
 		:param point: 目标点
 		"""
-		return self.x <= point.x <= self.x + 1 and self.y <= point.y <= self.y + 1
+		return self.x <= point.x < self.x + 1 and self.y <= point.y < self.y + 1
 	
 	def getHitPoint(self, start: Vector, direction: Vector) -> Vector | None:
 		"""
@@ -272,47 +302,52 @@ class BlockVector:
 		if direction.x == 0 and direction.y == 0:
 			return None
 		start: Vector = start.clone()
-		direction: Vector = direction.clone().normalize()
-		relative: Vector = ((self.getVector() - start).subtract(0.5, 0.5))
+		relative: Vector = ((self.getVector() - start).add(0.5, 0.5))
 		dc: BlockVector = direction.directionalCloneBlock()
 		if self.contains(start):
+			result1 = result2 = None
 			if dc.x != 0:
-				result: Vector = direction.clone().multiply(0.5 / abs(relative.x))
-				if -0.5 < result.y < 0.5:
-					return result
+				result1 = direction.clone().extendX((0.5 if dc.x > 0 else -0.5) - relative.x)
+				if -0.5 <= result1.y + relative.y <= 0.5:
+					return result1
 			if dc.y != 0:
-				result: Vector = direction.clone().multiply(0.5 / abs(relative.y))
-				if -0.5 < result.x < 0.5:
-					return result
-			return None
-			raise InvalidOperationException(f'不应当运行到此处，请检查代码问题。{start = }, {direction = }, {relative = }, {dc = }')
+				result2 = direction.clone().extendY((0.5 if dc.y > 0 else -0.5) - relative.y)
+				if -0.5 <= result2.x + relative.x <= 0.5:
+					return result2
+			raise InvalidOperationException(f'不应当运行到此处，请检查代码问题。{self = } {start = }, {direction = }, {relative = }, {dc = }, {result1 = }, {result2 = }')
 		else:
-			if -0.5 < relative.x < 0.5:  # 在上下方
+			if -0.5 <= relative.x < 0.5:  # 在上下方
 				if dc.y == -1 and relative.y > 0:
 					return None
 				if dc.y == 1 and relative.y < 0:
 					return None
-				result = direction.multiply(abs(relative.y) - 0.5)
-				if -0.5 < result.x < 0.5:
+				if dc.y == 0:
+					return None
+				result = direction.clone().extendY(abs(relative.y) - 0.5)
+				if -0.5 <= result.x < 0.5:
 					return result
 				return None
-			if -0.5 < relative.y < 0.5:  # 在左右方
+			if -0.5 <= relative.y < 0.5:  # 在左右方
 				if dc.x == -1 and relative.x > 0:
 					return None
 				if dc.x == 1 and relative.x < 0:
 					return None
-				result = direction.multiply(abs(relative.x) - 0.5)
-				if -0.5 < result.y < 0.5:
+				if dc.x == 0:
+					return None
+				result = direction.clone().extendX(abs(relative.x) - 0.5)
+				if -0.5 <= result.y < 0.5:
 					return result
 				return None
 			if dc.x == 0 or dc.y == 0:  # 斜角
 				return None
-			x_extend = direction.multiply(abs(relative.x) - 0.5).subtract(relative)
-			y_extend = direction.multiply(abs(relative.y) - 0.5).subtract(relative)
-			if -0.5 < x_extend.y < 0.5:
-				return x_extend
-			if -0.5 < y_extend.x < 0.5:
-				return y_extend
+			x_result = direction.clone().extendX(abs(relative.x) - 0.5)
+			x_extend = x_result.clone().subtract(relative)
+			y_result = direction.clone().extendY(abs(relative.y) - 0.5)
+			y_extend = y_result.clone().subtract(relative)
+			if -0.5 <= x_extend.y < 0.5:
+				return x_result
+			if -0.5 <= y_extend.x < 0.5:
+				return y_result
 			return None
 	
 	def __len__(self) -> float:

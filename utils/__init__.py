@@ -38,7 +38,7 @@ class Utils:
 		last_name = None
 		count = 0
 		traces = traceback.extract_tb(e.__traceback__)
-		result.append(f'  {traces[0].line}\n')
+		result.append(f'  {traces[-1].line}\n')
 		for frame in traces:
 			if last_file is None or last_file != frame.filename or last_line is None or last_line != frame.lineno or last_name is None or last_name != frame.name:
 				if count > 3:

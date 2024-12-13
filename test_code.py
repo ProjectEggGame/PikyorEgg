@@ -1,5 +1,8 @@
-from utils.text import RenderableString
+from utils.vector import *
 
-s: RenderableString = RenderableString('\\#12345678\\.12345678Hello \\_\\-World\\/!!')
 
-print(str(s))
+b = BlockVector(0, 0)
+s = Vector(0, 0)
+d = Vector(1, 0)
+
+print(b.getHitPoint(s, d))
