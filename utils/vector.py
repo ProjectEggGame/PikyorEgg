@@ -28,6 +28,14 @@ class Vector:
 		else:
 			self.x = x_or_pos
 			self.y = y_or_None
+			
+	def setX(self, x: float) -> 'Vector':
+		self.x = x
+		return self
+	
+	def setY(self, y: float) -> 'Vector':
+		self.y = y
+		return self
 	
 	def add(self, x: Union[float, tuple[float, float], 'Vector'], y: float | None = None) -> 'Vector':
 		if x is tuple:
@@ -91,6 +99,9 @@ class Vector:
 	def getBlockVector(self) -> 'BlockVector':
 		return BlockVector(math.floor(self.x), math.floor(self.y))
 	
+	def getBlockTuple(self) -> tuple[int, int]:
+		return math.floor(self.x), math.floor(self.y)
+	
 	def directionalCloneBlock(self) -> 'BlockVector':
 		"""
 		查看方向性。对于x和y，如果大于0，修改为1；如果小于0，修改为-1；否则修改为0
@@ -118,13 +129,19 @@ class Vector:
 		d.x, d.y = d.y, -d.x
 		return d.multiply(length)
 	
+	def xInteger(self) -> bool:
+		return self.x == int(self.x)
+	
+	def yInteger(self) -> bool:
+		return self.y == int(self.y)
+	
 	def extendX(self, x: float) -> 'Vector':
 		"""
 		更改x的值，并等比放大向量
 		:param x: 目标x
 		:return: 自身。如果self.x == 0且x != 0则直接返回自身，不做扩展
 		"""
-		if math.isclose(self.x, 0):
+		if utils.fequal(self.x, 0):
 			if x != 0:
 				utils.warn(f'扩展向量的零值。{self}: {x = }')
 				raise 1
@@ -139,13 +156,16 @@ class Vector:
 		:param y: 目标y
 		:return: 自身。如果self.y == 0则直接返回自身，不做扩展
 		"""
-		if math.isclose(self.y, 0) :
+		if utils.fequal(self.y, 0):
 			if y != 0:
 				utils.warn(f'扩展向量的零值。{self}: {y = }')
 			return self
 		self.x = self.x / self.y * y
 		self.y = y
 		return self
+	
+	def toString(self) -> str:
+		return f'Vector({self.x:}, {self.y})'
 	
 	def __len__(self) -> float:
 		return float(self.x ** 2 + self.y ** 2) ** 0.5
@@ -197,6 +217,14 @@ class BlockVector:
 		else:
 			self.x = x_or_pos
 			self.y = y_or_None
+	
+	def setX(self, x: int) -> 'BlockVector':
+		self.x = int(x)
+		return self
+	
+	def setY(self, y: int) -> 'BlockVector':
+		self.y = int(y)
+		return self
 	
 	def add(self, x: Union[int, tuple[int, int], 'BlockVector'], y: int | None = None) -> 'BlockVector':
 		if x is tuple:
@@ -290,7 +318,19 @@ class BlockVector:
 		检查方块是否包含目标点
 		:param point: 目标点
 		"""
-		return self.x <= point.x < self.x + 1 and self.y <= point.y < self.y + 1
+		return self.x <= point.x <= self.x + 1 and self.y <= point.y <= self.y + 1
+	
+	def covers(self, point: Vector) -> bool:
+		"""
+		检查目标点是否恰好在方块内部
+		"""
+		return self.x < point.x < self.x + 1 and self.y < point.y < self.y + 1
+	
+	def atBorder(self, point: Vector) -> bool:
+		"""
+		检查目标点是否恰好在方块边界
+		"""
+		return point.x == self.x or point.y == self.y or point.x == self.x + 1 or point.y == self.y + 1
 	
 	def getHitPoint(self, start: Vector, direction: Vector) -> Vector | None:
 		"""
@@ -316,39 +356,83 @@ class BlockVector:
 					return result2
 			raise InvalidOperationException(f'不应当运行到此处，请检查代码问题。{self = } {start = }, {direction = }, {relative = }, {dc = }, {result1 = }, {result2 = }')
 		else:
-			if -0.5 <= relative.x < 0.5:  # 在上下方
-				if dc.y == -1 and relative.y > 0:
+			result = direction.clone()
+			if dc.y == -1:
+				if relative.y > 0:
 					return None
-				if dc.y == 1 and relative.y < 0:
-					return None
-				if dc.y == 0:
-					return None
-				result = direction.clone().extendY(abs(relative.y) - 0.5)
-				if -0.5 <= result.x < 0.5:
+				result.extendY(relative.y + 0.5)
+				if -0.5 <= relative.x - result.x <= 0.5:
 					return result
-				return None
-			if -0.5 <= relative.y < 0.5:  # 在左右方
-				if dc.x == -1 and relative.x > 0:
+			elif dc.y == 1:
+				if relative.y < 0:
 					return None
-				if dc.x == 1 and relative.x < 0:
-					return None
-				if dc.x == 0:
-					return None
-				result = direction.clone().extendX(abs(relative.x) - 0.5)
-				if -0.5 <= result.y < 0.5:
+				result.extendY(relative.y - 0.5)
+				if -0.5 <= relative.x - result.x <= 0.5:
 					return result
-				return None
-			if dc.x == 0 or dc.y == 0:  # 斜角
-				return None
-			x_result = direction.clone().extendX(abs(relative.x) - 0.5)
-			x_extend = x_result.clone().subtract(relative)
-			y_result = direction.clone().extendY(abs(relative.y) - 0.5)
-			y_extend = y_result.clone().subtract(relative)
-			if -0.5 <= x_extend.y < 0.5:
-				return x_result
-			if -0.5 <= y_extend.x < 0.5:
-				return y_result
+			result = direction.clone()
+			if dc.x == -1:
+				if relative.x > 0:
+					return None
+				result.extendX(relative.x + 0.5)
+				if -0.5 <= relative.y - result.y <= 0.5:
+					return result
+			elif dc.x == 1:
+				if relative.x < 0:
+					return None
+				result.extendX(relative.x - 0.5)
+				if -0.5 <= relative.y - result.y <= 0.5:
+					return result
 			return None
+		
+	def getRelativeBlock(self, position: Vector, direction: Vector) -> list[tuple['BlockVector', Vector]] | None:
+		"""
+		获取方块角落上某一点向某一个方向移动的相关方块位置，主要用于移动撞边判断。如果direction不平行于边界，可能返回两个BlockVector和Vector元组。
+		元组中，后者Vector指示如果BlockVector是canPass，折速度向量结果
+		:param position: 某个角落
+		:param direction: 某个方向
+		:return: 相关方块位置。如果目标点不在角落，返回None；如果方向无关、不影响移动，返回空列表
+		"""
+		if utils.fequal(self.x, position.x):
+			left = True
+		elif utils.fequal(self.x + 1, position.x):
+			left = False
+		else:
+			return None
+		if utils.fequal(self.y, position.y):
+			up = True
+		elif utils.fequal(self.y + 1, position.y):
+			up = False
+		else:
+			return None
+		dcb = direction.clone().directionalCloneBlock()
+		if dcb.x == 0:
+			if (dcb.y == -1 and not up) or (dcb.y == 1 and up):
+				return [(
+					(BlockVector(self.x - 1, self.y) if left else BlockVector(self.x + 1, self.y)),
+					direction.clone().setX(0)
+				)]
+		elif dcb.x == -1:
+			if dcb.y == -1:
+				if not up and not left:
+					return [
+						(BlockVector(self.x, self.y + 1), direction.clone().setY(0)),
+						(BlockVector(self.x + 1, self.y), direction.clone().setX(0))
+					]
+			elif dcb.y == 1:
+				if up and not left:
+					return [(BlockVector(self.x, self.y - 1), direction.clone().setY(0)), (BlockVector(self.x + 1, self.y), direction.clone().setX(0))]
+			elif dcb.y == 0:
+				return [(BlockVector(self.x, self.y - 1) if up else BlockVector(self.x, self.y + 1), direction.clone().setY(0))]
+		elif dcb.x == 1:
+			if dcb.y == -1:
+				if not up and left:
+					return [(BlockVector(self.x - 1, self.y), direction.clone().setX(0)), (BlockVector(self.x, self.y + 1), direction.clone().setY(0))]
+			elif dcb.y == 1:
+				if up and left:
+					return [(BlockVector(self.x - 1, self.y), direction.clone().setX(0)), (BlockVector(self.x, self.y - 1), direction.clone().setY(0))]
+			elif dcb.y == 0:
+				return [(BlockVector(self.x, self.y - 1) if left else BlockVector(self.x, self.y + 1), direction.clone().setY(0))]
+		return []
 	
 	def __len__(self) -> float:
 		return float(self.x ** 2 + self.y ** 2) ** 0.5

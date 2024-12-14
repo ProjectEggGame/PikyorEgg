@@ -10,7 +10,6 @@ if TYPE_CHECKING:
 from item.item import BackPack
 from interact import interact
 from utils.vector import Vector, BlockVector
-from render.renderer import renderer
 from render.resource import resourceManager
 from utils.game import game
 from utils.text import Description
@@ -23,35 +22,35 @@ class Entity(Element):
 		"""
 		:param name: 实体名称
 		:param description: 实体描述，字符串列表
-		:param texture: 纹理列表，一般认为[0][1]是前面，[2][3]是后，[4][5]是左，[6][7]是右
+		:param texture: 纹理列表，一般认为[0][1]是前面，[2][3]是后，[4][5]是左，[6][7]是右。可以参考class Player的构造函数
 		"""
 		super().__init__(name, description, texture[0])
 		self._position: Vector = Vector(0, 0)
 		self._maxSpeed: float = speed
-		self._velocity: Vector = Vector(0, 0)
+		self.__velocity: Vector = Vector(0, 0)
 		self._setVelocity: Vector = Vector(0, 0)
 		self.__renderInterval: int = 6
 		self._textureSet: list[Texture] = texture
+		
+	def __processMove(self, _position, _setVelocity) -> Vector:
+		if (vLength := _setVelocity.length()) == 0:
+			return Vector()
+		ret: Vector = Vector()
+		rayTraceResult: list[tuple[Union['Block', BlockVector], Vector]] = game.mainWorld.rayTraceBlock(_position, _setVelocity, vLength)
+		for block, vector in rayTraceResult:
+			pass
+		return ret
 	
 	def passTick(self) -> None:
 		"""
 		内置函数，不应当额外调用，不应当随意重写。
 		重写时必须注意调用父类的同名函数，防止遗漏逻辑。
+		除非你一定要覆写当中的代码，否则尽量不要重写这个函数。
 		"""
-		self._position.add(self._velocity)
-		if (vLength := self._setVelocity.length()) != 0:
-			rayTraceResult: list[tuple[Union['Block', BlockVector], Vector]] = game.mainWorld.rayTraceBlock(self._position, self._setVelocity, vLength)
-			for block, vector in rayTraceResult:
-				if isinstance(block, BlockVector):  # None block
-					if vector.length() < vLength:
-						self._velocity.set(vector)
-					break
-				elif not block.canPass(self):
-					if vector.length() < vLength:
-						self._velocity.set(vector)
-					break
-		self._velocity.set(self._setVelocity)
-		vcb: BlockVector = self._velocity.directionalCloneBlock()
+		self._position.add(self.__velocity)
+		# self.__velocity.set(self.__processMove(self._position.clone(), self._setVelocity.clone()))
+		self.__velocity.set(self._setVelocity)
+		vcb: BlockVector = self.__velocity.directionalCloneBlock()
 		if vcb.x < 0:
 			self.__renderInterval -= 1
 			if self._texture is self._textureSet[4]:
@@ -100,7 +99,7 @@ class Entity(Element):
 			elif self._texture is self._textureSet[1]:
 				if self.__renderInterval <= 0:
 					self.__renderInterval = 6
-					self._texture = self._textureSet[1]
+					self._texture = self._textureSet[0]
 			else:
 				self.__renderInterval = 6
 				self._texture = self._textureSet[0]
@@ -113,7 +112,7 @@ class Entity(Element):
 		pass
 	
 	def render(self, screen: 'Surface', delta: float, at: Vector | None) -> None:
-		self._texture.renderAtMap(screen, self._position + self._velocity * delta)
+		self._texture.renderAtMap(screen, self._position + self.__velocity * delta)
 	
 	def setVelocity(self, v: Vector) -> None:
 		"""
@@ -126,7 +125,7 @@ class Entity(Element):
 		return self._position.clone()
 	
 	def getVelocity(self) -> Vector:
-		return self._velocity.clone()
+		return self.__velocity.clone()
 
 
 class Player(Entity):
@@ -163,4 +162,5 @@ class Player(Entity):
 		if interact.keys[pygame.K_d].peek():
 			v.add(1, 0)
 		self.setVelocity(v.normalize().multiply(self._maxSpeed))
-		
+		if interact.keys[pygame.K_q].deal():
+			utils.info(self.getPosition().toString())

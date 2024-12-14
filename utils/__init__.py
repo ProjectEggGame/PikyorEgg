@@ -75,6 +75,21 @@ class Utils:
 		:param e: 被抛出的错误
 		"""
 		self.traceStack(e, f'[{type(e).__name__}] {str(e)}!! when running code:')
+		
+	def fequal(self, a: float, b: float) -> bool:
+		return abs(a - b) < 1e-9
+	
+	def fless(self, a: float, b: float) -> bool:
+		return a < b and not self.fequal(a, b)
+	
+	def fgreater(self, a: float, b: float) -> bool:
+		return a > b and not self.fequal(a, b)
+	
+	def flesseq(self, a: float, b: float) -> bool:
+		return not self.fgreater(a, b)
+	
+	def fgreatereq(self, a: float, b: float) -> bool:
+		return not self.fless(a, b)
 
 
 utils: Utils = Utils()

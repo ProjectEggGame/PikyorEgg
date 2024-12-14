@@ -3,10 +3,10 @@ class Description:
 	元素描述。这个可以实现按时间不同变化的
 	"""
 	
-	def __init__(self, d: list[str] | None = None):
+	def __init__(self, d: list['RenderableString'] | None = None):
 		self._d = [] if d is None else d
 	
-	def generate(self) -> list[str]:
+	def generate(self) -> list['RenderableString']:
 		return self._d
 
 
@@ -98,22 +98,22 @@ class RenderableString:
 						config.appendString(i[2:])
 					config.font = int(i[1])
 					continue
-				case '-':
+				case '-', 's', 'S':
 					config.delete = True
 					if len(i) >= 1:
 						config.appendString(i[1:])
 					continue
-				case '_':
+				case '_', 'u', 'U':
 					config.underline = True
 					if len(i) >= 1:
 						config.appendString(i[1:])
 					continue
-				case '/':
+				case '/', 'i', 'I':
 					config.italic = True
 					if len(i) >= 1:
 						config.appendString(i[1:])
 					continue
-				case '=':
+				case '=', 'b', 'B':
 					config.bold = True
 					if len(i) >= 1:
 						config.appendString(i[1:])

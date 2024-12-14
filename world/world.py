@@ -2,6 +2,8 @@ import math
 import random
 from typing import Union, TYPE_CHECKING
 
+from utils import utils
+
 if TYPE_CHECKING:
 	from entity.entity import Entity, Player
 
@@ -12,17 +14,18 @@ from block.block import Block, GrassBlock, PathBlock, ErrorBlock
 
 
 class World(Renderable):
-	def __init__(self, worldID: int):
+	def __init__(self, worldID: int, seed: int | None = None):
 		super().__init__(None)
 		self._player: Union['Player', None] = None
 		self._id: int = worldID
 		self._entityList: set['Entity'] = set['Entity']()
 		self._ground: dict[BlockVector, Block] = dict[BlockVector, Block]()
+		self._seed: random.Random
 	
 	def generateDefaultWorld() -> 'World':
 		w: World = World(-1)
-		for i in range(-10, 10):
-			for j in range(-10, 10):
+		for i in range(-3, 3):
+			for j in range(-3, 3):
 				v = BlockVector(i, j)
 				w._ground[v] = GrassBlock(v) if j != 0 or i != 0 else PathBlock(v)
 		return w
@@ -59,8 +62,8 @@ class World(Renderable):
 	def removeEntity(self, entity: 'Entity') -> None:
 		self._entityList.remove(entity)
 	
-	def getBlockAt(self, point: Vector) -> None:
-		self._ground.get(point.clone().getBlockVector())
+	def getBlockAt(self, point: Vector | BlockVector) -> None:
+		self._ground.get(point if isinstance(point, BlockVector) else point.clone().getBlockVector())
 	
 	def setBlockAt(self, point: BlockVector, block: Block) -> Block | None:
 		"""
@@ -79,11 +82,15 @@ class World(Renderable):
 		:param width: 循迹宽度，默认0
 		:return: 元组列表，距离小到大排序。如果方块为None，则第一参数为方块向量，否则为方块；第二参数是起始点方向向的命中点（没有宽度偏移）
 		"""
-		if math.isclose(direction.x, 0) and math.isclose(direction.y, 0):
+		if utils.fequal(direction.x, 0) and utils.fequal(direction.y, 0):
 			return []
 		result: list[tuple[Block | BlockVector, Vector]] = []
 		dcb: BlockVector = direction.directionalCloneBlock()
-		directionFix: Vector = direction.directionalClone().multiply(width + 2)
+		if dcb.x == 0 and start.xInteger():
+			dcb.x = 1
+		if dcb.y == 0 and start.yInteger():
+			dcb.y = 1
+		directionFix: Vector = direction.directionalClone().multiply(width + 1)
 		checkEnd: BlockVector = start.clone().add(direction.normalize().multiply(length)).add(directionFix).getBlockVector()
 		checkStart: BlockVector = start.clone().subtract(directionFix).getBlockVector()
 		for i in [checkStart.x] if dcb.x == 0 else range(checkStart.x - dcb.x, checkEnd.x + dcb.x, dcb.x):
@@ -93,7 +100,6 @@ class World(Renderable):
 				hitResult: Vector | None = blockPos.getHitPoint(start, direction)
 				if hitResult is not None and hitResult.length() < length:
 					result.append((self._ground[blockPos] if blockPos in self._ground.keys() else blockPos.clone(), hitResult.clone()))
-					self._ground[blockPos] = PathBlock(blockPos.clone())
 					has_y = True
 				if has_y:
 					break

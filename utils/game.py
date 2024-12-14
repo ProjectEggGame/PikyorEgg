@@ -18,6 +18,8 @@ class Game:
 		self.window: Window | None = None
 	
 	def tick(self) -> None:
+		if self.window is not None:
+			self.window.tick()
 		if self.mainWorld is not None:
 			self.mainWorld.tick()
 	

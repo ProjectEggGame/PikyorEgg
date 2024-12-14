@@ -37,7 +37,7 @@ def renderThread():
 			else:
 				time.sleep(0.0001)
 			if nowRender - lastCount >= 1_000_000_000:
-				utils.info(f"{count}帧/秒")
+				utils.debug(f"{count}帧/秒")
 				count = 0
 				lastCount = nowRender
 		except Exception as e:
@@ -88,7 +88,7 @@ def mainThread():
 	pygame.display.set_caption("捡蛋")
 	screen = pygame.display.set_mode((info.current_w / 2, info.current_h / 2), SCREEN_FLAGS)
 	renderer.setScreen(screen)
-	renderer.setMapScale(min(info.current_w / 20, info.current_h / 15))
+	renderer.setSystemScale(min(info.current_w / 20, info.current_h / 15))
 	gt: Thread = Thread(name="GameThread", target=gameThread)
 	rt: Thread = Thread(name="RenderThread", target=renderThread)
 	gt.start()
@@ -119,7 +119,7 @@ def mainThread():
 						interact.onMouse(event)
 						break
 					case pygame.VIDEORESIZE:
-						renderer.setMapScale(min(event.size[0] / 20, event.size[1] / 15))
+						renderer.setSystemScale(min(event.size[0] / 20, event.size[1] / 15))
 						renderer.setScreen(pygame.display.set_mode(event.size, SCREEN_FLAGS))
 						pygame.display.update()
 						break

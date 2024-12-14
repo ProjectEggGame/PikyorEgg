@@ -130,7 +130,6 @@ def onKey(event) -> None:
 		else:
 			specialKeys[event.key & (KEY_COUNT - 1)].set(True)
 	elif event.type == pygame.KEYUP:
-		utils.info(f'onKey: key up {event.key}')
 		if event.key <= KEY_COUNT:
 			keys[event.key].set(False)
 		else:
