@@ -42,3 +42,10 @@ class Window(Renderable):
 			self._catches.tick()
 		for widget in self._widgets:
 			widget.tick()
+	
+	def onResize(self) -> None:
+		"""
+		窗口大小改变时的回调。可以重写，但是不要忘了令所有widgets也onResize一下
+		"""
+		for widget in self._widgets:
+			widget.onResize()

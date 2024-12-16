@@ -2,7 +2,6 @@
 这里相当于游戏资源管理器。所有的游戏资源（列表）都在这里。
 """
 from render.renderer import renderer
-from utils import utils
 from utils.error import NullPointerException
 from typing import TYPE_CHECKING
 if TYPE_CHECKING:
@@ -43,6 +42,15 @@ class Game:
 			self.window.passRender(renderer.getCanvas(), delta)
 		renderer.pop()
 		renderer.end()
+	
+	def readConfig(self, config: dict[str, any]) -> None:
+		"""
+		读取配置文件。
+		"""
+		pass
+	
+	def writeConfig(self) -> dict[str, any]:
+		return {}
 
 
 game = Game()

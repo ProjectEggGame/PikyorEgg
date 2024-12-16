@@ -6,7 +6,7 @@ from render.resource import Texture
 from utils.text import Description, RenderableString
 from enum import Enum
 
-from utils.vector import BlockVector
+from utils.vector import BlockVector, Vector
 
 
 class Location(Enum):
@@ -60,6 +60,7 @@ class Widget(Renderable):
 	onTick，每tick调用。\n
 	_x, _y, _w, _h与公开的x, y, width, height不同。前者的单位是屏幕像素；后者的单位是窗口，例如x=0.5意味着x坐标位于屏幕的一半。
 	"""
+	
 	def __init__(self, location: Location, x: float, y: float, width: float, height: float, name: RenderableString, description: Description, texture: Texture):
 		"""
 		创建控件。注意，位置取屏幕的相对位置。如果取LEFT_TOP，则x, y指代控件左上角与窗口左上角的相对位置；如果取RIGHT，则x, y分别指代控件右边与窗口右边的相对位置，和控件正中央与屏幕纵向正中央的相对位置
@@ -89,16 +90,35 @@ class Widget(Renderable):
 		self.onMouseUp: Callable[[int, int], bool] | None = None
 		self.onMouseDown: Callable[[int, int], bool] | None = None
 		self.onTick: Callable[[], int] | None = None
-		
-
+	
 	def onResize(self) -> None:
 		"""
-		根据预设调整具体位置
+		根据预设调整具体位置。可以重写，但是注意逻辑和算法不要错了
 		"""
-		renderer.getSize()
-		
+		windowSize: Vector = renderer.getSize()
+		self._w, self._h = self.width * windowSize.x, self.height * windowSize.y
+		match self.location:
+			case Location.LEFT_TOP:
+				self._x, self._y = self.x * windowSize.x, self.y * windowSize.y
+			case Location.LEFT:
+				self._x, self._y = self.x * windowSize.x, (windowSize.y - self._h) * 0.5 + self.y * windowSize.y
+			case Location.LEFT_BOTTOM:
+				self._x, self._y = self.x * windowSize.x, (windowSize.y - self._h) * windowSize.y + self.y * windowSize.y
+			case Location.TOP:
+				self._x, self._y = (windowSize.x - self._w) * 0.5 + self.x * windowSize.x, self.y * windowSize.y
+			case Location.CENTER:
+				self._x, self._y = (windowSize.x - self._w) * 0.5 + self.x * windowSize.x, (windowSize.y - self._h) * 0.5 + self.y * windowSize.y
+			case Location.BOTTOM:
+				self._x, self._y = (windowSize.x - self._w) * windowSize.x + self.x * windowSize.x, (windowSize.y - self._h) * windowSize.y + self.y * windowSize.y
+			case Location.RIGHT_TOP:
+				self._x, self._y = (windowSize.x - self._w) * windowSize.x + self.x * windowSize.x, self.y * windowSize.y
+			case Location.RIGHT:
+				self._x, self._y = (windowSize.x - self._w) * windowSize.x + self.x * windowSize.x, (windowSize.y - self._h) * 0.5 + self.y * windowSize.y
+			case Location.RIGHT_BOTTOM:
+				self._x, self._y = (windowSize.x - self._w) * windowSize.x + self.x * windowSize.x, (windowSize.y - self._h) * windowSize.y + self.y * windowSize.y
+	
 	def isMouseIn(self, x: int, y: int):
-		pass
+		return self._x <= x <= self._x + self._w and self._y <= y <= self._y + self._h
 	
 	def tick(self) -> None:
 		"""
@@ -111,4 +131,3 @@ class Widget(Renderable):
 	def click(self, x: int, y: int) -> bool:
 		if self.onClick is not None:
 			return self.onClick(x, y)
-

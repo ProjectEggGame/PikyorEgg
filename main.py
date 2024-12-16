@@ -9,6 +9,7 @@ from interact import interact
 
 from render.renderer import renderer
 from render.resource import resourceManager
+from save import settings
 from utils import utils
 from utils.game import game
 from world.world import World
@@ -93,8 +94,17 @@ def mainThread():
 	rt: Thread = Thread(name="RenderThread", target=renderThread)
 	gt.start()
 	rt.start()
-	utils.info("主线程启动")
 	del info
+	# begin 读取设置
+	try:
+		config: dict[str, any] = settings.readConfig()
+		game.readConfig(config)
+		renderer.readConfig(config)
+	except Exception as e:
+		utils.printException(e)
+		game.running = False
+	# end 读取设置
+	utils.info("主线程启动")
 	while game.running:
 		try:
 			for event in pygame.event.get():
@@ -132,6 +142,15 @@ def mainThread():
 		gt.join()
 	if rt.is_alive():
 		rt.join()
+	# begin 写入设置
+	try:
+		config: dict[str, any] = game.writeConfig()
+		config.update(renderer.writeConfig())
+		settings.writeConfig(config)
+	except Exception as e:
+		utils.printException(e)
+		game.running = False
+	# end 写入设置
 	pygame.display.quit()
 
 

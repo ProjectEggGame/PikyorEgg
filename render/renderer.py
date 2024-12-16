@@ -11,7 +11,7 @@ import pygame
 from pygame import Surface
 from utils.vector import Vector
 from utils.error import IllegalStatusException, InvalidOperationException
-from utils.sync import SynchronizedStorage
+from utils.sync import SynchronizedStorage, Boolean
 
 
 # from utils.game import game
@@ -37,7 +37,7 @@ class Renderer:
 		self._canvas: Surface | None = None
 		self._size: tuple[float, float] = (0, 0)
 		self._canvasSize: Vector = Vector()
-		self._is4to3: bool = False
+		self._is4to3: SynchronizedStorage[bool] = SynchronizedStorage[bool](True)
 		self._isRendering: bool = False
 		self._renderStack: deque[RenderStack] = deque[RenderStack]()
 		self._renderStack.append(RenderStack())
@@ -62,7 +62,7 @@ class Renderer:
 		"""
 		self._screen = screen
 		self._size = screen.get_size()
-		if self._is4to3:
+		if self._is4to3.get():
 			if self._size[0] / self._size[1] > 4 / 3:
 				self._offset = Vector((self._size[0] - float(self._size[1]) * 4 / 3) / 2, 0)
 			elif self._size[0] / self._size[1] < 4 / 3:
@@ -101,11 +101,14 @@ class Renderer:
 				self._customScale = newScale
 				self._scaleChanged = True
 		self._isRendering = True
+		# begin apply sync
 		if self._cameraAt is None:
-			self._camera.applyNew(self._camera.getNew().clone())
+			self._camera.apply(self._camera.getNew().clone())
 		else:
 			self._camera.get().set(self._cameraAt.getPosition() + self._cameraAt.getVelocity() * delta)
 			self._camera.getNew().set(self._camera.get().clone())
+		self._is4to3.apply(self._is4to3.getNew())
+		# end apply sync
 		self._screen.fill(0)
 		self._canvas.fill(0)
 	
@@ -259,6 +262,21 @@ class Renderer:
 	def modifyOffset(self, x: int | float, y: int | float) -> None:
 		self.assertRendering()
 		self._renderStack[-1].offset.add(x, y)
+	
+	def readConfig(self, config: dict[str, any]) -> None:
+		if "screenSize" in config:
+			ss = config["screenSize"]
+			if ss == "4:3":
+				self._is4to3.set(True)
+			elif ss == "16:9":
+				self._is4to3.set(False)
+			else:
+				utils.warn(f"screenSize: {ss} is not supported. Using 4:3.")
+	
+	def writeConfig(self) -> dict[str, any]:
+		return {
+			"screenSize": "4:3" if self._is4to3.getNew() else "16:9"
+		}
 
 
 renderer: Renderer = Renderer()

@@ -23,7 +23,7 @@ class SynchronizedStorage(Generic[_SyncT]):
 	def set(self, value: _SyncT) -> None:
 		self._newValue = value
 	
-	def applyNew(self, value: _SyncT) -> None:
+	def apply(self, value: _SyncT) -> None:
 		self._value = self._newValue
 		self._newValue = value
 
@@ -45,3 +45,32 @@ class SynchronizedModifier(Generic[_SyncT]):
 		self._queue = Queue[callable]
 		for modifier in q:
 			modifier(self._value)
+
+
+class Boolean:
+	def __init__(self, value: bool):
+		self._value: bool = value
+	
+	def set(self, value: bool) -> None:
+		self._value = value
+	
+	def toggle(self) -> None:
+		self._value = not self._value
+	
+	def get(self) -> bool:
+		return self._value
+	
+	def __bool__(self) -> bool:
+		return self._value
+	
+	def __eq__(self, other: bool) -> bool:
+		return self._value == other
+	
+	def __ne__(self, other: bool) -> bool:
+		return self._value != other
+	
+	def __str__(self) -> str:
+		return 'true' if self._value else 'false'
+	
+	def __repr__(self) -> str:
+		return f'Boolean({self._value})'
