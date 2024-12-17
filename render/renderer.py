@@ -219,8 +219,8 @@ class Renderer:
 		self._systemScale = int(scl)
 		self._scaleChanged = True
 	
-	def setCustomScale(self, scl: int) -> None:
-		self._customScale = int(scl)
+	def setCustomScale(self, scl: float) -> None:
+		self._customScale = scl
 		self._scaleChanged = True
 	
 	def getMapScale(self) -> float:
