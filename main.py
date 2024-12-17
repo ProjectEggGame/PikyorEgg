@@ -38,7 +38,7 @@ def renderThread():
 			else:
 				time.sleep(0.0001)
 			if nowRender - lastCount >= 1_000_000_000:
-				utils.debug(f"{count}帧/秒")
+				utils.trace(f"{count}帧/秒")
 				count = 0
 				lastCount = nowRender
 		except Exception as e:
@@ -52,7 +52,7 @@ def gameThread():
 	utils.info("游戏线程启动")
 	# test
 	game.mainWorld = World.generateDefaultWorld()
-	utils.info(game.mainWorld.__str__())
+	utils.trace(game.mainWorld.__str__())
 	player: Player = Player()
 	game.mainWorld.addPlayer(player)
 	renderer.cameraAt(player)
@@ -69,7 +69,7 @@ def gameThread():
 				lastTick = nowTick
 				count += 1
 			if nowRender - lastCount >= 1_000_000_000:
-				# utils.info(f"{count}tick/秒")
+				utils.trace(f"{count}tick/秒")
 				count = 0
 				lastCount = nowRender
 			else:
@@ -100,6 +100,7 @@ def mainThread():
 		config: dict[str, any] = configs.readConfig()
 		game.readConfig(config)
 		renderer.readConfig(config)
+		utils.readConfig(config)
 	except Exception as e:
 		utils.printException(e)
 		game.running = False
@@ -138,7 +139,7 @@ def mainThread():
 					case pygame.MOUSEWHEEL:
 						pass
 					case _:
-						utils.debug(event)
+						utils.trace(event)
 		except Exception as e:
 			utils.printException(e)
 			game.running = False
@@ -152,6 +153,7 @@ def mainThread():
 	try:
 		config: dict[str, any] = game.writeConfig()
 		config.update(renderer.writeConfig())
+		config.update(utils.writeConfig())
 		configs.writeConfig(config)
 	except Exception as e:
 		utils.printException(e)

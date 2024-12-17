@@ -47,7 +47,7 @@ class Entity(Element):
 			block: BlockVector
 			newPosition: Vector = self._position + vector
 			newVelocity: Vector = self._setVelocity - vector
-			utils.debug(f'{newPosition = }, {self._position = }, {vector = }')
+			utils.trace(f'{newPosition = }, {self._position = }, {vector = }')
 			rel: list[tuple[BlockVector, Vector]] | BlockVector | None = block.getRelativeBlock(newPosition, newVelocity)
 			if rel is None:  # 在中间
 				continue
@@ -135,7 +135,7 @@ class Entity(Element):
 		"""
 		self._position.add(self.__velocity)
 		self.__processMove()
-		utils.debug(f'{self._position = }, {self.__velocity}')
+		utils.trace(f'{self._position = }, {self.__velocity}')
 		vcb: BlockVector = self.__velocity.directionalCloneBlock()
 		if vcb.x < 0:
 			self.__renderInterval -= 1
