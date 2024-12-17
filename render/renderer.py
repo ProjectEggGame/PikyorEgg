@@ -2,6 +2,7 @@ from collections import deque
 from typing import Union, TYPE_CHECKING
 
 from interact import interact
+from save import configs
 from utils import utils
 
 if TYPE_CHECKING:
@@ -9,7 +10,7 @@ if TYPE_CHECKING:
 
 import pygame
 from pygame import Surface
-from utils.vector import Vector
+from utils.vector import Vector, BlockVector
 from utils.error import IllegalStatusException, InvalidOperationException
 from utils.sync import SynchronizedStorage, Boolean
 
@@ -37,18 +38,20 @@ class Renderer:
 		self._canvas: Surface | None = None
 		self._size: tuple[float, float] = (0, 0)
 		self._canvasSize: Vector = Vector()
-		self._is4to3: SynchronizedStorage[bool] = SynchronizedStorage[bool](True)
+		self._canvasCenter: BlockVector = BlockVector()
 		self._isRendering: bool = False
 		self._renderStack: deque[RenderStack] = deque[RenderStack]()
 		self._renderStack.append(RenderStack())
 		self._camera: SynchronizedStorage[Vector] = SynchronizedStorage[Vector](Vector(10.0, 10.0))
 		self._cameraAt: Union['Entity', None] = None
-		self._systemScale: float = 16.0  # 方块基本是16px
-		self._customScale: float = 1.0
-		self._customMapScale: float = 16.0
+		self._systemScale: int = 16  # 方块基本是16px
+		self._customMapScale: int = 16
 		self._scaleChanged: bool = True
 		self._offset: Vector = Vector(0, 0)
 		self._presentOffset: Vector = Vector(0, 0)
+		
+		self._customScale: float = 1.0
+		self._is4to3: SynchronizedStorage[bool] = SynchronizedStorage[bool](True)
 	
 	def ready(self) -> bool:
 		"""
@@ -69,6 +72,7 @@ class Renderer:
 				self._offset = Vector(0, (self._size[1] - float(self._size[0]) / 4 * 3) / 2)
 			else:
 				self._offset = Vector(0, 0)
+			self.setSystemScale(int(min(self._size[0] / 12, self._size[1] / 9)))
 		else:
 			if self._size[0] / self._size[1] > 16 / 9:
 				self._offset = Vector((self._size[0] - float(self._size[1]) * 16 / 9) / 2, 0)
@@ -76,8 +80,10 @@ class Renderer:
 				self._offset = Vector(0, (self._size[1] - float(self._size[0]) / 16 * 9) / 2)
 			else:
 				self._offset = Vector(0, 0)
+			self.setSystemScale(int(min(self._size[0] / 16, self._size[1] / 9)))
 		self._canvasSize = Vector(self._size[0], self._size[1]).subtract(self._offset).subtract(self._offset)
 		self._canvas = Surface(self._canvasSize.getTuple())
+		self._canvasCenter.set(int(self._canvasSize.x / 2), int(self._canvasSize.y / 2))
 		self._updateOffset()
 	
 	def cameraAt(self, entity: 'Entity') -> 'Entity':
@@ -93,10 +99,7 @@ class Renderer:
 			raise IllegalStatusException("尝试开始绘制，但是绘制已经开始。")
 		if interact.scroll.peekScroll() != 0:
 			newScale = self._customScale * (0.8 ** interact.scroll.dealScroll())
-			if utils.flesseq(newScale, 0.5):
-				newScale = 0.5
-			elif utils.fgreatereq(newScale, 8):
-				newScale = 8
+			newScale = utils.frange(newScale, 0.5, 8)
 			if newScale != self._customScale:
 				self._customScale = newScale
 				self._scaleChanged = True
@@ -186,16 +189,16 @@ class Renderer:
 		"""
 		self.assertRendering()
 		if fromPos is None or fromSize is None:
-			dst.blit(src, self._canvasSize.clone().multiply(0.5).add((mapPoint - self._camera.get()).subtract(0.5, 0.5).multiply(self._customMapScale)).getTuple())
+			dst.blit(src, self._canvasCenter.clone().add((mapPoint - self._camera.get()).subtract(0.5, 0.5).multiply(self._customMapScale).getBlockVector()).getTuple())
 		else:
-			dst.blit(src, self._canvasSize.clone().multiply(0.5).add((mapPoint + fromPos - self._camera.get()).subtract(0.5, 0.5).multiply(self._customMapScale)).getTuple(), (fromPos.x, fromPos.y, fromSize.x, fromSize.y))
+			dst.blit(src, self._canvasCenter.clone().add((mapPoint + fromPos - self._camera.get()).subtract(0.5, 0.5).multiply(self._customMapScale).getBlockVector()).getTuple(), (fromPos.x, fromPos.y, fromSize.x, fromSize.y))
 	
 	def renderAsBlock(self, src: Surface, dst: Surface, mapPoint: Vector, fromPos: Vector | None = None, fromSize: Vector | None = None):
 		self.assertRendering()
 		if fromPos is None or fromSize is None:
-			dst.blit(src, self._canvasSize.clone().multiply(0.5).add((mapPoint - self._camera.get()).multiply(self._customMapScale)).getBlockTuple())
+			dst.blit(src, self._canvasCenter.clone().add((mapPoint - self._camera.get()).multiply(self._customMapScale).getBlockVector()).getTuple())
 		else:
-			dst.blit(src, self._canvasSize.clone().multiply(0.5).add((mapPoint + fromPos - self._camera.get()).multiply(self._customMapScale)).getBlockTuple(), (fromPos.x, fromPos.y, fromSize.x, fromSize.y))
+			dst.blit(src, self._canvasCenter.clone().add((mapPoint + fromPos - self._camera.get()).multiply(self._customMapScale).getBlockVector()).getTuple(), (fromPos.x, fromPos.y, fromSize.x, fromSize.y))
 	
 	def push(self) -> None:
 		self.assertRendering()
@@ -212,12 +215,12 @@ class Renderer:
 		self._renderStack[-1].scale = scl
 		self._updateOffset()
 	
-	def setSystemScale(self, scl: float) -> None:
-		self._systemScale = scl
+	def setSystemScale(self, scl: int) -> None:
+		self._systemScale = int(scl)
 		self._scaleChanged = True
 	
-	def setCustomScale(self, scl: float) -> None:
-		self._customScale = scl
+	def setCustomScale(self, scl: int) -> None:
+		self._customScale = int(scl)
 		self._scaleChanged = True
 	
 	def getMapScale(self) -> float:
@@ -229,7 +232,7 @@ class Renderer:
 		:return:
 		"""
 		if self._scaleChanged:
-			self._customMapScale = self._customScale * self._systemScale
+			self._customMapScale = int(self._customScale * self._systemScale)
 			self._scaleChanged = False
 			return True
 		else:
@@ -244,8 +247,8 @@ class Renderer:
 		:return: 缩放后的表面
 		"""
 		return pygame.transform.scale(s, (
-			self._customMapScale if size_x is None else self._customMapScale * size_x / 16,
-			self._customMapScale if size_y is None else self._customMapScale * size_y / 16
+			self._customMapScale if size_x is None else int(self._customMapScale * size_x / 16),
+			self._customMapScale if size_y is None else int(self._customMapScale * size_y / 16)
 		))
 	
 	def uiScaleSurface(self, s: Surface) -> Surface:
@@ -264,18 +267,13 @@ class Renderer:
 		self._renderStack[-1].offset.add(x, y)
 	
 	def readConfig(self, config: dict[str, any]) -> None:
-		if "screenSize" in config:
-			ss = config["screenSize"]
-			if ss == "4:3":
-				self._is4to3.set(True)
-			elif ss == "16:9":
-				self._is4to3.set(False)
-			else:
-				utils.warn(f"screenSize: {ss} is not supported. Using 4:3.")
-	
+		self._is4to3.set(configs.readElseDefault(config, "screenSize", False, {"4:3": True, "16:9": False}, "screenSize: {} is not supported. Using 4:3."))
+		self.setCustomScale(configs.readElseDefault(config, "customScale", 1, lambda f: utils.frange(f, 0.5, 8)))
+		
 	def writeConfig(self) -> dict[str, any]:
 		return {
-			"screenSize": "4:3" if self._is4to3.getNew() else "16:9"
+			"screenSize": "4:3" if self._is4to3.getNew() else "16:9",
+			"customScale": self._customScale,
 		}
 
 

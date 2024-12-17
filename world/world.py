@@ -19,7 +19,7 @@ class World(Renderable):
 		self._player: Union['Player', None] = None
 		self._id: int = worldID
 		self._entityList: set['Entity'] = set['Entity']()
-		self._ground: dict[BlockVector, Block] = dict[BlockVector, Block]()
+		self._ground: dict[int, Block] = dict[int, Block]()
 		self._seed: random.Random
 	
 	def generateDefaultWorld() -> 'World':
@@ -27,7 +27,7 @@ class World(Renderable):
 		for i in range(-3, 3):
 			for j in range(-3, 3):
 				v = BlockVector(i, j)
-				w._ground[v] = GrassBlock(v) if j != 0 or i != 0 else PathBlock(v)
+				w._ground[hash(v)] = GrassBlock(v) if j != 0 or i != 0 else PathBlock(v)
 		return w
 	
 	def tick(self) -> None:
@@ -63,14 +63,14 @@ class World(Renderable):
 		self._entityList.remove(entity)
 	
 	def getBlockAt(self, point: Vector | BlockVector) -> None:
-		self._ground.get(point if isinstance(point, BlockVector) else point.clone().getBlockVector())
+		return self._ground.get(hash(point if isinstance(point, BlockVector) else point.clone().getBlockVector()))
 	
 	def setBlockAt(self, point: BlockVector, block: Block) -> Block | None:
 		"""
 		设置方块，返回原来的方块
 		"""
-		b = self._ground[point]
-		self._ground[point] = block
+		b = self._ground[hash(point)]
+		self._ground[hash(point)] = block
 		return b
 	
 	def rayTraceBlock(self, start: Vector, direction: Vector, length: float, width: float = 0) -> list[tuple[Block | BlockVector, Vector]]:
@@ -80,7 +80,7 @@ class World(Renderable):
 		:param direction: 射线方向
 		:param length: 追踪长度
 		:param width: 循迹宽度，默认0
-		:return: 元组列表，距离小到大排序。如果方块为None，则第一参数为方块向量，否则为方块；第二参数是起始点方向向的命中点（没有宽度偏移）
+		:return: 元组列表，距离小到大排序。如果方块为None，则第一个参数为方块向量，否则为方块；第二个参数是起始点方向向的命中点（没有宽度偏移）
 		"""
 		if utils.fequal(direction.x, 0) and utils.fequal(direction.y, 0):
 			return []
@@ -94,16 +94,17 @@ class World(Renderable):
 		checkEnd: BlockVector = start.clone().add(direction.normalize().multiply(length)).add(directionFix).getBlockVector()
 		checkStart: BlockVector = start.clone().subtract(directionFix).getBlockVector()
 		for i in [checkStart.x] if dcb.x == 0 else range(checkStart.x - dcb.x, checkEnd.x + dcb.x, dcb.x):
-			has_y: bool = False
 			for j in [checkStart.y] if dcb.y == 0 else range(checkStart.y - dcb.y, checkEnd.y + dcb.y, dcb.y):
+				if i == 3 and j == -3:
+					pass
 				blockPos: BlockVector = BlockVector(i, j)
 				hitResult: Vector | None = blockPos.getHitPoint(start, direction)
 				if hitResult is not None and hitResult.length() < length:
-					result.append((self._ground[blockPos] if blockPos in self._ground.keys() else blockPos.clone(), hitResult.clone()))
-					has_y = True
-				if has_y:
-					break
+					result.append((self._ground[hash(blockPos)] if hash(blockPos) in self._ground.keys() else blockPos.clone(), hitResult.clone()))
 		return result
+	
+	def __str__(self) -> str:
+		return f'World(blocks = {len(self._ground)}, {self._ground})'
 
 
 def generateRandom(seed_or_random=None) -> random.Random:

@@ -9,7 +9,7 @@ if TYPE_CHECKING:
 
 from item.item import BackPack
 from interact import interact
-from utils.vector import Vector, BlockVector
+from utils.vector import Vector, BlockVector, Matrices
 from render.resource import resourceManager
 from utils.game import game
 from utils.text import Description
@@ -32,14 +32,100 @@ class Entity(Element):
 		self.__renderInterval: int = 6
 		self._textureSet: list[Texture] = texture
 		
-	def __processMove(self, _position, _setVelocity) -> Vector:
-		if (vLength := _setVelocity.length()) == 0:
-			return Vector()
-		ret: Vector = Vector()
-		rayTraceResult: list[tuple[Union['Block', BlockVector], Vector]] = game.mainWorld.rayTraceBlock(_position, _setVelocity, vLength)
+	def __processMove(self) -> None:
+		if (vLength := self._setVelocity.length()) == 0:
+			self.__velocity.set(0, 0)
+			return
+		rayTraceResult: list[tuple[Union['Block', BlockVector], Vector]] = game.mainWorld.rayTraceBlock(self._position, self._setVelocity, vLength)
 		for block, vector in rayTraceResult:
-			pass
-		return ret
+			block: Union['Block', BlockVector]  # 命中方块，或者命中方块坐标
+			vector: Vector  # 起始点->命中点
+			if type(block) != BlockVector:
+				if block.canPass(self):  # 可通过方块，跳过
+					continue
+				block = block.getBlockPosition()
+			block: BlockVector
+			newPosition: Vector = self._position + vector
+			newVelocity: Vector = self._setVelocity - vector
+			utils.debug(f'{newPosition = }, {self._position = }, {vector = }')
+			rel: list[tuple[BlockVector, Vector]] | BlockVector | None = block.getRelativeBlock(newPosition, newVelocity)
+			if rel is None:  # 在中间
+				continue
+			elif type(rel) == BlockVector:  # 撞边不撞角
+				vel2: Vector = (Matrices.xOnly if rel.x == 0 else Matrices.yOnly) @ newVelocity
+				for b, v in game.mainWorld.rayTraceBlock(newPosition, vel2, vel2.length()):
+					if type(b) != BlockVector:
+						if b.canPass(self):
+							continue
+					# 还得判断钻缝的问题
+						b = b.getBlockPosition()
+					grb = b.getRelativeBlock(newPosition + v, v)
+					if type(grb) != list or len(grb) == 0:
+						continue
+					b2 = game.mainWorld.getBlockAt(grb[0][0])
+					if b2 is None or not b2.canPass(self):
+						self.__velocity.set(vector + v)
+						return
+					# 钻缝问题处理结束
+				# 退出for循环，说明全部通过
+				self.__velocity.set(vector + vel2)
+				return
+			elif not rel:  # 空列表
+				continue  # 不影响移动
+			else:  # 撞角
+				if len(rel) == 1:  # 碰一边
+					relativeBlock: Union['Block', None] = game.mainWorld.getBlockAt(rel[0][0])
+					if relativeBlock is None or not relativeBlock.canPass(self):  # 碰一边，然后恰好撞墙
+						self.__velocity.set(vector)
+					else:
+						self.__velocity.set(vector + rel[0][1])
+					return
+				# 碰一边处理结束，顶角处理开始
+				# 都能过的话，无脑，0优先。
+				# 然后这里好像还要再trace一次新的方向看看
+				relativeBlock: Union['Block', None] = game.mainWorld.getBlockAt(rel[0][0])
+				if relativeBlock is not None and relativeBlock.canPass(self):  # 0能过，trace新方向
+					for b, v in game.mainWorld.rayTraceBlock(newPosition, rel[0][1], rel[0][1].length()):
+						if type(b) != BlockVector:
+							if b.canPass(self):
+								continue
+						# 还得判断钻缝的问题
+							b = b.getBlockPosition()
+						grb = b.getRelativeBlock(newPosition + v, v)
+						if type(grb) != list or len(grb) == 0:
+							continue
+						b2 = game.mainWorld.getBlockAt(grb[0][0])
+						if b2 is None or not b2.canPass(self):
+							self.__velocity.set(vector + v)
+							return
+						# 钻缝问题处理结束
+					# 退出for循环，说明全部通过
+					self.__velocity.set(vector + rel[0][1])
+					return
+				relativeBlock = game.mainWorld.getBlockAt(rel[1][0])
+				if relativeBlock is not None and relativeBlock.canPass(self):  # 1能过，trace新方向
+					for b, v in game.mainWorld.rayTraceBlock(newPosition, rel[1][1], rel[1][1].length()):
+						if type(b) != BlockVector:
+							if b.canPass(self):
+								continue
+						# 还得判断钻缝的问题
+							b = b.getBlockPosition()
+						grb = b.getRelativeBlock(newPosition + v, v)
+						if type(grb) != list or len(grb) == 0:
+							continue
+						b2 = game.mainWorld.getBlockAt(grb[0][0])
+						if b2 is None or not b2.canPass(self):
+							self.__velocity.set(vector + v)
+							return
+						# 钻缝问题处理结束
+					# 退出for循环，说明全部通过
+					self.__velocity.set(vector + rel[1][1])
+					return
+				# 都不能过
+				self.__velocity.set(vector)
+				return
+		self.__velocity.set(self._setVelocity)
+		return
 	
 	def passTick(self) -> None:
 		"""
@@ -48,8 +134,8 @@ class Entity(Element):
 		除非你一定要覆写当中的代码，否则尽量不要重写这个函数。
 		"""
 		self._position.add(self.__velocity)
-		# self.__velocity.set(self.__processMove(self._position.clone(), self._setVelocity.clone()))
-		self.__velocity.set(self._setVelocity)
+		self.__processMove()
+		utils.debug(f'{self._position = }, {self.__velocity}')
 		vcb: BlockVector = self.__velocity.directionalCloneBlock()
 		if vcb.x < 0:
 			self.__renderInterval -= 1

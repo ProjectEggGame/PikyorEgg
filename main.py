@@ -9,7 +9,7 @@ from interact import interact
 
 from render.renderer import renderer
 from render.resource import resourceManager
-from save import settings
+from save import configs
 from utils import utils
 from utils.game import game
 from world.world import World
@@ -52,6 +52,7 @@ def gameThread():
 	utils.info("游戏线程启动")
 	# test
 	game.mainWorld = World.generateDefaultWorld()
+	utils.info(game.mainWorld.__str__())
 	player: Player = Player()
 	game.mainWorld.addPlayer(player)
 	renderer.cameraAt(player)
@@ -89,7 +90,6 @@ def mainThread():
 	pygame.display.set_caption("捡蛋")
 	screen = pygame.display.set_mode((info.current_w / 2, info.current_h / 2), SCREEN_FLAGS)
 	renderer.setScreen(screen)
-	renderer.setSystemScale(min(info.current_w / 20, info.current_h / 15))
 	gt: Thread = Thread(name="GameThread", target=gameThread)
 	rt: Thread = Thread(name="RenderThread", target=renderThread)
 	gt.start()
@@ -97,7 +97,7 @@ def mainThread():
 	del info
 	# begin 读取设置
 	try:
-		config: dict[str, any] = settings.readConfig()
+		config: dict[str, any] = configs.readConfig()
 		game.readConfig(config)
 		renderer.readConfig(config)
 	except Exception as e:
@@ -112,27 +112,33 @@ def mainThread():
 					case pygame.QUIT:
 						game.running = False
 						utils.info("退出游戏")
-						break
 					case pygame.KEYDOWN:
 						interact.onKey(event)
-						break
 					case pygame.KEYUP:
 						interact.onKey(event)
-						break
 					case pygame.MOUSEMOTION:
 						interact.onMouse(event)
-						break
 					case pygame.MOUSEBUTTONDOWN:
 						interact.onMouse(event)
-						break
 					case pygame.MOUSEBUTTONUP:
 						interact.onMouse(event)
-						break
 					case pygame.VIDEORESIZE:
-						renderer.setSystemScale(min(event.size[0] / 20, event.size[1] / 15))
 						renderer.setScreen(pygame.display.set_mode(event.size, SCREEN_FLAGS))
 						pygame.display.update()
-						break
+					case pygame.TEXTINPUT:
+						pass
+					case pygame.TEXTEDITING:
+						pass
+					case pygame.ACTIVEEVENT:
+						pass
+					case pygame.WINDOWENTER:
+						pass
+					case pygame.WINDOWLEAVE:
+						pass
+					case pygame.MOUSEWHEEL:
+						pass
+					case _:
+						utils.debug(event)
 		except Exception as e:
 			utils.printException(e)
 			game.running = False
@@ -146,7 +152,7 @@ def mainThread():
 	try:
 		config: dict[str, any] = game.writeConfig()
 		config.update(renderer.writeConfig())
-		settings.writeConfig(config)
+		configs.writeConfig(config)
 	except Exception as e:
 		utils.printException(e)
 		game.running = False

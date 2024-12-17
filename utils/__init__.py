@@ -90,6 +90,14 @@ class Utils:
 	
 	def fgreatereq(self, a: float, b: float) -> bool:
 		return not self.fless(a, b)
+	
+	def frange(self, value: float, start: float, end: float) -> float:
+		if self.flesseq(value, start):
+			return start
+		elif self.fgreatereq(value, end):
+			return end
+		else:
+			return value
 
 
 utils: Utils = Utils()

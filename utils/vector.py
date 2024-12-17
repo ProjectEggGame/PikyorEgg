@@ -5,6 +5,95 @@ from utils import utils
 from utils.error import InvalidOperationException
 
 
+class Matrix:
+	def __init__(self, M2x2: Union[list[float], list[list[float]], tuple[tuple[float, float], tuple[float, float]]]):
+		"""
+		创建变换矩阵
+		:param M2x2: 可以是((a1, a2), (b1, b2))或[[a1, a2], [b1, b2]]或[a1, a2, b1, b2]的形式
+		"""
+		if type(M2x2) == list and len(M2x2) >= 4 and type(M2x2[0]) == float:
+			self._a1: float = float(M2x2[0])
+			self._a2: float = float(M2x2[1])
+			self._b1: float = float(M2x2[2])
+			self._b2: float = float(M2x2[3])
+		else:
+			self._a1: float = M2x2[0][0]
+			self._a2: float = M2x2[0][1]
+			self._b1: float = M2x2[1][0]
+			self._b2: float = M2x2[1][1]
+	
+	def add(self, other: Union['Matrix', int, float]) -> 'Matrix':
+		if type(other) == Matrix:
+			self._a1 += other._a1
+			self._a2 += other._a2
+			self._b1 += other._b1
+			self._b2 += other._b2
+		else:
+			self._a1 += other
+			self._a2 += other
+			self._b1 += other
+			self._b2 += other
+		return self
+	
+	def subtract(self, other: Union['Matrix', int, float]) -> 'Matrix':
+		if type(other) == Matrix:
+			self._a1 -= other._a1
+			self._a2 -= other._a2
+			self._b1 -= other._b1
+			self._b2 -= other._b2
+		else:
+			self._a1 -= other
+			self._a2 -= other
+			self._b1 -= other
+			self._b2 -= other
+		return self
+	
+	def multiply(self, other: Union['Matrix', 'Vector', 'BlockVector', int, float]) -> Union['Matrix', 'Vector']:
+		if type(other) == Matrix:
+			self._a1, self._a2, self._b1, self._b2 = other._a1 * self._a1 + other._a2 * self._b1, other._a1 * self._a2 + other._a2 * self._b2, other._b1 * self._a1 + other._b2 * self._b1, other._b1 * self._a2 + other._b2 * self._b2
+			return self
+		elif type(other) == Vector or type(other) == BlockVector:
+			return Vector(self._a1 * other.x + self._a2 * other.y, self._b1 * other.x + self._b2 * other.y)
+		else:
+			self._a1 *= other
+			self._a2 *= other
+			self._b1 *= other
+			self._b2 *= other
+			return self
+	
+	def __eq__(self, other: 'Matrix') -> bool:
+		return self._a1 == other._a1 and self._a2 == other._a2 and self._b1 == other._b1 and self._b2 == other._b2
+	
+	def __add__(self, other: Union['Matrix', int, float]) -> 'Matrix':
+		if type(other) == Matrix:
+			return Matrix([[self._a1 + other._a1, self._a2 + other._a2], [self._b1 + other._b1, self._b2 + other._b2]])
+		else:
+			return Matrix([[self._a1 + other, self._a2 + other], [self._b1 + other, self._b2 + other]])
+	
+	def __sub__(self, other: Union['Matrix', int, float]) -> 'Matrix':
+		if type(other) == Matrix:
+			return Matrix([[self._a1 - other._a1, self._a2 - other._a2], [self._b1 - other._b1, self._b2 - other._b2]])
+		else:
+			return Matrix([[self._a1 - other, self._a2 - other], [self._b1 - other, self._b2 - other]])
+	
+	def __mul__(self, other: float | int) -> 'Matrix':
+		return Matrix([[self._a1 * other, self._a2 * other], [self._b1 * other, self._b2 * other]])
+	
+	def __rmul__(self, other: float | int) -> 'Matrix':
+		return Matrix([[self._a1 * other, self._a2 * other], [self._b1 * other, self._b2 * other]])
+	
+	def __matmul__(self, other: Union['Matrix', 'Vector', 'BlockVector']) -> Union['Matrix', 'Vector']:
+		if type(other) == Matrix:
+			return Matrix([[self._a1 * other._a1 + self._a2 * other._b1, self._a1 * other._a2 + self._a2 * other._b2], [self._b1 * other._a1 + self._b2 * other._b1, self._b1 * other._a2 + self._b2 * other._b2]])
+		else:
+			return Vector(self._a1 * other.x + self._a2 * other.y, self._b1 * other.x + self._b2 * other.y)
+
+
+class Matrices:
+	yOnly = Matrix([[0, 0], [0, 1]])
+	xOnly = Matrix([[1, 0], [0, 0]])
+
+
 class Vector:
 	def __init__(self, x: float = 0, y: float = 0):
 		"""
@@ -28,7 +117,7 @@ class Vector:
 		else:
 			self.x = x_or_pos
 			self.y = y_or_None
-			
+	
 	def setX(self, x: float) -> 'Vector':
 		self.x = x
 		return self
@@ -179,6 +268,9 @@ class Vector:
 	def __mul__(self, val: float) -> 'Vector':
 		return Vector(self.x * val, self.y * val)
 	
+	def __rmul__(self, val: float) -> 'Vector':
+		return Vector(self.x * val, self.y * val)
+	
 	def __truediv__(self, other: float) -> 'Vector':
 		return Vector(self.x / other, self.y / other)
 	
@@ -199,7 +291,7 @@ class BlockVector:
 		:param x: 横坐标，相对左上角。
 		:param y: 纵坐标，相对左上角
 		"""
-		if x >= 0x1_0000_0000 or y >= 0x1_0000_0000:
+		if x >= 0x1_0000_0000 or y >= 0x1_0000_0000 or x <= -0xffff_ffff or y <= -0xffff_ffff:
 			raise ValueError('BlockVector out of range')
 		self.x = x
 		self.y = y
@@ -209,14 +301,14 @@ class BlockVector:
 		重设坐标。可以直接传入一个唯一参数set((x, y))元组，也可以传入两个参数set(x, y)
 		"""
 		if x_or_pos is tuple:
-			self.x = x_or_pos[0]
-			self.y = x_or_pos[1]
+			self.x = int(x_or_pos[0])
+			self.y = int(x_or_pos[1])
 		elif type(x_or_pos) == type(self):
-			self.x = x_or_pos.x
-			self.y = x_or_pos.y
+			self.x = int(x_or_pos.x)
+			self.y = int(x_or_pos.y)
 		else:
-			self.x = x_or_pos
-			self.y = y_or_None
+			self.x = int(x_or_pos)
+			self.y = int(y_or_None)
 	
 	def setX(self, x: int) -> 'BlockVector':
 		self.x = int(x)
@@ -332,16 +424,16 @@ class BlockVector:
 		"""
 		return point.x == self.x or point.y == self.y or point.x == self.x + 1 or point.y == self.y + 1
 	
-	def getHitPoint(self, start: Vector, direction: Vector) -> Vector | None:
+	def getHitPoint(self, startPosition: Vector, direction: Vector) -> Vector | None:
 		"""
 		获取从start射出的射线direction会碰到方块表面位置，返回start点到该位置的向量
-		:param start: 起始点
+		:param startPosition: 起始点
 		:param direction: 方向
 		:returns: 如果start不经过direction，返回None
 		"""
 		if direction.x == 0 and direction.y == 0:
 			return None
-		start: Vector = start.clone()
+		start: Vector = startPosition.clone()
 		relative: Vector = ((self.getVector() - start).add(0.5, 0.5))
 		dc: BlockVector = direction.directionalCloneBlock()
 		if self.contains(start):
@@ -383,27 +475,38 @@ class BlockVector:
 				if -0.5 <= relative.y - result.y <= 0.5:
 					return result
 			return None
-		
-	def getRelativeBlock(self, position: Vector, direction: Vector) -> list[tuple['BlockVector', Vector]] | None:
+	
+	def getRelativeBlock(self, position: Vector, direction: Vector) -> Union[list[tuple['BlockVector', Vector]], 'BlockVector', None]:
 		"""
 		获取方块角落上某一点向某一个方向移动的相关方块位置，主要用于移动撞边判断。如果direction不平行于边界，可能返回两个BlockVector和Vector元组。
 		元组中，后者Vector指示如果BlockVector是canPass，折速度向量结果
 		:param position: 某个角落
 		:param direction: 某个方向
-		:return: 相关方块位置。如果目标点不在角落，返回None；如果方向无关、不影响移动，返回空列表
+		:return: 相关方块位置。如果目标点不在角落，返回撞边的方向，例如撞右边返回(1, 0)；如果方向无关、不影响移动，返回空列表
 		"""
 		if utils.fequal(self.x, position.x):
 			left = True
+			if utils.fequal(self.y, position.y):
+				up = True
+			elif utils.fequal(self.y + 1, position.y):
+				up = False
+			else:
+				return BlockVector(-1, 0)  # 撞左边
 		elif utils.fequal(self.x + 1, position.x):
 			left = False
+			if utils.fequal(self.y, position.y):
+				up = True
+			elif utils.fequal(self.y + 1, position.y):
+				up = False
+			else:
+				return BlockVector(1, 0)  # 撞右边
 		else:
-			return None
-		if utils.fequal(self.y, position.y):
-			up = True
-		elif utils.fequal(self.y + 1, position.y):
-			up = False
-		else:
-			return None
+			if utils.fequal(self.y, position.y):
+				return BlockVector(0, -1)  # 撞上边
+			elif utils.fequal(self.y + 1, position.y):
+				return BlockVector(0, 1)  # 撞下边
+			else:
+				return None  # 接受触点在方块中间
 		dcb = direction.clone().directionalCloneBlock()
 		if dcb.x == 0:
 			if (dcb.y == -1 and not up) or (dcb.y == 1 and up):
@@ -431,7 +534,7 @@ class BlockVector:
 				if up and left:
 					return [(BlockVector(self.x - 1, self.y), direction.clone().setX(0)), (BlockVector(self.x, self.y - 1), direction.clone().setY(0))]
 			elif dcb.y == 0:
-				return [(BlockVector(self.x, self.y - 1) if left else BlockVector(self.x, self.y + 1), direction.clone().setY(0))]
+				return [(BlockVector(self.x, self.y - 1) if up else BlockVector(self.x, self.y + 1), direction.clone().setY(0))]
 		return []
 	
 	def __len__(self) -> float:
@@ -444,6 +547,9 @@ class BlockVector:
 		return BlockVector(self.x - other.x, self.y - other.y)
 	
 	def __mul__(self, val: int | float) -> 'BlockVector':
+		return BlockVector(self.x * val, self.y * val)
+	
+	def __rmul__(self, val: int | float) -> 'BlockVector':
 		return BlockVector(self.x * val, self.y * val)
 	
 	def __truediv__(self, other: int | float) -> 'BlockVector':
@@ -459,4 +565,5 @@ class BlockVector:
 		return f'Block({self.x}, {self.y})'
 	
 	def __hash__(self) -> int:
-		return self.x << 32 + self.y
+		return (self.x << 32) + (self.y if self.y >= 0 else self.y - 1)
+	
