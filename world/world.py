@@ -26,6 +26,8 @@ class World(Renderable):
 		w: World = World(-1)
 		for i in range(-3, 3):
 			for j in range(-3, 3):
+				if j == 1 and i == 1:
+					continue
 				v = BlockVector(i, j)
 				w._ground[hash(v)] = GrassBlock(v) if j != 0 or i != 0 else PathBlock(v)
 		return w

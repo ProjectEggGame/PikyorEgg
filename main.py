@@ -52,7 +52,6 @@ def gameThread():
 	utils.info("游戏线程启动")
 	# test
 	game.mainWorld = World.generateDefaultWorld()
-	utils.trace(game.mainWorld.__str__())
 	player: Player = Player()
 	game.mainWorld.addPlayer(player)
 	renderer.cameraAt(player)

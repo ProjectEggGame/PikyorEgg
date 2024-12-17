@@ -278,10 +278,10 @@ class Vector:
 		return self.x == other.x and self.y == other.y
 	
 	def __str__(self) -> str:
-		return f'Vector({self.x:.3f}, {self.y:.3f})'
+		return f'Vector({self.x}, {self.y})'
 	
 	def __repr__(self) -> str:
-		return f'Vector({self.x:.3f}, {self.y:.3f})'
+		return f'Vector({self.x}, {self.y})'
 
 
 class BlockVector:
@@ -434,7 +434,7 @@ class BlockVector:
 		if direction.x == 0 and direction.y == 0:
 			return None
 		start: Vector = startPosition.clone()
-		relative: Vector = ((self.getVector() - start).add(0.5, 0.5))
+		relative: Vector = ((self.getVector() - start).add(0.5, 0.5))  # 起始点->方块中心
 		dc: BlockVector = direction.directionalCloneBlock()
 		if self.contains(start):
 			result1 = result2 = None
@@ -450,26 +450,26 @@ class BlockVector:
 		else:
 			result = direction.clone()
 			if dc.y == -1:
-				if relative.y > 0:
+				if relative.y > 0.51:
 					return None
 				result.extendY(relative.y + 0.5)
 				if -0.5 <= relative.x - result.x <= 0.5:
 					return result
 			elif dc.y == 1:
-				if relative.y < 0:
+				if relative.y < -0.51:
 					return None
 				result.extendY(relative.y - 0.5)
 				if -0.5 <= relative.x - result.x <= 0.5:
 					return result
 			result = direction.clone()
 			if dc.x == -1:
-				if relative.x > 0:
+				if relative.x > 0.51:
 					return None
 				result.extendX(relative.x + 0.5)
 				if -0.5 <= relative.y - result.y <= 0.5:
 					return result
 			elif dc.x == 1:
-				if relative.x < 0:
+				if relative.x < -0.51:
 					return None
 				result.extendX(relative.x - 0.5)
 				if -0.5 <= relative.y - result.y <= 0.5:

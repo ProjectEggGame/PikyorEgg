@@ -150,3 +150,12 @@ class Utils:
 
 
 utils: Utils = Utils()
+
+
+def prints(func):
+	def wrapper(*args, **kwargs):
+		s = f'args: {args}, kwargs: {kwargs}'
+		ret = func(*args, **kwargs)
+		utils.trace(s + f', ret = {ret}')
+		return ret
+	return wrapper
