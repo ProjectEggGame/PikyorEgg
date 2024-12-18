@@ -34,19 +34,25 @@ class RenderStack:
 class Renderer:
 	def __init__(self):
 		super().__init__()
-		self._screen: Surface | None = None
-		self._canvas: Surface | None = None
+		self._screen: Surface | None = None  # 屏幕
 		self._size: tuple[float, float] = (0, 0)
+		
+		self._canvas: Surface | None = None  # 用于预绘制的画布
 		self._canvasSize: Vector = Vector()
 		self._canvasCenter: BlockVector = BlockVector()
+		
 		self._isRendering: bool = False
+		
 		self._renderStack: deque[RenderStack] = deque[RenderStack]()
 		self._renderStack.append(RenderStack())
+		
 		self._camera: SynchronizedStorage[Vector] = SynchronizedStorage[Vector](Vector(10.0, 10.0))
 		self._cameraAt: Union['Entity', None] = None
+		
 		self._systemScale: int = 16  # 方块基本是16px
 		self._customMapScale: int = 16
 		self._scaleChanged: bool = True
+		
 		self._offset: Vector = Vector(0, 0)
 		self._presentOffset: Vector = Vector(0, 0)
 		
@@ -183,22 +189,23 @@ class Renderer:
 			scaled = pygame.transform.scale(src, (dw * self._renderStack[-1].scale, dh * self._renderStack[-1].scale))
 			dst.blit(scaled, (self._presentOffset.x + dx, self._presentOffset.y + dy))
 	
-	def renderAtMap(self, src: Surface, dst: Surface, mapPoint: Vector, fromPos: Vector | None = None, fromSize: Vector | None = None) -> None:
+	def renderAtMap(self, src: Surface, mapPoint: Vector, fromPos: Vector | None = None, fromSize: Vector | None = None) -> None:
 		"""
 		按地图的方式渲染目标，会忽略margin，会考虑camera
 		"""
 		self.assertRendering()
+		dst = self._canvas
 		if fromPos is None or fromSize is None:
 			dst.blit(src, self._canvasCenter.clone().add((mapPoint - self._camera.get()).subtract(0.5, 0.5).multiply(self._customMapScale).getBlockVector()).getTuple())
 		else:
 			dst.blit(src, self._canvasCenter.clone().add((mapPoint + fromPos - self._camera.get()).subtract(0.5, 0.5).multiply(self._customMapScale).getBlockVector()).getTuple(), (fromPos.x, fromPos.y, fromSize.x, fromSize.y))
 	
-	def renderAsBlock(self, src: Surface, dst: Surface, mapPoint: Vector, fromPos: Vector | None = None, fromSize: Vector | None = None):
+	def renderAsBlock(self, src: Surface, mapPoint: Vector, fromPos: Vector | None = None, fromSize: Vector | None = None):
 		self.assertRendering()
 		if fromPos is None or fromSize is None:
-			dst.blit(src, self._canvasCenter.clone().add((mapPoint - self._camera.get()).multiply(self._customMapScale).getBlockVector()).getTuple())
+			self._canvas.blit(src, self._canvasCenter.clone().add((mapPoint - self._camera.get()).multiply(self._customMapScale).getBlockVector()).getTuple())
 		else:
-			dst.blit(src, self._canvasCenter.clone().add((mapPoint + fromPos - self._camera.get()).multiply(self._customMapScale).getBlockVector()).getTuple(), (fromPos.x, fromPos.y, fromSize.x, fromSize.y))
+			self._canvas.blit(src, self._canvasCenter.clone().add((mapPoint + fromPos - self._camera.get()).multiply(self._customMapScale).getBlockVector()).getTuple(), (fromPos.x, fromPos.y, fromSize.x, fromSize.y))
 	
 	def push(self) -> None:
 		self.assertRendering()
@@ -233,6 +240,9 @@ class Renderer:
 		"""
 		if self._scaleChanged:
 			self._customMapScale = int(self._customScale * self._systemScale)
+			map_size = self._canvasSize.clone().multiply(1 / self._customMapScale)
+			self._mapCanvas = Surface(map_size.getBlockTuple())
+			self._mapCenter = map_size.multiply(0.5).getBlockVector()
 			self._scaleChanged = False
 			return True
 		else:

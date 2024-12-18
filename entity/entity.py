@@ -195,8 +195,8 @@ class Entity(Element):
 		"""
 		pass
 	
-	def render(self, screen: 'Surface', delta: float, at: Vector | None) -> None:
-		self._texture.renderAtMap(screen, self._position + self.__velocity * delta)
+	def render(self, delta: float, at: Vector | None) -> None:
+		self._texture.renderAtMap(self._position + self.__velocity * delta)
 	
 	def setVelocity(self, v: Vector) -> None:
 		"""

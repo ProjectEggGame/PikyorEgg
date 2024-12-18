@@ -10,7 +10,7 @@ if TYPE_CHECKING:
 from pygame import Surface
 from render.renderable import Renderable
 from utils.vector import Vector, BlockVector
-from block.block import Block, GrassBlock, PathBlock, ErrorBlock
+from block.block import Block, GrassBlock, PathBlock, ErrorBlock, FarmlandBlock
 
 
 class World(Renderable):
@@ -26,10 +26,10 @@ class World(Renderable):
 		w: World = World(-1)
 		for i in range(-3, 3):
 			for j in range(-3, 3):
-				if j == 1 and i == 1:
+				if j ==  i:
 					continue
 				v = BlockVector(i, j)
-				w._ground[hash(v)] = GrassBlock(v) if j != 0 or i != 0 else PathBlock(v)
+				w._ground[hash(v)] = FarmlandBlock(v)
 		return w
 	
 	def tick(self) -> None:
@@ -42,15 +42,15 @@ class World(Renderable):
 		if self._player is not None:
 			self._player.passTick()
 	
-	def render(self, screen: Surface, delta: float, at: Union[Vector, None]) -> None:
+	def render(self, delta: float, at: Union[Vector, None]) -> None:
 		for b in self._ground.values():
 			if b is None:
 				continue
-			b.render(screen, delta, at)
+			b.render(delta, at)
 		for e in self._entityList:
-			e.render(screen, delta, at)
+			e.render(delta, at)
 		if self._player is not None:
-			self._player.render(screen, delta, at)
+			self._player.render(delta, at)
 	
 	def addPlayer(self, player: 'Player') -> None:
 		self._player = player

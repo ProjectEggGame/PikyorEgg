@@ -23,27 +23,25 @@ class Texture:
 	def renderAtInterface(self, screen: Surface, at: Vector) -> None:
 		renderer.render(self._surface, screen, 0, 0, self._surface.get_width(), self._surface.get_height(), screen.get_size()[0] * at.x, screen.get_size()[0] * at.y)
 	
-	def renderAsBlock(self, screen: Surface, at: Vector, fromPos: Vector | None = None, fromSize: Vector | None = None):
+	def renderAsBlock(self, at: Vector, fromPos: Vector | None = None, fromSize: Vector | None = None):
 		"""
 		相对于地图渲染
-		:param screen: 渲染目标屏幕
 		:param at: 地图位置
 		:param fromPos: 源图起始点
 		:param fromSize: 源图截取大小
 		:return:
 		"""
-		renderer.renderAsBlock(self._mapScaled, screen, at if self._offset is None else at + self._offset, fromPos, fromSize)
+		renderer.renderAsBlock(self._mapScaled, at if self._offset is None else at + self._offset, fromPos, fromSize)
 		
-	def renderAtMap(self, screen: Surface, at: Vector, fromPos: Vector | None = None, fromSize: Vector | None = None):
+	def renderAtMap(self, at: Vector, fromPos: Vector | None = None, fromSize: Vector | None = None):
 		"""
 		相对于地图渲染
-		:param screen: 渲染目标屏幕
 		:param at: 地图位置
 		:param fromPos: 源图起始点
 		:param fromSize: 源图截取大小
 		:return:
 		"""
-		renderer.renderAtMap(self._mapScaled, screen, at if self._offset is None else at + self._offset, fromPos, fromSize)
+		renderer.renderAtMap(self._mapScaled, at if self._offset is None else at + self._offset, fromPos, fromSize)
 	
 	def changeMapScale(self) -> None:
 		self._mapScaled = renderer.mapScaleSurface(self._surface)

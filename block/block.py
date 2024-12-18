@@ -1,11 +1,9 @@
-from typing import overload, TYPE_CHECKING, Union
+from typing import TYPE_CHECKING, Union
 
-from pygame import Surface
 from render.resource import resourceManager
 from utils.element import Element
-from utils.game import game
 from utils.error import InvalidOperationException, neverCall
-from utils.text import Description
+from utils.text import Description, RenderableString
 
 if TYPE_CHECKING:
 	from entity.entity import Entity
@@ -25,8 +23,8 @@ class Block(Element):
 		self.tick()
 		pass
 	
-	def render(self, screen: Surface, delta: float, at: 'Vector | None') -> None:
-		self.getTexture().renderAsBlock(screen, self._position.getVector())
+	def render(self, delta: float, at: 'Vector | None') -> None:
+		self.getTexture().renderAsBlock(self._position.getVector())
 	
 	def canPass(self, entity: Union['Entity', None] = None) -> bool:
 		"""
@@ -122,19 +120,19 @@ class Wall(Block, ElementHolder):
 
 class GrassBlock(Ground, ElementHolder):
 	def __init__(self, position: 'BlockVector'):
-		super().__init__("草地", Description(["\\#FF4BAB25青色的草地"]), position, resourceManager.getOrNew('block/grass'))
+		super().__init__("草地", Description([RenderableString("\\#FF4BAB25青色的草地")]), position, resourceManager.getOrNew('block/grass'))
 
 
 class PathBlock(Ground, ElementHolder):
 	def __init__(self, position: 'BlockVector'):
-		super().__init__("草陉", Description(["\\#FF4BAB25土黄色的道路"]), position, resourceManager.getOrNew('block/path'))
-	
-	def render(self, screen: Surface, delta: float, at: 'Vector | None') -> None:
-		if game.mainWorld is not None:
-			pass
-		self.getTexture().renderAsBlock(screen, self._position.getVector())
+		super().__init__("草陉", Description([RenderableString("\\#FF4BAB25土黄色的道路")]), position, resourceManager.getOrNew('block/path'))
+
+
+class FarmlandBlock(Ground, ElementHolder):
+	def __init__(self, position: 'BlockVector'):
+		super().__init__(" Farmland", Description([RenderableString("\\#FF733706肥沃的泥土")]), position, resourceManager.getOrNew('block/farmland'))
 
 
 class ErrorBlock(Ground):
 	def __init__(self, position: 'BlockVector'):
-		super().__init__("错误方块", Description(["\\#FFEE0000错误方块"]), position, resourceManager.getOrNew('no_texture'))
+		super().__init__("错误方块", Description([RenderableString("\\#FFEE0000错误方块")]), position, resourceManager.getOrNew('no_texture'))

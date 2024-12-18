@@ -2,6 +2,7 @@
 这个文件主要用于导出和导入设置。
 """
 import json
+import os
 from typing import Callable
 
 from utils import utils
@@ -11,6 +12,8 @@ def readConfig() -> dict[str, any]:
 	"""
 	读取配置文件。！！！由于文件位置问题，只能在main.py中调用！！！
 	"""
+	if not os.path.exists("user"):
+		os.makedirs("user")
 	try:
 		f = open("user/config.json", "r")
 	except FileNotFoundError:

@@ -1,5 +1,6 @@
 from pygame import Surface
 
+from utils.text import RenderableString
 from utils.vector import Vector
 from render.renderable import Renderable
 from render.resource import Texture
@@ -22,17 +23,17 @@ class Window(Renderable):
 		self._widgets: list[Widget] = []
 		self._catches: Widget | None = None
 		
-	def renderBackground(self, screen: Surface, delta: float) -> None:
+	def renderBackground(self, delta: float) -> None:
 		"""
 		渲染背景。可以重写
 		"""
 		if self._texture is not None:
-			self._texture.renderAtInterface(screen, Vector(0, 0))
+			self._texture.renderAtInterface(Vector(0, 0))
 		
-	def passRender(self, screen: Surface, delta: float, at: Vector | None = None) -> None:
-		self.renderBackground(screen, delta)
+	def passRender(self, delta: float, at: Vector | None = None) -> None:
+		self.renderBackground(delta)
 		for widget in self._widgets:
-			widget.passRender(screen, delta)
+			widget.passRender(delta)
 			
 	def tick(self) -> None:
 		"""
@@ -49,3 +50,20 @@ class Window(Renderable):
 		"""
 		for widget in self._widgets:
 			widget.onResize()
+
+
+class FloatWindow(Window):
+	"""
+	浮动窗口。窗口会根据鼠标位置自动移动。不用继承，想显示什么直接game.floatWindow.submit()就行了，目前只支持Text
+	"""
+	def __init__(self):
+		super().__init__("Floater")
+		self._rendering: list[RenderableString] = []
+	
+	def submit(self, contents: list[RenderableString]) -> None:
+		"""
+		把要显示的东西提交给FloatWindow
+		:param contents: 要显示的RenderableString，每一行一个元素，每个RenderableString不要包含换行符
+		"""
+		self._rendering = contents
+		

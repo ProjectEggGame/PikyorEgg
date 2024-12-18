@@ -12,6 +12,7 @@ from render.resource import resourceManager
 from save import configs
 from utils import utils
 from utils.game import game
+from window.window import FloatWindow
 from world.world import World
 
 nowRender = time.perf_counter_ns()
@@ -50,12 +51,13 @@ def renderThread():
 
 def gameThread():
 	utils.info("游戏线程启动")
-	# test
+	# 游戏初始化
 	game.mainWorld = World.generateDefaultWorld()
 	player: Player = Player()
 	game.mainWorld.addPlayer(player)
 	renderer.cameraAt(player)
-	# test
+	game.floatWindow = FloatWindow()
+	# 游戏初始化
 	count = 0
 	lastCount = time.perf_counter_ns()
 	global lastTick
@@ -170,5 +172,7 @@ def mainThread():
 if __name__ == '__main__':
 	ret = pygame.init()
 	utils.info(f"pygame初始化成功{ret[0]}模块，失败{ret[1]}模块")
+	import os
+	print(os.getcwd())
 	mainThread()
 	pygame.quit()
