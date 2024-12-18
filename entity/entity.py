@@ -237,14 +237,15 @@ class Player(Entity):
 	
 	def tick(self) -> None:
 		v: Vector = Vector()
-		if interact.keys[pygame.K_w].peek():
-			v.add(0, -1)
-		if interact.keys[pygame.K_a].peek():
-			v.add(-1, 0)
-		if interact.keys[pygame.K_s].peek():
-			v.add(0, 1)
-		if interact.keys[pygame.K_d].peek():
-			v.add(1, 0)
+		if game.getWindow() is None:
+			if interact.keys[pygame.K_w].peek():
+				v.add(0, -1)
+			if interact.keys[pygame.K_a].peek():
+				v.add(-1, 0)
+			if interact.keys[pygame.K_s].peek():
+				v.add(0, 1)
+			if interact.keys[pygame.K_d].peek():
+				v.add(1, 0)
 		self.setVelocity(v.normalize().multiply(self._maxSpeed))
 		if interact.keys[pygame.K_q].deal():
 			utils.info(self.getPosition().toString())

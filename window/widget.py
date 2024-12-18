@@ -1,51 +1,27 @@
 from typing import Callable
 
+from pygame import Surface
+
 from render.renderable import Renderable
-from render.renderer import renderer
+from render.renderer import renderer, Location
 from render.resource import Texture
 from utils.text import Description, RenderableString
-from enum import Enum
 
 from utils.vector import BlockVector, Vector
 
 
-class Location(Enum):
-	LEFT_TOP = 0
-	"""
-	左上角
-	"""
-	LEFT = 1
-	"""
-	左居中
-	"""
-	LEFT_BOTTOM = 2
-	"""
-	左下角
-	"""
-	TOP = 3
-	"""
-	上居中
-	"""
-	CENTER = 4
-	"""
-	正中心
-	"""
-	BOTTOM = 5
-	"""
-	下居中
-	"""
-	RIGHT_TOP = 6
-	"""
-	右上角
-	"""
-	RIGHT = 7
-	"""
-	右居中
-	"""
-	RIGHT_BOTTOM = 8
-	"""
-	右下角
-	"""
+class ColorSet:
+	def __init__(self, isText: bool = True):
+		if isText:
+			self.inactive: int = 0xffaaaaaa
+			self.active: int = 0xffeeeeee
+			self.hovering: int = 0xff000000
+			self.click: int = 0xff000000
+		else:
+			self.inactive: int = 0xff888888
+			self.active: int = 0xff111111
+			self.hovering: int = 0xffeeeeee
+			self.click: int = 0xffcccccc
 
 
 class Widget(Renderable):
@@ -61,7 +37,7 @@ class Widget(Renderable):
 	_x, _y, _w, _h与公开的x, y, width, height不同。前者的单位是屏幕像素；后者的单位是窗口，例如x=0.5意味着x坐标位于屏幕的一半。
 	"""
 	
-	def __init__(self, location: Location, x: float, y: float, width: float, height: float, name: RenderableString, description: Description, texture: Texture):
+	def __init__(self, location: Location, x: float, y: float, width: float, height: float, name: RenderableString, description: Description, textLocation: Location = Location.CENTER, texture: Texture = None):
 		"""
 		创建控件。注意，位置取屏幕的相对位置。如果取LEFT_TOP，则x, y指代控件左上角与窗口左上角的相对位置；如果取RIGHT，则x, y分别指代控件右边与窗口右边的相对位置，和控件正中央与屏幕纵向正中央的相对位置
 		:param location: 位置
@@ -75,6 +51,7 @@ class Widget(Renderable):
 		"""
 		super().__init__(texture)
 		self.location: Location = location
+		self.textLocation: Location = textLocation
 		self.x: float = x
 		self.y: float = y
 		self.width: float = width
@@ -85,11 +62,49 @@ class Widget(Renderable):
 		self._y: int = 0
 		self._w: int = 0
 		self._h: int = 0
+		self._isMouseIn: bool = False
+		self.active: bool = True
 		self.onHover: Callable[[int, int], bool] | None = None
 		self.onClick: Callable[[int, int], bool] | None = None
 		self.onMouseUp: Callable[[int, int], bool] | None = None
 		self.onMouseDown: Callable[[int, int], bool] | None = None
 		self.onTick: Callable[[], int] | None = None
+		self.color: ColorSet = ColorSet(False)
+		self.textColor: ColorSet = ColorSet(True)
+	
+	def render(self, delta: float, at: Vector | None = None) -> None:
+		if self._texture is not None:
+			self._texture.renderAtInterface(Vector(self._x, self._y))
+		else:
+			colorSelector = self.color.inactive if not self.active else self.color.active if not self._isMouseIn else self.color.hovering
+			head = colorSelector & 0xff000000
+			colorSelector -= head
+			if head == 0xff000000:
+				renderer.getCanvas().fill(colorSelector, (self._x, self._y, self._w, self._h))
+			else:
+				s = Surface((self._w, self._h))
+				s.fill(colorSelector)
+				s.set_alpha(head >> 24)
+				renderer.getCanvas().blit(s, (self._x, self._y))
+		match self.textLocation:
+			case Location.LEFT_TOP:
+				renderer.renderString(self.name, self._x, self._y, self.textColor.inactive if not self.active else self.textColor.active if not self._isMouseIn else self.color.click, Location.LEFT_TOP)
+			case Location.LEFT:
+				renderer.renderString(self.name, self._x, self._y + self._h // 2, self.textColor.inactive if not self.active else self.textColor.active if not self._isMouseIn else self.color.click, Location.LEFT)
+			case Location.LEFT_BOTTOM:
+				renderer.renderString(self.name, self._x, self._y + self._h, self.textColor.inactive if not self.active else self.textColor.active if not self._isMouseIn else self.color.click, Location.LEFT_BOTTOM)
+			case Location.TOP:
+				renderer.renderString(self.name, self._x + self._w // 2, self._y, self.textColor.inactive if not self.active else self.textColor.active if not self._isMouseIn else self.color.click, Location.TOP)
+			case Location.CENTER:
+				renderer.renderString(self.name, int(self._x + self._w / 2), int(self._y + self._h / 2), self.textColor.inactive if not self.active else self.textColor.active if not self._isMouseIn else self.color.click, Location.CENTER)
+			case Location.BOTTOM:
+				renderer.renderString(self.name, self._x + self._w // 2, self._y + self._h, self.textColor.inactive if not self.active else self.textColor.active if not self._isMouseIn else self.color.click, Location.BOTTOM)
+			case Location.RIGHT_TOP:
+				renderer.renderString(self.name, self._x + self._w, self._y, self.textColor.inactive if not self.active else self.textColor.active if not self._isMouseIn else self.color.click, Location.RIGHT_TOP)
+			case Location.RIGHT:
+				renderer.renderString(self.name, self._x + self._w, self._y + self._h // 2, self.textColor.inactive if not self.active else self.textColor.active if not self._isMouseIn else self.color.click, Location.RIGHT)
+			case Location.RIGHT_BOTTOM:
+				renderer.renderString(self.name, self._x + self._w, self._y + self._h, self.textColor.inactive if not self.active else self.textColor.active if not self._isMouseIn else self.color.click, Location.RIGHT_BOTTOM)
 	
 	def onResize(self) -> None:
 		"""
@@ -118,7 +133,8 @@ class Widget(Renderable):
 				self._x, self._y = (windowSize.x - self._w) * windowSize.x + self.x * windowSize.x, (windowSize.y - self._h) * windowSize.y + self.y * windowSize.y
 	
 	def isMouseIn(self, x: int, y: int):
-		return self._x <= x <= self._x + self._w and self._y <= y <= self._y + self._h
+		self._isMouseIn = self._x <= x <= self._x + self._w and self._y <= y <= self._y + self._h
+		return self._isMouseIn
 	
 	def tick(self) -> None:
 		"""
@@ -131,3 +147,24 @@ class Widget(Renderable):
 	def click(self, x: int, y: int) -> bool:
 		if self.onClick is not None:
 			return self.onClick(x, y)
+	
+	def passHover(self, x: int, y: int):
+		if self.onHover is not None:
+			return self.onHover(x, y)
+	
+	def passClick(self, x: int, y: int):
+		if self.onClick is not None:
+			return self.onClick(x, y)
+	
+	def passMouseDown(self, x: int, y: int):
+		if self.onMouseDown is not None:
+			return self.onMouseDown(x, y)
+	
+	def passMouseUp(self, x: int, y: int):
+		if self.onMouseUp is not None:
+			return self.onMouseUp(x, y)
+
+
+class Button(Widget):
+	def __init__(self, location: Location, x: float, y: float, width: float, height: float, name: RenderableString, description: Description, textLocation: Location = Location.CENTER, texture: Texture = None):
+		super().__init__(location, x, y, width, height, name, description, textLocation, texture)

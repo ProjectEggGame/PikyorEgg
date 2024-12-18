@@ -1,7 +1,6 @@
 """
 这里相当于游戏资源管理器。所有的游戏资源（列表）都在这里。
 """
-from interact import interact
 from render.renderer import renderer
 from utils.error import NullPointerException
 from typing import TYPE_CHECKING, Union
@@ -16,13 +15,15 @@ class Game:
 		self.mainWorld: Union['World', None] = None
 		self.running: bool = True
 		self.tickCount: int = 0
-		self.window: Union['Window', None] = None
+		self._window: Union['Window', None] = None
 		self.floatWindow: Union['FloatWindow', None] = None  # 在主程序中初始化
 
 	def tick(self) -> None:
-		if self.window is not None:
-			self.window.tick()
-		if self.mainWorld is not None:
+		notPause: bool = True
+		if self._window is not None:
+			self._window.tick()
+			notPause = not self._window.pauseGame()
+		if self.mainWorld is not None and notPause:
 			self.mainWorld.tick()
 		self.processMouse()
 	
@@ -37,15 +38,26 @@ class Game:
 			delta = 1
 		if delta < 0:
 			delta = 0
-		renderer.begin(delta)
+		renderer.begin(delta, self._window is None)
 		if self.mainWorld is not None:
 			self.mainWorld.passRender(delta)
 		renderer.push()
 		renderer.setScale(8)
-		if self.window is not None:
-			self.window.passRender(delta)
+		if self._window is not None:
+			self._window.passRender(delta)
 		renderer.pop()
 		renderer.end()
+	
+	def setWindow(self, window: Union['Window', None]) -> None:
+		self._window = window
+		if window is not None:
+			window.onResize()
+		
+	def getWindow(self) -> Union['Window', None]:
+		return self._window
+	
+	def quit(self) -> None:
+		self.running = False
 	
 	def readConfig(self, config: dict[str, any]) -> None:
 		"""

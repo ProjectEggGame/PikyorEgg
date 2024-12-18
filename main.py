@@ -1,18 +1,18 @@
 import time
 
-import numba
 import pygame
 from threading import Thread
 
 from entity.entity import Player
 from interact import interact
+from render import font
 
 from render.renderer import renderer
 from render.resource import resourceManager
 from save import configs
 from utils import utils
 from utils.game import game
-from window.window import FloatWindow
+from window.window import FloatWindow, StartWindow
 from world.world import World
 
 nowRender = time.perf_counter_ns()
@@ -33,6 +33,7 @@ def renderThread():
 			if nowRender - lastRender >= 5_000_000:
 				if renderer.dealMapScaleChange():
 					resourceManager.changeMapScale()
+					font.setScale(renderer.getSystemScale() * 0.5)
 				game.render((nowRender - lastTick) / 60_000_000)
 				lastRender = nowRender
 				count += 1
@@ -51,13 +52,6 @@ def renderThread():
 
 def gameThread():
 	utils.info("游戏线程启动")
-	# 游戏初始化
-	game.mainWorld = World.generateDefaultWorld()
-	player: Player = Player()
-	game.mainWorld.addPlayer(player)
-	renderer.cameraAt(player)
-	game.floatWindow = FloatWindow()
-	# 游戏初始化
 	count = 0
 	lastCount = time.perf_counter_ns()
 	global lastTick
@@ -106,6 +100,15 @@ def mainThread():
 		utils.printException(e)
 		game.running = False
 	# end 读取设置
+	# 游戏初始化
+	font.initializeFont()
+	player: Player = Player()
+	renderer.cameraAt(player)
+	game.setWindow(StartWindow())
+	game.mainWorld = World.generateDefaultWorld()
+	game.mainWorld.addPlayer(player)
+	game.floatWindow = FloatWindow()
+	# 游戏初始化
 	utils.info("主线程启动")
 	while game.running:
 		try:
@@ -120,13 +123,21 @@ def mainThread():
 						interact.onKey(event)
 					case pygame.MOUSEMOTION:
 						interact.onMouse(event)
+						if game.getWindow() is not None:
+							game.getWindow().passMouseMove(event)
 					case pygame.MOUSEBUTTONDOWN:
 						interact.onMouse(event)
+						if game.getWindow() is not None:
+							game.getWindow().passMouseDown(event)
 					case pygame.MOUSEBUTTONUP:
 						interact.onMouse(event)
+						if game.getWindow() is not None:
+							game.getWindow().passMouseUp(event)
 					case pygame.VIDEORESIZE:
 						renderer.setScreen(pygame.display.set_mode(event.size, SCREEN_FLAGS))
 						pygame.display.update()
+						if game.getWindow() is not None:
+							game.getWindow().onResize()
 					case pygame.TEXTINPUT:
 						pass
 					case pygame.TEXTEDITING:
@@ -172,7 +183,5 @@ def mainThread():
 if __name__ == '__main__':
 	ret = pygame.init()
 	utils.info(f"pygame初始化成功{ret[0]}模块，失败{ret[1]}模块")
-	import os
-	print(os.getcwd())
 	mainThread()
 	pygame.quit()

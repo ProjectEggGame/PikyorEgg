@@ -20,8 +20,8 @@ class Texture:
 		self._mapScaled: Surface = renderer.mapScaleSurface(self._surface)
 		self._offset: Vector | None = None
 	
-	def renderAtInterface(self, screen: Surface, at: Vector) -> None:
-		renderer.render(self._surface, screen, 0, 0, self._surface.get_width(), self._surface.get_height(), screen.get_size()[0] * at.x, screen.get_size()[0] * at.y)
+	def renderAtInterface(self, at: Vector) -> None:
+		renderer.render(self._surface, 0, 0, self._surface.get_width(), self._surface.get_height(), renderer.getCanvas().get_size()[0] * at.x, renderer.getCanvas().get_size()[0] * at.y)
 	
 	def renderAsBlock(self, at: Vector, fromPos: Vector | None = None, fromSize: Vector | None = None):
 		"""
