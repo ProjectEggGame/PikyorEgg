@@ -89,23 +89,23 @@ class Widget(Renderable):
 				renderer.getCanvas().blit(s, (self._x, self._y))
 		match self.textLocation:
 			case Location.LEFT_TOP:
-				renderer.renderString(self.name, self._x, self._y, self.textColor.inactive if not self.active else self.textColor.active if not self._isMouseIn else self.color.click, Location.LEFT_TOP)
+				renderer.renderString(self.name, self._x, self._y, self.textColor.inactive if not self.active else self.textColor.active if not self._isMouseIn else self.textColor.hovering, Location.LEFT_TOP)
 			case Location.LEFT:
-				renderer.renderString(self.name, self._x, self._y + self._h // 2, self.textColor.inactive if not self.active else self.textColor.active if not self._isMouseIn else self.color.click, Location.LEFT)
+				renderer.renderString(self.name, self._x, self._y + self._h // 2, self.textColor.inactive if not self.active else self.textColor.active if not self._isMouseIn else self.textColor.hovering, Location.LEFT)
 			case Location.LEFT_BOTTOM:
-				renderer.renderString(self.name, self._x, self._y + self._h, self.textColor.inactive if not self.active else self.textColor.active if not self._isMouseIn else self.color.click, Location.LEFT_BOTTOM)
+				renderer.renderString(self.name, self._x, self._y + self._h, self.textColor.inactive if not self.active else self.textColor.active if not self._isMouseIn else self.textColor.hovering, Location.LEFT_BOTTOM)
 			case Location.TOP:
-				renderer.renderString(self.name, self._x + self._w // 2, self._y, self.textColor.inactive if not self.active else self.textColor.active if not self._isMouseIn else self.color.click, Location.TOP)
+				renderer.renderString(self.name, self._x + self._w // 2, self._y, self.textColor.inactive if not self.active else self.textColor.active if not self._isMouseIn else self.textColor.hovering, Location.TOP)
 			case Location.CENTER:
-				renderer.renderString(self.name, int(self._x + self._w / 2), int(self._y + self._h / 2), self.textColor.inactive if not self.active else self.textColor.active if not self._isMouseIn else self.color.click, Location.CENTER)
+				renderer.renderString(self.name, int(self._x + self._w / 2), int(self._y + self._h / 2), self.textColor.inactive if not self.active else self.textColor.active if not self._isMouseIn else self.textColor.hovering, Location.CENTER)
 			case Location.BOTTOM:
-				renderer.renderString(self.name, self._x + self._w // 2, self._y + self._h, self.textColor.inactive if not self.active else self.textColor.active if not self._isMouseIn else self.color.click, Location.BOTTOM)
+				renderer.renderString(self.name, self._x + self._w // 2, self._y + self._h, self.textColor.inactive if not self.active else self.textColor.active if not self._isMouseIn else self.textColor.hovering, Location.BOTTOM)
 			case Location.RIGHT_TOP:
-				renderer.renderString(self.name, self._x + self._w, self._y, self.textColor.inactive if not self.active else self.textColor.active if not self._isMouseIn else self.color.click, Location.RIGHT_TOP)
+				renderer.renderString(self.name, self._x + self._w, self._y, self.textColor.inactive if not self.active else self.textColor.active if not self._isMouseIn else self.textColor.hovering, Location.RIGHT_TOP)
 			case Location.RIGHT:
-				renderer.renderString(self.name, self._x + self._w, self._y + self._h // 2, self.textColor.inactive if not self.active else self.textColor.active if not self._isMouseIn else self.color.click, Location.RIGHT)
+				renderer.renderString(self.name, self._x + self._w, self._y + self._h // 2, self.textColor.inactive if not self.active else self.textColor.active if not self._isMouseIn else self.textColor.hovering, Location.RIGHT)
 			case Location.RIGHT_BOTTOM:
-				renderer.renderString(self.name, self._x + self._w, self._y + self._h, self.textColor.inactive if not self.active else self.textColor.active if not self._isMouseIn else self.color.click, Location.RIGHT_BOTTOM)
+				renderer.renderString(self.name, self._x + self._w, self._y + self._h, self.textColor.inactive if not self.active else self.textColor.active if not self._isMouseIn else self.textColor.hovering, Location.RIGHT_BOTTOM)
 	
 	def onResize(self) -> None:
 		"""

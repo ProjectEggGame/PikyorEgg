@@ -1,6 +1,7 @@
 import pygame
 from typing import TYPE_CHECKING, Union
 
+from entity.manager import entityManager
 from utils import utils
 
 if TYPE_CHECKING:
@@ -229,7 +230,7 @@ class Entity(Element):
 		entity.__velocity = Vector.load(d["velocity"])
 		entity.name = d["name"]
 		entity._maxSpeed = d["maxSpeed"]
-		entity._position = d["position"]
+		entity._position = Vector.load(d["position"])
 		return entity
 
 
@@ -268,8 +269,6 @@ class Player(Entity):
 			if interact.keys[pygame.K_d].peek():
 				v.add(1, 0)
 		self.setVelocity(v.normalize().multiply(self._maxSpeed))
-		if interact.keys[pygame.K_q].deal():
-			utils.info(self.getPosition().toString())
 	
 	def save(self) -> dict:
 		return super().save()
@@ -277,5 +276,8 @@ class Player(Entity):
 	@classmethod
 	def load(cls, d: dict, entity=None) -> 'Player':
 		p = Player(d['name'])
-		super().load(p)
+		super().load(d, p)
 		return p
+	
+
+entityManager.register('player', Player)

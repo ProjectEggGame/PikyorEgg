@@ -64,7 +64,7 @@ class Location(Enum):
 class RenderStack:
 	def __init__(self, other: 'RenderStack | None' = None):
 		if other is None:
-			self.offset: Vector = Vector(0, 0)
+			self.offset: BlockVector = BlockVector(0, 0)
 			self.scale: float = 1
 			self.padding: int = 10
 		else:
@@ -95,8 +95,8 @@ class Renderer:
 		self._customMapScale: int = 16
 		self._mapScaleChanged: bool = True
 		
-		self._offset: Vector = Vector(0, 0)
-		self._presentOffset: Vector = Vector(0, 0)
+		self._offset: BlockVector = BlockVector(0, 0)
+		self._presentOffset: BlockVector = BlockVector(0, 0)
 		
 		self._customScale: float = 1.0
 		self._is4to3: SynchronizedStorage[bool] = SynchronizedStorage[bool](True)
@@ -115,21 +115,21 @@ class Renderer:
 		self._size = screen.get_size()
 		if self._is4to3.get():
 			if self._size[0] / self._size[1] > 4 / 3:
-				self._offset = Vector((self._size[0] - self._size[1] * 4 / 3) / 2, 0)
+				self._offset = BlockVector(int(self._size[0] - self._size[1] * 4 / 3) >> 1, 0)
 			elif self._size[0] / self._size[1] < 4 / 3:
-				self._offset = Vector(0, (self._size[1] - self._size[0] / 4 * 3) / 2)
+				self._offset = BlockVector(0, int(self._size[1] - self._size[0] / 4 * 3) >> 1)
 			else:
-				self._offset = Vector(0, 0)
+				self._offset = BlockVector(0, 0)
 			self.setSystemScale(min(self._size[0] // 12, self._size[1] // 9))
 		else:
 			if self._size[0] / self._size[1] > 16 / 9:
-				self._offset = Vector((self._size[0] - self._size[1] * 16 / 9) / 2, 0)
+				self._offset = BlockVector(int(self._size[0] - self._size[1] * 16 / 9) >> 1, 0)
 			elif self._size[0] / self._size[1] < 16 / 9:
-				self._offset = Vector(0, (self._size[1] - self._size[0] / 16 * 9) / 2)
+				self._offset = BlockVector(0, int(self._size[1] - self._size[0] / 16 * 9) >> 1)
 			else:
-				self._offset = Vector(0, 0)
+				self._offset = BlockVector(0, 0)
 			self.setSystemScale(min(self._size[0] // 16, self._size[1] // 9))
-		self._canvasSize = Vector(self._size[0], self._size[1]).subtract(self._offset).subtract(self._offset)
+		self._canvasSize = BlockVector(self._size[0], self._size[1]).subtract(self._offset).subtract(self._offset)
 		self._canvas = Surface(self._canvasSize.getTuple())
 		self._canvasCenter.set(int(self._canvasSize.x / 2), int(self._canvasSize.y / 2))
 		self._updateOffset()
@@ -209,7 +209,7 @@ class Renderer:
 	def getCamera(self) -> Vector:
 		return self._camera.getNew()
 	
-	def getOffset(self) -> Vector:
+	def getOffset(self) -> BlockVector:
 		return self._offset.clone()
 	
 	def render(self, src: Surface, sx: int | float, sy: int | float, sw: int | float, sh: int | float, dx: int | float, dy: int | float, dw: int | float | None = None, dh: int | float | None = None) -> None:
@@ -260,31 +260,34 @@ class Renderer:
 		:param location: 渲染位置，默认左上角
 		"""
 		self.assertRendering()
+		if len(text.set) == 0:
+			return
+		height = font.fontHeight if text.set[0].font < 10 else (font.fontHeight >> 1)
 		match location:
 			case Location.LEFT_TOP:
 				text.renderAt(self._canvas, x, y, defaultColor)
 			case Location.LEFT:
-				text.renderAt(self._canvas, x, y - font.fontHeight // 2, defaultColor)
+				text.renderAt(self._canvas, x, y - (height >> 1), defaultColor)
 			case Location.LEFT_BOTTOM:
-				text.renderAt(self._canvas, x, y - font.fontHeight, defaultColor)
+				text.renderAt(self._canvas, x, y - height, defaultColor)
 			case Location.TOP:
 				l: int = text.length()
-				text.renderAt(self._canvas, x - l // 2, y, defaultColor)
+				text.renderAt(self._canvas, x - (l >> 1), y, defaultColor)
 			case Location.CENTER:
 				l: int = text.length()
-				text.renderAt(self._canvas, x - l // 2, y - font.fontHeight // 2, defaultColor)
+				text.renderAt(self._canvas, x - (l >> 1), y - (height >> 1), defaultColor)
 			case Location.BOTTOM:
 				l: int = text.length()
-				text.renderAt(self._canvas, x - l // 2, y - font.fontHeight, defaultColor)
+				text.renderAt(self._canvas, x - (l >> 1), y - height, defaultColor)
 			case Location.RIGHT_TOP:
 				l: int = text.length()
 				text.renderAt(self._canvas, x - l, y, defaultColor)
 			case Location.RIGHT:
 				l: int = text.length()
-				text.renderAt(self._canvas, x - l, y - font.fontHeight // 2, defaultColor)
+				text.renderAt(self._canvas, x - l, y - (height >> 1), defaultColor)
 			case Location.RIGHT_BOTTOM:
 				l: int = text.length()
-				text.renderAt(self._canvas, x - l, y - font.fontHeight, defaultColor)
+				text.renderAt(self._canvas, x - l, y - height, defaultColor)
 	
 	def push(self) -> None:
 		self.assertRendering()
@@ -361,11 +364,12 @@ class Renderer:
 	
 	def readConfig(self, config: dict[str, any]) -> None:
 		self._is4to3.set(configs.readElseDefault(config, "screenSize", False, {"4:3": True, "16:9": False}, "screenSize: {} is not supported. Using 4:3."))
+		self._is4to3.apply(self._is4to3.getNew())
 		self.setCustomScale(configs.readElseDefault(config, "customScale", 1, lambda f: utils.frange(f, 0.5, 8)))
 		
 	def writeConfig(self) -> dict[str, any]:
 		return {
-			"screenSize": "4:3" if self._is4to3.getNew() else "16:9",
+			"screenSize": "4:3" if self._is4to3.get() else "16:9",
 			"customScale": self._customScale,
 		}
 

@@ -41,7 +41,7 @@ class Font:
 			surface.set_alpha(color >> 24)
 		else:
 			surface: Surface = self.get(bold, italic, underline, strikeThrough).render(string, True, ((color >> 16) & 0xff, (color >> 8) & 0xff, color & 0xff), (0xff, 0xff, 0xff))
-			surface.set_colorkey((0, 0, 0))
+			surface.set_colorkey((0xff, 0xff, 0xff))
 			surface.set_alpha(color >> 24)
 		screen.blit(surface, (x, y - self._scaledOffset))
 		return surface.get_size()[0]

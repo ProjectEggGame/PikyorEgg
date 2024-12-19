@@ -86,7 +86,6 @@ def mainThread():
 	info = pygame.display.Info()
 	pygame.display.set_caption("捡蛋")
 	screen = pygame.display.set_mode((info.current_w / 2, info.current_h / 2), SCREEN_FLAGS)
-	renderer.setScreen(screen)
 	del info
 	# begin 读取设置
 	try:
@@ -99,12 +98,11 @@ def mainThread():
 		game.running = False
 	# end 读取设置
 	# 游戏初始化
+	renderer.setScreen(screen)
 	font.initializeFont()
 	player: Player = Player('Anonymous')
 	renderer.cameraAt(player)
 	game.setWindow(StartWindow())
-	game.mainWorld = World.generateDefaultWorld()
-	game.mainWorld.addPlayer(player)
 	game.floatWindow = FloatWindow()
 	# 游戏初始化
 	# 启动线程
@@ -129,15 +127,15 @@ def mainThread():
 						interact.onMouse(event)
 						interact.mouse.subtract(renderer.getOffset())  # interact不能导入renderer，委托此处修正鼠标位置
 						if game.getWindow() is not None:
-							game.getWindow().passMouseMove(event)
+							game.getWindow().passMouseMove(interact.mouse.x, interact.mouse.y)
 					case pygame.MOUSEBUTTONDOWN:
 						interact.onMouse(event)
 						if game.getWindow() is not None:
-							game.getWindow().passMouseDown(event)
+							game.getWindow().passMouseDown(interact.mouse.x, interact.mouse.y)
 					case pygame.MOUSEBUTTONUP:
 						interact.onMouse(event)
 						if game.getWindow() is not None:
-							game.getWindow().passMouseUp(event)
+							game.getWindow().passMouseUp(interact.mouse.x, interact.mouse.y)
 					case pygame.VIDEORESIZE:
 						renderer.setScreen(pygame.display.set_mode(event.size, SCREEN_FLAGS))
 						pygame.display.update()

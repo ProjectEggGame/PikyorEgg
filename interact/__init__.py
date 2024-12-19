@@ -2,13 +2,13 @@ import pygame
 
 from interact.status import Status, ScrollStatus
 from utils import utils
-from utils.vector import Vector
+from utils.vector import Vector, BlockVector
 
 
 class Interact:
 	def __init__(self):
 		self._KEY_COUNT = 256
-		self.mouse: Vector = Vector(0, 0)
+		self.mouse: BlockVector = BlockVector(0, 0)
 		self.left: Status = Status('MouseLeft')
 		self.middle: Status = Status('MouseMiddle')
 		self.right: Status = Status('MouseRight')

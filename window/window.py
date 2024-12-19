@@ -4,9 +4,11 @@ import pygame
 from pygame import Surface
 from pygame.event import Event
 
+from entity.entity import Player
 from interact import interact
 from render import font
 from render.renderer import renderer
+from save.save import Archive
 from utils import utils
 from utils.game import game
 from utils.text import RenderableString, Description
@@ -14,6 +16,7 @@ from utils.vector import Vector
 from render.renderable import Renderable
 from render.resource import Texture
 from window.widget import Widget, Button, Location
+from world.world import World
 
 
 class Window(Renderable):
@@ -60,20 +63,20 @@ class Window(Renderable):
 			widget.passRender(delta)
 		self.render(delta)
 	
-	def passMouseMove(self, event: Event) -> None:
+	def passMouseMove(self, x: int, y: int) -> None:
 		for widget in self._widgets:
-			if widget.isMouseIn(event.pos[0], event.pos[1]):
-				widget.passHover(event.pos[0], event.pos[1])
+			if widget.isMouseIn(x, y):
+				widget.passHover(x, y)
 	
-	def passMouseDown(self, event: Event) -> None:
+	def passMouseDown(self, x: int, y: int) -> None:
 		for widget in self._widgets:
-			if widget.isMouseIn(event.pos[0], event.pos[1]):
-				widget.passMouseDown(event.pos[0], event.pos[1])
+			if widget.isMouseIn(x, y):
+				widget.passMouseDown(x, y)
 	
-	def passMouseUp(self, event: Event) -> None:
+	def passMouseUp(self, x: int, y: int) -> None:
 		for widget in self._widgets:
-			if widget.isMouseIn(event.pos[0], event.pos[1]):
-				widget.passMouseUp(event.pos[0], event.pos[1])
+			if widget.isMouseIn(x, y):
+				widget.passMouseUp(x, y)
 	
 	def passTick(self) -> None:
 		if self._catches is not None:
@@ -133,7 +136,7 @@ class FloatWindow(Renderable):
 		s.fill((60, 60, 60))
 		for i in range(len(info)):
 			info[i][0].renderSmall(s, 0, i * font.fontHeight >> 1, 0xffffffff)
-		x, y = interact.mouse.clone().subtract(0, len(info) * font.fontHeight >> 1).getBlockTuple()
+		x, y = interact.mouse.clone().subtract(0, len(info) * font.fontHeight >> 1).getTuple()
 		if x < 0:
 			x = 0
 		if y < 0:
@@ -144,8 +147,15 @@ class FloatWindow(Renderable):
 class StartWindow(Window):
 	def __init__(self):
 		super().__init__("Start")
+		
+		def _0(x, y) -> bool:
+			game.setWindow(None)
+			game.mainWorld = World.generateDefaultWorld()
+			game.mainWorld.addPlayer(Player('Test'))
+			return True
+		
 		self._widgets.append(Button(Location.CENTER, 0, 0.05, 0.4, 0.08, RenderableString("\\02LINK START"), Description([RenderableString("开始游戏")]), textLocation=Location.CENTER))
-		self._widgets[0].onMouseDown = lambda x, y: game.setWindow(None) or True
+		self._widgets[0].onMouseDown = _0
 		self._widgets.append(Button(Location.CENTER, 0, 0.15, 0.4, 0.08, RenderableString("\\02LOAD"), Description([RenderableString("加载存档")]), textLocation=Location.CENTER))
 		self._widgets[1].onMouseDown = lambda x, y: game.setWindow(LoadWindow()) or True
 		self._widgets.append(Button(Location.CENTER, 0, 0.25, 0.4, 0.08, RenderableString("\\02SHUT DOWN"), Description([RenderableString("结束游戏")]), textLocation=Location.CENTER))
@@ -163,6 +173,23 @@ class StartWindow(Window):
 class LoadWindow(Window):
 	def __init__(self):
 		super().__init__("Load")
+		self._widgets.append(Button(Location.LEFT_TOP, 0, 0, 0.09, 0.12, RenderableString('\\04<-'), Description([RenderableString("返回")]), Location.CENTER))
+		self._widgets[0].onMouseDown = lambda x, y: game.setWindow(StartWindow()) or True
+		if os.path.exists('user') and os.path.exists('user/archive'):
+			dl = os.listdir('user/archive')
+			for i in range(len(dl)):
+				button = Button(Location.CENTER, 0, -0.4 + i * 0.1, 0.4, 0.08, RenderableString('\\10' + dl[i][:-5]), Description([RenderableString("加载此存档")]), Location.CENTER)
+				
+				def _func(x, y):
+					archive = Archive(dl[i][:-5])
+					archive.read()
+					game.mainWorld = World.load(archive.dic)
+					game.setWindow(None)
+					archive.close()
+					return True
+				
+				button.onMouseDown = _func
+				self._widgets.append(button)
 	
 	def tick(self) -> None:
 		if interact.keys[pygame.K_ESCAPE].deal():
@@ -180,7 +207,13 @@ class PauseWindow(Window):
 		self._widgets[2].onMouseDown = lambda x, y: game.setWindow(None) or True
 		self._widgets.append(Button(Location.CENTER, 0, 0, 0.4, 0.08, RenderableString('\\02???'), Description([RenderableString("？？？")]), Location.CENTER))
 		self._widgets[3].onMouseDown = lambda x, y: game.setWindow(None) or True
-		self._widgets.append(Button(Location.CENTER, 0, 0.1, 0.4, 0.08, RenderableString('\\02???'), Description([RenderableString("？？？")]), Location.CENTER))
-		self._widgets[4].onMouseDown = lambda x, y: game.setWindow(None) or True
+		self._widgets.append(Button(Location.CENTER, 0, 0.1, 0.4, 0.08, RenderableString('\\02Exit'), Description([RenderableString("不保存并退出")]), Location.CENTER))
+		
+		def _4(x, y) -> bool:
+			game.mainWorld = None
+			game.setWindow(StartWindow())
+			return True
+		
+		self._widgets[4].onMouseDown = _4
 		self._widgets.append(Button(Location.CENTER, 0, 0.2, 0.4, 0.08, RenderableString('\\02Save & Exit'), Description([RenderableString("保存并退出")]), Location.CENTER))
 		self._widgets[5].onMouseDown = lambda x, y: (game.mainWorld.save() if game.mainWorld is not None else False) or game.setWindow(StartWindow())

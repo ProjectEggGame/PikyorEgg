@@ -2,6 +2,8 @@ import math
 import random
 from typing import Union, TYPE_CHECKING
 
+from block.manager import blockManager
+from entity.manager import entityManager
 from save.save import Archive
 from utils import utils
 
@@ -112,6 +114,7 @@ class World(Renderable):
 		archive: Archive = Archive(self._name)
 		w = archive.dic['world'] = {}
 		e = archive.dic['entity'] = []
+		archive.dic['name'] = self._name
 		archive.dic['id'] = self._id
 		archive.dic['player'] = self._player.save()
 		for p, b in self._ground.items():
@@ -119,6 +122,18 @@ class World(Renderable):
 		for f in self._entityList:
 			e.append(f.save())
 		archive.write()
+		
+	@classmethod
+	def load(cls, d: dict) -> 'World':
+		world = cls(d['id'], d['name'])
+		world._player = entityManager.get('player').load(d['player'])
+		for i in (dictWorld := d['world']):
+			dictBlock = dictWorld[i]
+			block = blockManager.get(dictBlock['id']).load(dictBlock)
+			world._ground[hash(block.getBlockPosition())] = block
+		for e in d['entity']:
+			world._entityList.add(entityManager.get(e['id']).load(d))
+		return world
 
 	def __str__(self) -> str:
 		return f'World(blocks = {len(self._ground)}, {self._ground})'

@@ -25,3 +25,6 @@ class Archive:
 		self._file.close()
 		self._file = open(f"user/archive/{self._name}.json", "w")
 		self._file.write(s)
+	
+	def close(self) -> None:
+		self._file.close()
