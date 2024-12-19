@@ -5,6 +5,7 @@ from pygame import Surface
 from render.renderable import Renderable
 from render.renderer import renderer, Location
 from render.resource import Texture
+from utils.game import game
 from utils.text import Description, RenderableString
 
 from utils.vector import BlockVector, Vector
@@ -134,6 +135,8 @@ class Widget(Renderable):
 	
 	def isMouseIn(self, x: int, y: int):
 		self._isMouseIn = self._x <= x <= self._x + self._w and self._y <= y <= self._y + self._h
+		if self._isMouseIn:
+			game.floatWindow.submit(self.description)
 		return self._isMouseIn
 	
 	def tick(self) -> None:

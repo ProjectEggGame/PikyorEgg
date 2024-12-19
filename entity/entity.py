@@ -1,5 +1,4 @@
 import pygame
-from pygame import Surface
 from typing import TYPE_CHECKING, Union
 
 from utils import utils
@@ -18,7 +17,7 @@ from utils.element import Element
 
 
 class Entity(Element):
-	def __init__(self, name: str, description: Description, texture: list[Texture], speed: float = 0):
+	def __init__(self, entityID: str, name: str, description: Description, texture: list[Texture], speed: float = 0):
 		"""
 		:param name: 实体名称
 		:param description: 实体描述，字符串列表
@@ -31,6 +30,7 @@ class Entity(Element):
 		self._setVelocity: Vector = Vector(0, 0)
 		self.__renderInterval: int = 6
 		self._textureSet: list[Texture] = texture
+		self._id = entityID
 		
 	def __processMove(self) -> None:
 		if (vLength := self._setVelocity.length()) == 0:
@@ -210,14 +210,35 @@ class Entity(Element):
 	
 	def getVelocity(self) -> Vector:
 		return self.__velocity.clone()
+	
+	def save(self) -> dict:
+		return {
+			"position": self._position.save(),
+			"velocity": self.__velocity.save(),
+			"name": self.name,
+			"maxSpeed": self._maxSpeed,
+		}
+	
+	@classmethod
+	def load(cls, d: dict, entity: Union['Entity', None] = None) -> 'Entity':
+		"""
+		:param d: 加载字典
+		:param entity: 默认None，用于区分手动调用和自动调用。手动调用必须传入，理论上不允许自动调用
+		:return: 返回entity
+		"""
+		entity.__velocity = Vector.load(d["velocity"])
+		entity.name = d["name"]
+		entity._maxSpeed = d["maxSpeed"]
+		entity._position = d["position"]
+		return entity
 
 
 class Player(Entity):
-	def __init__(self):
+	def __init__(self, name: str):
 		"""
 		创建玩家
 		"""
-		super().__init__("player", Description(), [
+		super().__init__("player", name, Description(), [
 			resourceManager.getOrNew('player/no_player_1'),
 			resourceManager.getOrNew('player/no_player_2'),
 			resourceManager.getOrNew('player/no_player_b1'),
@@ -249,3 +270,12 @@ class Player(Entity):
 		self.setVelocity(v.normalize().multiply(self._maxSpeed))
 		if interact.keys[pygame.K_q].deal():
 			utils.info(self.getPosition().toString())
+	
+	def save(self) -> dict:
+		return super().save()
+	
+	@classmethod
+	def load(cls, d: dict, entity=None) -> 'Player':
+		p = Player(d['name'])
+		super().load(p)
+		return p

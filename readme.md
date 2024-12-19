@@ -48,6 +48,7 @@
     - 为了管理一坨物品，添加Inventory类，也就是物品栏。很多东西都可以有独特的物品栏，比如鸡可以有饰品栏，也可以有装备栏，它们都属于物品栏的一种
   - 所有地图继承Block类
     - 子类有Ground地面，默认可以踩上去；有Wall墙，默认不能通过
+  - <font color = 'red'>所有Element类的继承者应当重写save()函数，并包含一个@classmethod load()函数，用于存档和读档。</font>
 - 交互UI方面
   - 类Window窗口。
     - 游戏会显示game.window指示的窗口，同时只能显示一个窗口。
@@ -59,7 +60,7 @@
   - 简而言之：以反斜杠开头
     - ```\\#```后续8位16进制，表示颜色。
     - ```\\.```后续8位16进制，表示背景颜色。
-    - ```\\f```标记字体。
+    - ```\\xx```标记字体。
     - ```\\/``` ```\\i``` ```\\I```标记斜体。
     - ```\\=``` ```\\b``` ```\\B```标记粗体。
     - ```\\_``` ```\\u``` ```\\U```标记下划线。
@@ -68,7 +69,7 @@
   - 具体说说，RenderableString的格式化字符序列全部以反斜杠\开头，在python中往往需要两个反斜杠表示一个反斜杠
     - 标记字符颜色：```RenderableString('\\#AARRGGBBtext_to_display')```，其中AA表示透明度，RGB分别为红绿蓝。均为16进制表示。如果不足8位，或格式不符，\\#后的8个字符会被一并全部舍弃不显示
     - 标记字符背景色：```RenderableString('\\.AARRGGBBtext_to_display')```，同上。
-    - 标记字符字体：```RenderableString('\\f<font_name_here>')```，其中font_name_here为字体文件名，不带后缀；或者```RenderableString('\\fX')```，其中X为一个数字，每个数字代表一个预设字体。
+    - 标记字符字体：```RenderableString('\\xx')```，其中xx为字体编号，参考render/font.py中的```allFonts```字典，0号字体标记为```'\\00'```。
     - 标记斜体：```RenderableString('\\/')```或者```RenderableString('\\i')```或者```RenderableString('\\I')```，斜体英文为italic。
     - 标记粗体：```RenderableString('\\=')```或者```RenderableString('\\b')```或者```RenderableString('\\B')```，粗体为bold。
     - 标记下划线：```RenderableString('\\_')```或者```RenderableString('\\u')```或者```RenderableString('\\U')```，下划线为underline。

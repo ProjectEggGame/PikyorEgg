@@ -8,7 +8,7 @@ from utils import utils
 
 class Description:
 	"""
-	元素描述。这个可以实现按时间不同变化的
+	元素描述。如果重写，可以实现按时间不同变化的
 	"""
 	
 	def __init__(self, d: list['RenderableString'] | None = None):
@@ -37,6 +37,11 @@ class InnerStringConfig:
 		dx = font.allFonts[self.font].draw(screen, self.string, x, y, defaultColor if self.color == 0x1_ffff_ffff else self.color, self.bold, self.italic, self.underline, self.delete)
 		return x + dx
 	
+	def renderSmall(self, screen: Surface, x: int, y: int, defaultColor: int) -> int:
+		smallFont = self.font if self.font >= 10 else self.font + 10
+		dx = font.allFonts[smallFont].draw(screen, self.string, x, y, defaultColor if self.color == 0x1_ffff_ffff else self.color, self.bold, self.italic, self.underline, self.delete)
+		return x + dx
+	
 	def clone(self) -> 'InnerStringConfig':
 		ret: 'InnerStringConfig' = InnerStringConfig()
 		ret.color = self.color
@@ -55,7 +60,15 @@ class InnerStringConfig:
 			self.string += string
 	
 	def length(self) -> int:
-		return font.allFonts[self.font].get(self.bold, self.italic, self.underline, self.delete).size(self.string)[0] if self.string is not None else 0
+		if self.string is None:
+			return 0
+		return font.allFonts[self.font].get(self.bold, self.italic, self.underline, self.delete).size(self.string)[0]
+	
+	def lengthSmall(self) -> int:
+		if self.string is None:
+			return 0
+		smallFont = self.font if self.font >= 10 else self.font + 10
+		return font.allFonts[smallFont].get(self.bold, self.italic, self.underline, self.delete).size(self.string)[0]
 	
 	def __str__(self) -> str:
 		return \
@@ -99,6 +112,7 @@ class RenderableString:
 				self.set.append(config)
 				config = config.clone()
 			if len(i) == 0:
+				config.appendString('\\')
 				continue
 			match i[0]:
 				case '#':
@@ -135,8 +149,6 @@ class RenderableString:
 					config.bold = True
 					if len(i) >= 1:
 						config.appendString(i[1:])
-				case '\\':
-					config.appendString('\\')
 				case 'r':
 					config = InnerStringConfig()
 					if len(i) >= 1:
@@ -144,23 +156,17 @@ class RenderableString:
 				case '0':
 					config.font = 0
 					if len(i) >= 1:
-						config.appendString(i[1:])
+						if ord('0') <= ord(i[1]) <= ord('4'):
+							config.font = int(i[1])
+					if len(i) >= 2:
+						config.appendString(i[2:])
 				case '1':
 					config.font = 1
 					if len(i) >= 1:
-						config.appendString(i[1:])
-				case '2':
-					config.font = 2
-					if len(i) >= 1:
-						config.appendString(i[1:])
-				case '3':
-					config.font = 3
-					if len(i) >= 1:
-						config.appendString(i[1:])
-				case '4':
-					config.font = 4
-					if len(i) >= 1:
-						config.appendString(i[1:])
+						if ord('0') <= ord(i[1]) <= ord('4'):
+							config.font = int(i[1]) + 10
+					if len(i) >= 2:
+						config.appendString(i[2:])
 				case _:
 					utils.warn(f'无法识别的字符序列：{i}，来自\n{string}')
 		if config.string is not None:
@@ -172,9 +178,20 @@ class RenderableString:
 			s += i.length()
 		return s
 	
+	def lengthSmall(self) -> int:
+		s = 0
+		for i in self.set:
+			s += i.lengthSmall()
+		return s
+	
 	def renderAt(self, screen: Surface, x: int, y: int, defaultColor: int) -> int:
 		for i in self.set:
 			x = i.renderAt(screen, x, y, defaultColor)
+		return x
+	
+	def renderSmall(self, screen: Surface, x: int, y: int, defaultColor: int) -> int:
+		for i in self.set:
+			x = i.renderSmall(screen, x, y, defaultColor)
 		return x
 	
 	def __str__(self):

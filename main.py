@@ -5,6 +5,7 @@ from threading import Thread
 
 from entity.entity import Player
 from interact import interact
+from interact.key_process import processKeys
 from render import font
 
 from render.renderer import renderer
@@ -61,6 +62,7 @@ def gameThread():
 			nowTick = time.perf_counter_ns()
 			if nowTick - lastTick >= 45_000_000:
 				game.tick()
+				processKeys()
 				lastTick = nowTick
 				count += 1
 			if nowRender - lastCount >= 1_000_000_000:
@@ -85,10 +87,6 @@ def mainThread():
 	pygame.display.set_caption("捡蛋")
 	screen = pygame.display.set_mode((info.current_w / 2, info.current_h / 2), SCREEN_FLAGS)
 	renderer.setScreen(screen)
-	gt: Thread = Thread(name="GameThread", target=gameThread)
-	rt: Thread = Thread(name="RenderThread", target=renderThread)
-	gt.start()
-	rt.start()
 	del info
 	# begin 读取设置
 	try:
@@ -102,13 +100,18 @@ def mainThread():
 	# end 读取设置
 	# 游戏初始化
 	font.initializeFont()
-	player: Player = Player()
+	player: Player = Player('Anonymous')
 	renderer.cameraAt(player)
 	game.setWindow(StartWindow())
 	game.mainWorld = World.generateDefaultWorld()
 	game.mainWorld.addPlayer(player)
 	game.floatWindow = FloatWindow()
 	# 游戏初始化
+	# 启动线程
+	gt: Thread = Thread(name="GameThread", target=gameThread)
+	rt: Thread = Thread(name="RenderThread", target=renderThread)
+	gt.start()
+	rt.start()
 	utils.info("主线程启动")
 	while game.running:
 		try:
@@ -122,7 +125,9 @@ def mainThread():
 					case pygame.KEYUP:
 						interact.onKey(event)
 					case pygame.MOUSEMOTION:
+						game.floatWindow.submit(None)  # 移动更新floatWindow
 						interact.onMouse(event)
+						interact.mouse.subtract(renderer.getOffset())  # interact不能导入renderer，委托此处修正鼠标位置
 						if game.getWindow() is not None:
 							game.getWindow().passMouseMove(event)
 					case pygame.MOUSEBUTTONDOWN:

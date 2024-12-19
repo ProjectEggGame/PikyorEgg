@@ -8,3 +8,10 @@ class Element(Renderable):
 		super().__init__(texture)
 		self.name = name
 		self.description = description
+	
+	def save(self) -> dict:
+		pass
+	
+	@classmethod
+	def load(cls, d: dict) -> 'Element':
+		pass

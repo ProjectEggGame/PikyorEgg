@@ -1,6 +1,11 @@
+import os.path
+
+import pygame
 from pygame import Surface
 from pygame.event import Event
 
+from interact import interact
+from render import font
 from render.renderer import renderer
 from utils import utils
 from utils.game import game
@@ -70,14 +75,19 @@ class Window(Renderable):
 			if widget.isMouseIn(event.pos[0], event.pos[1]):
 				widget.passMouseUp(event.pos[0], event.pos[1])
 	
-	def tick(self) -> None:
-		"""
-		窗口的tick函数。可以重写，但是不要忘了令所有widgets和catches也tick一下
-		"""
+	def passTick(self) -> None:
 		if self._catches is not None:
 			self._catches.tick()
 		for widget in self._widgets:
 			widget.tick()
+		self.tick()
+	
+	def tick(self) -> None:
+		"""
+		窗口的tick函数。可以重写。默认情况下，ESC会关闭当前窗口
+		"""
+		if interact.keys[pygame.K_ESCAPE].deal():
+			game.setWindow(None)
 	
 	def onResize(self) -> None:
 		"""
@@ -93,33 +103,84 @@ class Window(Renderable):
 		return True
 
 
-class FloatWindow(Window):
+class FloatWindow(Renderable):
 	"""
 	浮动窗口。窗口会根据鼠标位置自动移动。不用继承，想显示什么直接game.floatWindow.submit()就行了，目前只支持Text
 	"""
 	
 	def __init__(self):
-		super().__init__("Floater")
-		self._rendering: list[RenderableString] = []
+		super().__init__(None)
+		self._rendering: Description | None = None
 	
-	def submit(self, contents: list[RenderableString]) -> None:
+	def submit(self, contents: Description | None) -> None:
 		"""
 		把要显示的东西提交给FloatWindow
 		:param contents: 要显示的RenderableString，每一行一个元素，每个RenderableString不要包含换行符
 		"""
 		self._rendering = contents
+	
+	def render(self, delta: float, at=None) -> None:
+		if self._rendering is None:
+			return
+		info = []
+		maximum = 0
+		for i in self._rendering.generate():
+			present = i.lengthSmall()
+			info.append((i, present))
+			if present > maximum:
+				maximum = present
+		s = Surface((maximum, len(info) * font.fontHeight >> 1))
+		s.fill((60, 60, 60))
+		for i in range(len(info)):
+			info[i][0].renderSmall(s, 0, i * font.fontHeight >> 1, 0xffffffff)
+		x, y = interact.mouse.clone().subtract(0, len(info) * font.fontHeight >> 1).getBlockTuple()
+		if x < 0:
+			x = 0
+		if y < 0:
+			y = 0
+		renderer.getCanvas().blit(s, (x, y))
 
 
 class StartWindow(Window):
 	def __init__(self):
 		super().__init__("Start")
-		self._widgets.append(Button(Location.CENTER, 0, 0.05, 0.4, 0.08, RenderableString("\\2LINK START"), Description([RenderableString("开始游戏")]), textLocation=Location.CENTER))
+		self._widgets.append(Button(Location.CENTER, 0, 0.05, 0.4, 0.08, RenderableString("\\02LINK START"), Description([RenderableString("开始游戏")]), textLocation=Location.CENTER))
 		self._widgets[0].onMouseDown = lambda x, y: game.setWindow(None) or True
-		self._widgets.append(Button(Location.CENTER, 0, 0.15, 0.4, 0.08, RenderableString("\\2SHUT DOWN"), Description([RenderableString("结束游戏")]), textLocation=Location.CENTER))
-		self._widgets[1].onMouseDown = lambda x, y: game.quit() or True
+		self._widgets.append(Button(Location.CENTER, 0, 0.15, 0.4, 0.08, RenderableString("\\02LOAD"), Description([RenderableString("加载存档")]), textLocation=Location.CENTER))
+		self._widgets[1].onMouseDown = lambda x, y: game.setWindow(LoadWindow()) or True
+		self._widgets.append(Button(Location.CENTER, 0, 0.25, 0.4, 0.08, RenderableString("\\02SHUT DOWN"), Description([RenderableString("结束游戏")]), textLocation=Location.CENTER))
+		self._widgets[2].onMouseDown = lambda x, y: game.quit() or True
 	
 	def render(self, delta: float, at=None) -> None:
 		super().render(delta)
-		utils.trace('hello')
 		size: Vector = renderer.getSize()
-		renderer.renderString(RenderableString('\\0P\\1i\\3k\\4y\\0o\\1r \\3E\\4g\\0g\\1!'), int(size.x / 2), int(size.y / 4), 0xeeeeee00, Location.CENTER)
+		renderer.renderString(RenderableString('\\00P\\01i\\03k\\04y\\00o\\01r \\03E\\04g\\00g\\01!'), int(size.x / 2), int(size.y / 4), 0xeeeeee00, Location.CENTER)
+	
+	def tick(self) -> None:
+		interact.keys[pygame.K_ESCAPE].deal()  # 舍弃ESC消息
+
+
+class LoadWindow(Window):
+	def __init__(self):
+		super().__init__("Load")
+	
+	def tick(self) -> None:
+		if interact.keys[pygame.K_ESCAPE].deal():
+			game.setWindow(StartWindow())
+
+
+class PauseWindow(Window):
+	def __init__(self):
+		super().__init__("Pause")
+		self._widgets.append(Button(Location.CENTER, 0, -0.3, 0.4, 0.08, RenderableString('\\02Continue'), Description([RenderableString("继续游戏")]), Location.CENTER))
+		self._widgets[0].onMouseDown = lambda x, y: game.setWindow(None) or True
+		self._widgets.append(Button(Location.CENTER, 0, -0.2, 0.4, 0.08, RenderableString('\\02Settings'), Description([RenderableString("设置")]), Location.CENTER))
+		self._widgets[1].onMouseDown = lambda x, y: game.setWindow(None) or True
+		self._widgets.append(Button(Location.CENTER, 0, -0.1, 0.4, 0.08, RenderableString('\\02???'), Description([RenderableString("？？？")]), Location.CENTER))
+		self._widgets[2].onMouseDown = lambda x, y: game.setWindow(None) or True
+		self._widgets.append(Button(Location.CENTER, 0, 0, 0.4, 0.08, RenderableString('\\02???'), Description([RenderableString("？？？")]), Location.CENTER))
+		self._widgets[3].onMouseDown = lambda x, y: game.setWindow(None) or True
+		self._widgets.append(Button(Location.CENTER, 0, 0.1, 0.4, 0.08, RenderableString('\\02???'), Description([RenderableString("？？？")]), Location.CENTER))
+		self._widgets[4].onMouseDown = lambda x, y: game.setWindow(None) or True
+		self._widgets.append(Button(Location.CENTER, 0, 0.2, 0.4, 0.08, RenderableString('\\02Save & Exit'), Description([RenderableString("保存并退出")]), Location.CENTER))
+		self._widgets[5].onMouseDown = lambda x, y: (game.mainWorld.save() if game.mainWorld is not None else False) or game.setWindow(StartWindow())

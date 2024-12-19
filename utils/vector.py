@@ -108,7 +108,7 @@ class Vector:
 		"""
 		重设坐标。可以直接传入一个唯一参数set((x, y))元组，也可以传入两个参数set(x, y)
 		"""
-		if x_or_pos is tuple:
+		if type(x_or_pos) == tuple:
 			self.x = x_or_pos[0]
 			self.y = x_or_pos[1]
 		elif type(x_or_pos) == type(self):
@@ -127,7 +127,7 @@ class Vector:
 		return self
 	
 	def add(self, x: Union[float, tuple[float, float], 'Vector'], y: float | None = None) -> 'Vector':
-		if x is tuple:
+		if type(x) == tuple:
 			x, y = x
 		elif type(x) == type(self):
 			x, y = x.x, x.y
@@ -136,7 +136,7 @@ class Vector:
 		return self
 	
 	def subtract(self, x: Union[float, tuple[float, float], 'Vector'], y: float | None = None) -> 'Vector':
-		if x is tuple:
+		if type(x) == tuple:
 			x, y = x
 		elif type(x) == type(self):
 			x, y = x.x, x.y
@@ -256,6 +256,16 @@ class Vector:
 	def toString(self) -> str:
 		return f'Vector({self.x:}, {self.y})'
 	
+	def save(self) -> dict:
+		return {
+			'x': self.x,
+			'y': self.y
+		}
+	
+	@classmethod
+	def load(cls, d: dict) -> 'Vector':
+		return Vector(d['x'], d['y'])
+	
 	def __len__(self) -> float:
 		return float(self.x ** 2 + self.y ** 2) ** 0.5
 	
@@ -300,7 +310,7 @@ class BlockVector:
 		"""
 		重设坐标。可以直接传入一个唯一参数set((x, y))元组，也可以传入两个参数set(x, y)
 		"""
-		if x_or_pos is tuple:
+		if type(x_or_pos) == tuple:
 			self.x = int(x_or_pos[0])
 			self.y = int(x_or_pos[1])
 		elif type(x_or_pos) == type(self):
@@ -319,7 +329,7 @@ class BlockVector:
 		return self
 	
 	def add(self, x: Union[int, tuple[int, int], 'BlockVector'], y: int | None = None) -> 'BlockVector':
-		if x is tuple:
+		if type(x) == tuple:
 			x, y = x
 		elif type(x) == type(self):
 			x, y = x.x, x.y
@@ -328,7 +338,7 @@ class BlockVector:
 		return self
 	
 	def subtract(self, x: Union[int, tuple[int, int], 'BlockVector'], y: int | None = None) -> 'BlockVector':
-		if x is tuple:
+		if type(x) == tuple:
 			x, y = x
 		elif type(x) == type(self):
 			x, y = x.x, x.y
@@ -536,6 +546,16 @@ class BlockVector:
 			elif dcb.y == 0:
 				return [(BlockVector(self.x, self.y - 1) if up else BlockVector(self.x, self.y + 1), direction.clone().setY(0))]
 		return []
+	
+	def save(self) -> dict:
+		return {
+			'x': self.x,
+			'y': self.y
+		}
+	
+	@classmethod
+	def load(cls, d: dict) -> 'BlockVector':
+		return BlockVector(int(d['x']), int(d['y']))
 	
 	def __len__(self) -> float:
 		return float(self.x ** 2 + self.y ** 2) ** 0.5

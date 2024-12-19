@@ -40,6 +40,7 @@ class Interact:
 	def onMouse(self, event) -> None:
 		if event.type == pygame.MOUSEMOTION:
 			self.mouse.set(event.pos)
+			# 此处交给main.py来修正鼠标位置不对的问题，根据renderer.getOffset()
 		elif event.type == pygame.MOUSEBUTTONDOWN:
 			if event.button == 1:
 				self.left.set(True)

@@ -2,6 +2,7 @@ import math
 import random
 from typing import Union, TYPE_CHECKING
 
+from save.save import Archive
 from utils import utils
 
 if TYPE_CHECKING:
@@ -14,19 +15,21 @@ from block.block import Block, GrassBlock, PathBlock, ErrorBlock, FarmlandBlock
 
 
 class World(Renderable):
-	def __init__(self, worldID: int, seed: int | None = None):
+	def __init__(self, worldID: int, name: str, seed: int | None = None):
 		super().__init__(None)
+		self._name: str = name
 		self._player: Union['Player', None] = None
 		self._id: int = worldID
 		self._entityList: set['Entity'] = set['Entity']()
 		self._ground: dict[int, Block] = dict[int, Block]()
-		self._seed: random.Random
+		self._seed: random.Random = seed or 0
 	
-	def generateDefaultWorld() -> 'World':
-		w: World = World(-1)
+	@classmethod
+	def generateDefaultWorld(cls) -> 'World':
+		w: World = World(-1, "__DEFAULT_WORLD__")
 		for i in range(-3, 3):
 			for j in range(-3, 3):
-				if j ==  i:
+				if j == i:
 					continue
 				v = BlockVector(i, j)
 				w._ground[hash(v)] = FarmlandBlock(v)
@@ -105,6 +108,18 @@ class World(Renderable):
 					result.append((self._ground[hash(blockPos)] if hash(blockPos) in self._ground.keys() else blockPos.clone(), hitResult.clone()))
 		return result
 	
+	def save(self) -> None:
+		archive: Archive = Archive(self._name)
+		w = archive.dic['world'] = {}
+		e = archive.dic['entity'] = []
+		archive.dic['id'] = self._id
+		archive.dic['player'] = self._player.save()
+		for p, b in self._ground.items():
+			w[p] = b.save()
+		for f in self._entityList:
+			e.append(f.save())
+		archive.write()
+
 	def __str__(self) -> str:
 		return f'World(blocks = {len(self._ground)}, {self._ground})'
 

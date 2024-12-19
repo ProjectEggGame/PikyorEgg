@@ -5,6 +5,8 @@ from render.renderer import renderer
 from utils.error import NullPointerException
 from typing import TYPE_CHECKING, Union
 
+from utils.sync import SynchronizedStorage
+
 if TYPE_CHECKING:
 	from world.world import World
 	from window.window import Window, FloatWindow
@@ -15,14 +17,15 @@ class Game:
 		self.mainWorld: Union['World', None] = None
 		self.running: bool = True
 		self.tickCount: int = 0
-		self._window: Union['Window', None] = None
+		self._window: SynchronizedStorage[Union['Window', None]] = SynchronizedStorage[Union['Window', None]](None)
 		self.floatWindow: Union['FloatWindow', None] = None  # 在主程序中初始化
 
 	def tick(self) -> None:
 		notPause: bool = True
-		if self._window is not None:
-			self._window.tick()
-			notPause = not self._window.pauseGame()
+		if self._window.get() is not None:
+			self._window.get().passTick()
+			notPause = not self._window.get().pauseGame()
+		self._window.apply(self._window.getNew())
 		if self.mainWorld is not None and notPause:
 			self.mainWorld.tick()
 		self.processMouse()
@@ -41,20 +44,19 @@ class Game:
 		renderer.begin(delta, self._window is None)
 		if self.mainWorld is not None:
 			self.mainWorld.passRender(delta)
-		renderer.push()
-		renderer.setScale(8)
-		if self._window is not None:
-			self._window.passRender(delta)
-		renderer.pop()
+		if self._window.get() is not None:
+			self._window.get().passRender(delta)
+		if self.floatWindow is not None:
+			self.floatWindow.render(delta)
 		renderer.end()
 	
 	def setWindow(self, window: Union['Window', None]) -> None:
-		self._window = window
+		self._window.set(window)
 		if window is not None:
 			window.onResize()
 		
 	def getWindow(self) -> Union['Window', None]:
-		return self._window
+		return self._window.getNew()
 	
 	def quit(self) -> None:
 		self.running = False

@@ -209,6 +209,9 @@ class Renderer:
 	def getCamera(self) -> Vector:
 		return self._camera.getNew()
 	
+	def getOffset(self) -> Vector:
+		return self._offset.clone()
+	
 	def render(self, src: Surface, sx: int | float, sy: int | float, sw: int | float, sh: int | float, dx: int | float, dy: int | float, dw: int | float | None = None, dh: int | float | None = None) -> None:
 		"""
 		渲染目标。以下全部是int类型的px单位。请尽量避免使用这个方法，因为这个方法的效率比较低下。
@@ -225,7 +228,7 @@ class Renderer:
 		self.assertRendering()
 		if dw is None or dh is None:
 			scaled = pygame.transform.scale(src, (self._renderStack[-1].scale * sw, self._renderStack[-1].scale * sw))
-			self._canvas.blit(scaled, (self._presentOffset.x + dx, self._presentOffset.y + dy), (sx, sy, sw, sh), 0)
+			self._canvas.blit(scaled, (self._presentOffset.x + dx, self._presentOffset.y + dy), (sx, sy, sw, sh))
 		else:
 			scaled = pygame.transform.scale(src, (dw * self._renderStack[-1].scale, dh * self._renderStack[-1].scale))
 			self._canvas.blit(scaled, (self._presentOffset.x + dx, self._presentOffset.y + dy))

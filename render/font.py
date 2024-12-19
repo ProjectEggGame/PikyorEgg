@@ -7,13 +7,20 @@ fontHeight: int = 30
 
 
 class Font:
-	def __init__(self, file: str, yOffset: int = 0):
+	def __init__(self, file: str, yOffset: int = 0, halfSize: bool = False):
+		self._half: bool = halfSize
 		self._addr: str = file
 		self._yOffset: float = yOffset
-		self._scaledOffset: int = int(yOffset * fontHeight * 0.01)
+		if self._half:
+			self._scaledOffset: int = int(yOffset * fontHeight * 0.005)
+		else:
+			self._scaledOffset: int = int(yOffset * fontHeight * 0.01)
 		try:
 			self._file = open(file, 'rb')
-			self._font = pygame.font.Font(self._file, fontHeight)
+			if self._half:
+				self._font = pygame.font.Font(self._file, fontHeight >> 1)
+			else:
+				self._font = pygame.font.Font(self._file, fontHeight)
 		except Exception as e:
 			utils.printException(e)
 	
@@ -42,8 +49,12 @@ class Font:
 	def setHeight(self, h: int) -> None:
 		self._file.close()
 		self._file = open(self._addr, 'rb')
-		self._font = pygame.font.Font(self._file, h)
-		self._scaledOffset = int(self._yOffset * h * 0.01)
+		if self._half:
+			self._font = pygame.font.Font(self._file, h >> 1)
+			self._scaledOffset = int(self._yOffset * h * 0.005)
+		else:
+			self._font = pygame.font.Font(self._file, h)
+			self._scaledOffset = int(self._yOffset * h * 0.01)
 
 
 allFonts: dict[int, Font] = {}
@@ -62,6 +73,11 @@ def initializeFont() -> None:
 	allFonts[2] = Font('./assets/font/sword_art_online.ttf')
 	allFonts[3] = Font('./assets/font/yumindb.ttf', 2)
 	allFonts[4] = Font('./assets/font/jetbrains.ttf', 18)
+	allFonts[10] = Font('./assets/font/stsong.ttf', 19, True)
+	allFonts[11] = Font('./assets/font/stz.ttf', 20, True)
+	allFonts[12] = Font('./assets/font/sword_art_online.ttf', True)
+	allFonts[13] = Font('./assets/font/yumindb.ttf', 2, True)
+	allFonts[14] = Font('./assets/font/jetbrains.ttf', 18, True)
 
 
 def finalize() -> None:
