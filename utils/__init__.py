@@ -1,3 +1,4 @@
+import types
 from sys import stdout, stderr
 import traceback
 from threading import Lock
@@ -11,18 +12,19 @@ class Utils:
 			self._lock.release()
 		self._logLevel = 0
 	
-	def __copyFromConfigs(self, dic: dict[str, any], key: str, else_: any, result_or_judgement: dict[any, any] | Callable[[any], any] | None, warningMessage: str | None = None) -> any:
+	@staticmethod
+	def __copyFromConfigs(dic: dict[str, any], key: str, else_: any, result_or_judgement: dict[any, any] | Callable[[any], any] | None, warningMessage: str | None = None) -> any:
 		"""此处代码应当抄写configs.py中的readElseDefault"""
 		if key in dic:
 			res = dic[key]
-			if type(result_or_judgement) == dict:
+			if isinstance(result_or_judgement, dict):
 				if res in result_or_judgement:
 					return result_or_judgement[res]
 				else:
 					if warningMessage:
 						utils.warn(warningMessage.format(res))
 					return else_
-			elif type(result_or_judgement) == type(self.__copyFromConfigs):
+			elif isinstance(result_or_judgement, types.FunctionType):
 				return result_or_judgement(res)
 			else:
 				return else_
@@ -31,7 +33,7 @@ class Utils:
 	
 	def readConfig(self, config: dict) -> None:
 		self._logLevel = self.__copyFromConfigs(config, 'logLevel', 0, {'trace': 0, 'debug': 1, 'info': 2, 'warn': 3, 'error': 4}, 'Invalid log level: {}')
-		
+	
 	def writeConfig(self) -> dict:
 		match self._logLevel:
 			case 0:
@@ -55,7 +57,7 @@ class Utils:
 		if self._logLevel > 0:
 			return
 		self._output('[IKUN] [TRACE] ', *args, sep=sep, end=end)
-		
+	
 	def debug(self, *args, sep=' ', end='\n') -> None:
 		if self._logLevel > 1:
 			return
@@ -80,6 +82,7 @@ class Utils:
 		"""
 		建议改为调用printException()
 		:param e: 被抛出的错误
+		:param msg: 其他要输出的错误
 		"""
 		result = []
 		last_file = None
@@ -125,20 +128,25 @@ class Utils:
 		"""
 		self.traceStack(e, f'[{type(e).__name__}] {str(e)}!! when running code:')
 	
-	def fequal(self, a: float, b: float) -> bool:
+	@staticmethod
+	def fequal(a: float, b: float) -> bool:
 		return abs(a - b) < 1e-9
 	
-	def fless(self, a: float, b: float) -> bool:
-		return a < b and not self.fequal(a, b)
+	@staticmethod
+	def fless(a: float, b: float) -> bool:
+		return a < b and not Utils.fequal(a, b)
 	
-	def fgreater(self, a: float, b: float) -> bool:
-		return a > b and not self.fequal(a, b)
+	@staticmethod
+	def fgreater(a: float, b: float) -> bool:
+		return a > b and not Utils.fequal(a, b)
 	
-	def flesseq(self, a: float, b: float) -> bool:
-		return not self.fgreater(a, b)
+	@staticmethod
+	def flesseq(a: float, b: float) -> bool:
+		return not Utils.fgreater(a, b)
 	
-	def fgreatereq(self, a: float, b: float) -> bool:
-		return not self.fless(a, b)
+	@staticmethod
+	def fgreatereq(a: float, b: float) -> bool:
+		return not Utils.fless(a, b)
 	
 	def frange(self, value: float, start: float, end: float) -> float:
 		if self.flesseq(value, start):
@@ -158,4 +166,5 @@ def prints(func):
 		ret = func(*args, **kwargs)
 		utils.trace(s + f', ret = {ret}')
 		return ret
+	
 	return wrapper

@@ -2,14 +2,12 @@ import os.path
 
 import pygame
 from pygame import Surface
-from pygame.event import Event
 
 from entity.entity import Player
 from interact import interact
 from render import font
 from render.renderer import renderer
 from save.save import Archive
-from utils import utils
 from utils.game import game
 from utils.text import RenderableString, Description
 from utils.vector import Vector
@@ -148,7 +146,7 @@ class StartWindow(Window):
 	def __init__(self):
 		super().__init__("Start")
 		
-		def _0(x, y) -> bool:
+		def _0(*_) -> bool:
 			game.setWindow(None)
 			game.mainWorld = World.generateDefaultWorld()
 			game.mainWorld.addPlayer(Player('Test'))
@@ -180,7 +178,7 @@ class LoadWindow(Window):
 			for i in range(len(dl)):
 				button = Button(Location.CENTER, 0, -0.4 + i * 0.1, 0.4, 0.08, RenderableString('\\10' + dl[i][:-5]), Description([RenderableString("加载此存档")]), Location.CENTER)
 				
-				def _func(x, y):
+				def _func(*_):
 					archive = Archive(dl[i][:-5])
 					archive.read()
 					game.mainWorld = World.load(archive.dic)
@@ -209,11 +207,18 @@ class PauseWindow(Window):
 		self._widgets[3].onMouseDown = lambda x, y: game.setWindow(None) or True
 		self._widgets.append(Button(Location.CENTER, 0, 0.1, 0.4, 0.08, RenderableString('\\02Exit'), Description([RenderableString("不保存并退出")]), Location.CENTER))
 		
-		def _4(x, y) -> bool:
+		def _4(*_) -> bool:
 			game.mainWorld = None
 			game.setWindow(StartWindow())
 			return True
 		
 		self._widgets[4].onMouseDown = _4
 		self._widgets.append(Button(Location.CENTER, 0, 0.2, 0.4, 0.08, RenderableString('\\02Save & Exit'), Description([RenderableString("保存并退出")]), Location.CENTER))
-		self._widgets[5].onMouseDown = lambda x, y: (game.mainWorld.save() if game.mainWorld is not None else False) or game.setWindow(StartWindow())
+		
+		def _5(*_) -> bool:
+			game.mainWorld.save()
+			game.mainWorld = None
+			game.setWindow(StartWindow())
+			return True
+		
+		self._widgets[5].onMouseDown = _5

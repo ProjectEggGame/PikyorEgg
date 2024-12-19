@@ -2,7 +2,6 @@ import pygame
 from typing import TYPE_CHECKING, Union
 
 from entity.manager import entityManager
-from utils import utils
 
 if TYPE_CHECKING:
 	from block.block import Block
@@ -41,7 +40,7 @@ class Entity(Element):
 		for block, vector in rayTraceResult:
 			block: Union['Block', BlockVector]  # 命中方块，或者命中方块坐标
 			vector: Vector  # 起始点->命中点
-			if type(block) != BlockVector:
+			if not isinstance(block, BlockVector):
 				if block.canPass(self):  # 可通过方块，跳过
 					continue
 				block = block.getBlockPosition()
@@ -51,16 +50,16 @@ class Entity(Element):
 			rel: list[tuple[BlockVector, Vector]] | BlockVector | None = block.getRelativeBlock(newPosition, newVelocity)
 			if rel is None:  # 在中间
 				continue
-			elif type(rel) == BlockVector:  # 撞边不撞角
+			elif isinstance(rel, BlockVector):  # 撞边不撞角
 				vel2: Vector = (Matrices.xOnly if rel.x == 0 else Matrices.yOnly) @ newVelocity
 				for b, v in game.mainWorld.rayTraceBlock(newPosition, vel2, vel2.length()):
-					if type(b) != BlockVector:
+					if not isinstance(b, BlockVector):
 						if b.canPass(self):
 							continue
 					# 还得判断钻缝的问题
 						b = b.getBlockPosition()
 					grb = b.getRelativeBlock(newPosition + v, v)
-					if type(grb) != list or len(grb) == 0:
+					if not isinstance(grb, list) or len(grb) == 0:
 						continue
 					b2 = game.mainWorld.getBlockAt(grb[0][0])
 					if b2 is None or not b2.canPass(self):
@@ -86,13 +85,13 @@ class Entity(Element):
 				relativeBlock: Union['Block', None] = game.mainWorld.getBlockAt(rel[0][0])
 				if relativeBlock is not None and relativeBlock.canPass(self):  # 0能过，trace新方向
 					for b, v in game.mainWorld.rayTraceBlock(newPosition, rel[0][1], rel[0][1].length()):
-						if type(b) != BlockVector:
+						if not isinstance(b, BlockVector):
 							if b.canPass(self):
 								continue
 						# 还得判断钻缝的问题
 							b = b.getBlockPosition()
 						grb = b.getRelativeBlock(newPosition + v, v)
-						if type(grb) != list or len(grb) == 0:
+						if not isinstance(grb, list) or len(grb) == 0:
 							continue
 						b2 = game.mainWorld.getBlockAt(grb[0][0])
 						if b2 is None or not b2.canPass(self):
@@ -105,13 +104,13 @@ class Entity(Element):
 				relativeBlock = game.mainWorld.getBlockAt(rel[1][0])
 				if relativeBlock is not None and relativeBlock.canPass(self):  # 1能过，trace新方向
 					for b, v in game.mainWorld.rayTraceBlock(newPosition, rel[1][1], rel[1][1].length()):
-						if type(b) != BlockVector:
+						if not isinstance(b, BlockVector):
 							if b.canPass(self):
 								continue
 						# 还得判断钻缝的问题
 							b = b.getBlockPosition()
 						grb = b.getRelativeBlock(newPosition + v, v)
-						if type(grb) != list or len(grb) == 0:
+						if not isinstance(grb, list) or len(grb) == 0:
 							continue
 						b2 = game.mainWorld.getBlockAt(grb[0][0])
 						if b2 is None or not b2.canPass(self):
@@ -221,7 +220,7 @@ class Entity(Element):
 		}
 	
 	@classmethod
-	def load(cls, d: dict, entity: Union['Entity', None] = None) -> 'Entity':
+	def load(cls, d: dict, entity: Union['Entity', None] = None) -> Union['Entity', None]:
 		"""
 		:param d: 加载字典
 		:param entity: 默认None，用于区分手动调用和自动调用。手动调用必须传入，理论上不允许自动调用

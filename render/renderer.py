@@ -88,7 +88,7 @@ class Renderer:
 		self._renderStack: deque[RenderStack] = deque[RenderStack]()
 		self._renderStack.append(RenderStack())
 		
-		self._camera: SynchronizedStorage[Vector] = SynchronizedStorage[Vector](Vector(10.0, 10.0))
+		self._camera: SynchronizedStorage[Vector] = SynchronizedStorage[Vector](Vector(0.0, 0.0))
 		self._cameraAt: Union['Entity', None] = None
 		
 		self._systemScale: int = 16  # 方块基本是16px
@@ -134,10 +134,13 @@ class Renderer:
 		self._canvasCenter.set(int(self._canvasSize.x / 2), int(self._canvasSize.y / 2))
 		self._updateOffset()
 	
-	def cameraAt(self, entity: 'Entity') -> 'Entity':
+	def cameraAt(self, entity: Union['Entity', None]) -> 'Entity':
 		e = self._cameraAt
 		self._cameraAt = entity
 		return e
+	
+	def getCameraAt(self) -> Union['Entity', None]:
+		return self._cameraAt
 	
 	def begin(self, delta: float, noWindow: bool) -> None:
 		"""
@@ -328,7 +331,6 @@ class Renderer:
 		"""
 		if self._mapScaleChanged:
 			self._customMapScale = int(self._customScale * self._systemScale)
-			map_size = self._canvasSize.clone().multiply(1 / self._customMapScale)
 			self._mapScaleChanged = False
 			return True
 		else:

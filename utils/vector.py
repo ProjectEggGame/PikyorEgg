@@ -11,7 +11,7 @@ class Matrix:
 		创建变换矩阵
 		:param M2x2: 可以是((a1, a2), (b1, b2))或[[a1, a2], [b1, b2]]或[a1, a2, b1, b2]的形式
 		"""
-		if type(M2x2) == list and len(M2x2) >= 4 and type(M2x2[0]) == float:
+		if isinstance(M2x2, list) and len(M2x2) >= 4 and type(M2x2[0]) == float:
 			self._a1: float = float(M2x2[0])
 			self._a2: float = float(M2x2[1])
 			self._b1: float = float(M2x2[2])
@@ -23,7 +23,7 @@ class Matrix:
 			self._b2: float = M2x2[1][1]
 	
 	def add(self, other: Union['Matrix', int, float]) -> 'Matrix':
-		if type(other) == Matrix:
+		if isinstance(other, Matrix):
 			self._a1 += other._a1
 			self._a2 += other._a2
 			self._b1 += other._b1
@@ -36,7 +36,7 @@ class Matrix:
 		return self
 	
 	def subtract(self, other: Union['Matrix', int, float]) -> 'Matrix':
-		if type(other) == Matrix:
+		if isinstance(other, Matrix):
 			self._a1 -= other._a1
 			self._a2 -= other._a2
 			self._b1 -= other._b1
@@ -49,10 +49,10 @@ class Matrix:
 		return self
 	
 	def multiply(self, other: Union['Matrix', 'Vector', 'BlockVector', int, float]) -> Union['Matrix', 'Vector']:
-		if type(other) == Matrix:
+		if isinstance(other, Matrix):
 			self._a1, self._a2, self._b1, self._b2 = other._a1 * self._a1 + other._a2 * self._b1, other._a1 * self._a2 + other._a2 * self._b2, other._b1 * self._a1 + other._b2 * self._b1, other._b1 * self._a2 + other._b2 * self._b2
 			return self
-		elif type(other) == Vector or type(other) == BlockVector:
+		elif isinstance(other, Vector) or isinstance(other, BlockVector):
 			return Vector(self._a1 * other.x + self._a2 * other.y, self._b1 * other.x + self._b2 * other.y)
 		else:
 			self._a1 *= other
@@ -65,13 +65,13 @@ class Matrix:
 		return self._a1 == other._a1 and self._a2 == other._a2 and self._b1 == other._b1 and self._b2 == other._b2
 	
 	def __add__(self, other: Union['Matrix', int, float]) -> 'Matrix':
-		if type(other) == Matrix:
+		if isinstance(other, Matrix):
 			return Matrix([[self._a1 + other._a1, self._a2 + other._a2], [self._b1 + other._b1, self._b2 + other._b2]])
 		else:
 			return Matrix([[self._a1 + other, self._a2 + other], [self._b1 + other, self._b2 + other]])
 	
 	def __sub__(self, other: Union['Matrix', int, float]) -> 'Matrix':
-		if type(other) == Matrix:
+		if isinstance(other, Matrix):
 			return Matrix([[self._a1 - other._a1, self._a2 - other._a2], [self._b1 - other._b1, self._b2 - other._b2]])
 		else:
 			return Matrix([[self._a1 - other, self._a2 - other], [self._b1 - other, self._b2 - other]])
@@ -83,7 +83,7 @@ class Matrix:
 		return Matrix([[self._a1 * other, self._a2 * other], [self._b1 * other, self._b2 * other]])
 	
 	def __matmul__(self, other: Union['Matrix', 'Vector', 'BlockVector']) -> Union['Matrix', 'Vector']:
-		if type(other) == Matrix:
+		if isinstance(other, Matrix):
 			return Matrix([[self._a1 * other._a1 + self._a2 * other._b1, self._a1 * other._a2 + self._a2 * other._b2], [self._b1 * other._a1 + self._b2 * other._b1, self._b1 * other._a2 + self._b2 * other._b2]])
 		else:
 			return Vector(self._a1 * other.x + self._a2 * other.y, self._b1 * other.x + self._b2 * other.y)
@@ -108,10 +108,10 @@ class Vector:
 		"""
 		重设坐标。可以直接传入一个唯一参数set((x, y))元组，也可以传入两个参数set(x, y)
 		"""
-		if type(x_or_pos) == tuple:
+		if isinstance(x_or_pos, tuple):
 			self.x = x_or_pos[0]
 			self.y = x_or_pos[1]
-		elif type(x_or_pos) == type(self):
+		elif isinstance(x_or_pos, Vector):
 			self.x = x_or_pos.x
 			self.y = x_or_pos.y
 		else:
@@ -127,18 +127,18 @@ class Vector:
 		return self
 	
 	def add(self, x: Union[float, tuple[float, float], 'Vector'], y: float | None = None) -> 'Vector':
-		if type(x) == tuple:
+		if isinstance(x, tuple):
 			x, y = x
-		elif type(x) == type(self):
+		elif isinstance(x, Vector):
 			x, y = x.x, x.y
 		self.x += x
 		self.y += y
 		return self
 	
 	def subtract(self, x: Union[float, tuple[float, float], 'Vector'], y: float | None = None) -> 'Vector':
-		if type(x) == tuple:
+		if isinstance(x, tuple):
 			x, y = x
-		elif type(x) == type(self):
+		elif isinstance(x, Vector):
 			x, y = x.x, x.y
 		self.x -= x
 		self.y -= y
@@ -310,10 +310,10 @@ class BlockVector:
 		"""
 		重设坐标。可以直接传入一个唯一参数set((x, y))元组，也可以传入两个参数set(x, y)
 		"""
-		if type(x_or_pos) == tuple:
+		if isinstance(x_or_pos, tuple):
 			self.x = int(x_or_pos[0])
 			self.y = int(x_or_pos[1])
-		elif type(x_or_pos) == type(self):
+		elif isinstance(x_or_pos, BlockVector):
 			self.x = int(x_or_pos.x)
 			self.y = int(x_or_pos.y)
 		else:
@@ -329,18 +329,18 @@ class BlockVector:
 		return self
 	
 	def add(self, x: Union[int, tuple[int, int], 'BlockVector'], y: int | None = None) -> 'BlockVector':
-		if type(x) == tuple:
+		if isinstance(x, tuple):
 			x, y = x
-		elif type(x) == type(self):
+		elif isinstance(x, BlockVector):
 			x, y = x.x, x.y
 		self.x += x
 		self.y += y
 		return self
 	
 	def subtract(self, x: Union[int, tuple[int, int], 'BlockVector'], y: int | None = None) -> 'BlockVector':
-		if type(x) == tuple:
+		if isinstance(x, tuple):
 			x, y = x
-		elif type(x) == type(self):
+		elif isinstance(x, BlockVector):
 			x, y = x.x, x.y
 		self.x -= x
 		self.y -= y

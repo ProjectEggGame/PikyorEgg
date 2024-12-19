@@ -37,7 +37,6 @@ class Game:
 		if not renderer.ready():
 			raise NullPointerException('当前screen为None。')
 		if delta > 1:
-			# utils.warn(f'{delta = :.3f}')
 			delta = 1
 		if delta < 0:
 			delta = 0
@@ -67,7 +66,8 @@ class Game:
 		"""
 		pass
 	
-	def writeConfig(self) -> dict[str, any]:
+	@staticmethod
+	def writeConfig() -> dict[str, any]:
 		return {}
 	
 	def processMouse(self):

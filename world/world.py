@@ -1,4 +1,3 @@
-import math
 import random
 from typing import Union, TYPE_CHECKING
 
@@ -10,10 +9,9 @@ from utils import utils
 if TYPE_CHECKING:
 	from entity.entity import Entity, Player
 
-from pygame import Surface
 from render.renderable import Renderable
 from utils.vector import Vector, BlockVector
-from block.block import Block, GrassBlock, PathBlock, ErrorBlock, FarmlandBlock
+from block.block import Block, FarmlandBlock
 
 
 class World(Renderable):

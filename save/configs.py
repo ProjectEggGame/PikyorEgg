@@ -3,6 +3,7 @@
 """
 import json
 import os
+import types
 from typing import Callable
 
 from utils import utils
@@ -50,14 +51,14 @@ def readElseDefault(dic: dict[str, any], key: str, else_: any, result_or_judgeme
 	"""
 	if key in dic:
 		res = dic[key]
-		if type(result_or_judgement) == dict:
+		if isinstance(result_or_judgement, dict):
 			if res in result_or_judgement:
 				return result_or_judgement[res]
 			else:
 				if warningMessage:
 					utils.warn(warningMessage.format(res))
 				return else_
-		elif type(result_or_judgement) == type(readElseDefault):
+		elif isinstance(result_or_judgement, types.FunctionType):
 			return result_or_judgement(res)
 		else:
 			return else_

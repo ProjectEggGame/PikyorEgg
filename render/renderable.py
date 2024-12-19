@@ -1,4 +1,3 @@
-from pygame import Surface
 from utils.vector import Vector
 from render.resource import Texture
 

@@ -14,7 +14,6 @@ from save import configs
 from utils import utils
 from utils.game import game
 from window.window import FloatWindow, StartWindow
-from world.world import World
 
 nowRender = time.perf_counter_ns()
 lastRender = nowRender
