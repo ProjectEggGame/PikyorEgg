@@ -1,0 +1,506 @@
+# 概述
+
+此文件记录了该文件推送时，代码的结构以及对应的用法。
+
+- 此文件中，对于函数的描述：
+  - 函数参数，以param开头标记，紧接参数名和参数类型，例如：
+    - param ```value: int```
+    - 表示一个名为value的参数名，value的类型应当为int，否则可能会产生不必要的错误。
+  - 函数返回，以returns开头标记，紧接返回类型，例如：
+    - returns ```int```
+    - 表示无论如何，一定返回int类型的结果。
+    - 如果没有，表示函数没有返回，或返回```None```
+  - 函数报错，以raises开头标记，紧接错误类型，例如：
+    - raises ```Exception```
+    - 表示函数运行时，可能引起Exception类型的错误。
+- 注意，该文件中，除非重写，否则子类的doc中不再会说明父类拥有的成员。如果希望获得全面的内容，请不要忘记查看父类文档。
+
+# 结构 ProjectEgg
+
+<details><summary>assets/ 资源文件</summary>
+
+- font/ 管理所有字体文件
+- texture/
+  - block/ 所有方块纹理
+  - egg/ 所有鸡蛋纹理
+  - entity/ 所有实体纹理
+  - item/ 所有物品纹理
+  - player/ 玩家纹理，可以理解为皮肤
+  - window/ 按钮和窗口的背景
+  - no_texture.bmp 当找不到纹理时，会显示此图片
+
+</details>
+
+<details><summary>block/ 软件包</summary>
+
+- block.py 文件
+  - ```class Block```
+    - 直接继承自```Element```
+    - 直接继承者```Ground``` ```Wall```
+    - 该类不应当被直接创建使用，应当被继承后使用。
+    - 成员变量
+      - ```_position: BlockVector``` 方块的位置，保护成员，使用```getBlockPosition()```或者```getPosition()```来访问。
+      - ```_blockID: str``` 方块ID，保护成员，不可访问。
+      - ```_holding: list[Element]``` 叠加元素，保护成员，使用```getHolding()```来访问，以及```holdAppend()```和```holdRemove()```等来修改。
+    - 成员函数
+      - ```__init__```
+        - 创建方块类，初始化参数。
+        - param ```blockID: str``` 方块唯一ID。同种方块一定拥有完全相同的ID，不同方块一定拥有不同的ID。例如，草地方块的ID是nature.grass。
+        - param ```name: str``` 方块名称，有时方块可以被命名，一般情况下填入默认的名称即可。
+        - param ```description: Description``` 方块说明。当鼠标悬浮在这个方块上时，会显示的方块信息。
+        - param ```position: BlockVector``` 方块在世界上的位置。这一参数设置了以后就不应当变更，否则可能引发未知错误。
+        - param ```texture: Texture``` 方块纹理。
+      - ```tick```
+        - 重写自```Element.tick()```，且应当被继承类重写。
+      - ```passTick```
+        - 重写自```Element.passTick()```。参考```Element.passTick()```
+      - ```render```
+        - 渲染这个方块。重写自```Renderable.render()```，可以重写。
+      - ```canPass```
+        - 查看一个实体是否能够经过这个方块。每个继承方块类都<font color='red'>必须必须重写</font>这个函数。
+        - param ```entity: Union['Entity', None] = None``` 检测的实体，默认传入None。如果传入None，则返回该方块是否可以被大多数一般实体经过，否则返回该方块是否可以被要检测的实体经过。
+      - ```getPosition```
+        - returns ```Vector``` 该方块的世界坐标。
+      - ```getBlockPosition```
+        - returns ```BlockVector``` 该方块的世界坐标，整数形式。
+      - ```tryHold```
+        - 尝试在方块上叠加其他方块。例如，如果把树视为方块，那么可以在草地上叠加树方块。可重写。
+        - param ```block: Element``` 要叠加的方块。
+        - returns ```bool``` 能否成功叠加。
+      - ```holdAppend```
+        - 在方块上叠加其他方块。请提前使用tryHold检查。可以重写。
+        - param ```element: Element``` 要叠加的方块。
+        - raises ```InvalidOperationException``` 当方块无法被叠加时，抛出错误。
+      - ```getHolding```
+        - 获取当前方块上叠加的所有元素。
+        - returns ```list[Element]```
+      - ```holdRemove```
+        - 移除被叠加的某个元素。可以重写。
+        - param ```element: Element``` 要移除的元素。
+        - returns ```bool``` 如果成功移除，返回```True```；如果失败，比如不存在，返回```False```
+      - ```save```
+        - 保存这个方块。可以重写。
+        - returns ```dict``` 这个函数会返回方块的位置，ID和叠加方块。
+      - ```load```
+        - ```@classmethod``` 函数应当直接用类名调用。
+        - 从字典中加载这个方块。每个继承类都<font color='red'>必须包含</font>一个独立的@classmethod的该函数
+        - 这个函数可以从字典中加载方块的位置、ID和叠加方块，但是必须传入一个非None的Block实例，然后这个函数会将加载到的位置、ID和叠加方块赋给传入的block。继承类加载方块时，可以调用Block.load()并传入已经部分加载的方块来简化一些流程。
+        - param ```d: dict``` 要加载的方块字典。
+        - param ```block: Union[Block, None] = None``` 要加载的方块实例。默认为None，使用时，不应当传入None。
+        - returns ```Block``` 被加载的方块，也就是传入的block。
+        - raises ```InvalidOperationException``` 如果传入的block为None，抛出错误。
+      - ```__str__```
+        - 转化为字符串，输出方块的类型和名字。
+        - returns ```str```
+      - ```__repr__```
+        - 同```__str__```
+        - returns ```str```
+  - ```class Ground```
+    - 直接继承自```Block```
+    - 直接继承者```GrassBlock``` ```PathBlock``` ```FarmlandBlock``` ```ErrorBlock```
+    - 所有的地面方块。这个类自行重写了```canPass```，并对任何情况都返回True。
+  - ```class Wall```
+    - 直接继承自```Block```
+    - 所有的墙类方块。这个类自行重写了```canPass```，并对任何情况都返回False。
+  - ```class GrassBlock```
+    - 直接继承自```Ground```
+    - 草地方块，可以直接创建实例、使用。
+    - 成员函数：
+      - ```__init__```
+        - 创建草方块。
+        - param ```position: BlockVector``` 方块坐标。
+      - ```load```
+        - ```@classmethod```
+        - 从字典中加载草方块。
+        - param ```d: dict``` 要加载的方块字典。
+        - returns ```GrassBlock``` 被加载的方块。
+  - ```class PathBlock```
+    - 直接继承自```Ground```
+    - 草径方块，可以直接创建实例、使用。
+    - 成员函数：
+      - ```__init__```
+        - 创建草径方块。
+        - param ```position: BlockVector``` 方块坐标。
+      - ```load```
+        - ```@classmethod```
+        - 从字典中加载草径方块。
+        - param ```d: dict``` 要加载的方块字典。
+        - returns ```PathBlock``` 被加载的方块。
+  - ```class FarmlandBlock```
+    - 直接继承自```Ground```
+    - 耕地方块，可以直接创建实例、使用。
+    - 成员函数：
+      - ```__init__```
+        - 创建耕地方块。
+        - param ```position: BlockVector``` 方块坐标。
+      - ```load```
+        - ```@classmethod```
+        - 从字典中加载耕地方块。
+        - param ```d: dict``` 要加载的方块字典。
+        - returns ```FarmlandBlock``` 被加载的方块。
+  - ```class ErrorBlock```
+    - 直接继承自```Ground```
+    - 错误方块，可以直接创建实例、使用。用于调试。
+    - 成员函数：
+      - ```__init__```
+        - 创建错误方块。
+        - param ```position: BlockVector``` 方块坐标。
+      - ```load```
+        - ```@classmethod```
+        - 从字典中加载错误方块。
+        - param ```d: dict``` 要加载的方块字典。
+        - returns ```ErrorBlock``` 被加载的方块。
+  - 文件尾部的剩余代码块
+    - 这些代码向```blockManager```（位于block/manager.py）注册方块ID和方块类，用于避免循环import问题。
+    - 这样其他类在想要使用方块的时候，就可以直接使用方块ID向```blockManager```发起寻找请求，而不用导入方块类，可以避免胡乱导入的问题。
+- manager.py文件
+  - ```class BlockManager```
+    - 方块管理器。用于管理方块ID。
+    - 成员变量：
+      - ```_dic: dict``` 字典，以ID作为key，方块类作为value。使用```register()```和```get()```访问。
+    - 成员函数：
+      - ```register```
+        - 注册一个方块ID和方块。
+        - param ```blockID: str``` 方块ID。
+        - param ```block: type``` 方块类名。
+        - raises ```ValueError``` 如果传入的方块ID已经被注册，抛出错误。
+      - ```get```
+        - 通过key获取已经注册的方块类。
+        - param ```blockID: str``` 方块ID。
+        - returns ```type``` 方块类。
+        - raises ```KeyError``` 如果传入的方块ID没有被注册，会由python内置dict抛出错误。
+  - 文件尾部的剩余代码块
+    - 创建了一个唯一的```blockManager```实例，可以在其他地方使用。其他地方也不应当再创建BlockManager实例。
+
+</details>
+
+<details><summary>entity/ 软件包</summary>
+
+- entity.py文件
+  - ```class Entity```
+    - 直接继承自```Element```
+    - 直接继承者```Player```
+    - 成员变量：
+      - ```__velocity: Vector``` 实体在游戏内移动的速度，私有成员，使用```getVelocity```访问。
+      - ```__renderInterval: int``` 实体在屏幕上渲染不同资源的间隔，私有成员，不可访问。
+      - ```_position: Vector``` 实体在地图上的位置，保护成员，使用```getPosition```访问。
+      - ```_maxSpeed: float``` 实体的最大移动速度，保护乘员，目前不可访问。
+      - ```_setVelocity: Vector``` 给实体设置速度时，会先赋值给它。然后经过运算再赋给```__velocity```。保护乘员，通过```setVelocity```访问。
+      - ```_textureSet``` 纹理列表。一般认为0,1是前面，2,3是后，4,5是左，6,7是右。可以参考```class Player```的构造函数
+      - ```_id``` 实体ID，与方块ID相似。
+    - 成员方法：
+      - ```__processMove```
+        - 处理速度，将```_setVelocity```计算后调整给```__velocity```。
+        - 私有方法。
+      - ```passTick```
+        - 继承自```Element```，在游戏内每tick调用。不建议重写。
+        - 该函数处理实体移动、速度处理，以及渲染纹理选择。
+      - ```tick```
+        - 继承自```Element```。可重写。
+      - ```render```
+        - 将纹理渲染到地图上。可以重写。
+        - param ```delta: float``` 渲染时间偏移。值为渲染时刻与上一帧渲染时刻的时间差，与每tick时间的比值，用于平滑渲染。
+        - param ```at: Vector | None``` 渲染位置。一般传入None，使用实体自己的位置进行渲染即可。
+      - ```setVelocity```
+        - 设置速度
+        - param ```velocity: Vector``` 速度向量。
+      - ```getPosition```
+        - 获取实体的位置。
+        - returns ```Vector``` 实体位置。
+      - ```getVelocity```
+        - 获取实体的当前速度。准确地说，是上一tick的速度。
+        - returns ```Vector``` 实体速度。
+      - ```save```
+        - 保存这个实体。可以重写，重写后也可以调用```super().save()```，省略一些代码量。
+        - returns ```dict``` 实体有关量的字典。
+      - ```load```
+        - ```@classmethod```
+        - 从字典中加载实体。每一个重写的实体类都必须<font color='red'>必须重写</font>这个函数。重写
+        - param ```d: dict``` 要加载的实体字典。
+        - param ```entity: Entity | None``` 实体实例。如果传入了实体实例，则会在实例上加载，否则会创建一个新的实体实例。
+        - returns ```Entity``` 被加载的实体。
+  - ```class Player```
+    - 直接继承自```Entity```
+    - 玩家实体，可以直接创建实例、使用。
+    - 成员变量：
+      - ```health: float``` 生命值。初始值暂定100，可以修改。
+      - ```maxHealth: float``` 最大生命值。初始值暂定100，可以修改。
+      - ```inventory: float``` 玩家背包，暂时没用。
+    - 成员函数：
+      - ```tick```
+        - 继承自```Entity```，在游戏内每tick调用。
+        - ```class Player```的重写添加了WASD四个按键的检测和速度设置。
+      - ```load```
+        - ```@classmethod```
+        - 从字典中加载玩家。
+  - 文件尾部的剩余代码
+    - 向```entityManager```注册玩家类。```entityManager```与```blockManager```类似。
+- manager.py文件
+  - 参考block/manager.py文件。这两个文件基本作用相同，只不过一个管理实体、一个管理方块。
+
+</details>
+
+<details><summary>interact/ 软件包</summary>
+
+- __init__.py文件
+  - ```class Interact```
+    - 管理玩家交互的类。只有一个实例，在文件尾定义。
+    - 成员变量：
+      - ```_KEY_COUNT: int = 256``` 是```keys```和```specialKeys```列表的长度。外部无法访问，不知道也无所谓。
+      - ```mouse: BlockVector``` 指示鼠标在窗口中的相对位置。已经经过offset的调整，直接使用即可。
+      - ```left: Status``` 鼠标左键的状态。参考```class Status```。
+      - ```middle: Status``` 鼠标中键的状态。
+      - ```right: Status``` 鼠标右键的状态。
+      - ```scroll: ScrollStatus``` 鼠标滚轮的状态。参考```class ScrollStatus```。
+      - ```keys: list[Status | None]``` 键盘按键的状态。要检查哪个键的状态，就使用```keys[pygame.K_***]```来访问到对应键的```Status```。访问对应的键之前，请检查pygame中K_***的值是否大于256（或者说，巨大无比），如果是，则访问```specialKeys[K_*** & 255]```
+      - ```specialKeys: list[Status | None]``` 特殊键的状态，例如Ctrl、Win、Alt等键。
+    - 成员方法
+      - ```onKey```
+      - ```onMouse```
+      - 成员方法都只在main.py中调用，用于传入交互键状态。不需要其他地方调用或使用。
+  - 文件尾部剩余代码
+    - 定义了一个```interact: Interact```，所有的交互状态都在这个实例中。不需要额外创建```class Interact```的实例。
+- key_process.py文件
+  - ```def processKeys```
+    - 每tick处理其他的交互问题。这会在每tick的最后最后，由main.py中唯一调用。
+    - 例如，当前版本中，按Q会在控制台中输出interact.mouse的值，按退出会尝试弹出暂停窗口，按空格会切换相机锁定（```renderer.cameraAt()```）
+- status.py文件
+  - ```class Status```
+    - 直接继承者```ScrollStatus```
+    - 记录交互状态。
+    - 成员变量：
+      - ```name``` 按键的名字。
+      - ```_presentStatus: bool``` 当前按键是否被按下。
+      - ```_shouldDeal: bool``` 如果按键在被tick检测到按下前，就已经被玩家抬起，那么```_presentStatus```是False，但是这个变量仍然是```True```。每次按键的持续按下只会令该变量改为```True```一次。
+      - ```__init__```
+        - 初始化。应当只用于interact.py，其他地方不应使用。
+        - param ```name: str``` 按键的名字。
+      - ```set```
+        - 手动设置状态。这可能忽略用户是否真实按下了对应的按键。
+        - param ```status: bool``` 设置的状态。
+        - 如果```status```和```_presentStatus```不同，也会让```_shouldDeal```改成```True```
+      - ```peek```
+        - 瞟一眼按键状态。
+        - returns ```bool``` 当前按键是否被按下。
+      - ```deal```
+        - 只有```_shouldDeal```为```True```时，才会返回```presentStatus```的值，然后将```_shouldDeal```改为```False```。
+        - returns ```bool``` 当前按键是否被按下。
+      - ```__str__```
+        - 转换成```str```，调试的时候可能有用。
+  - ```class ScrollStatus```
+    - 继承自```Status```
+    - 记录鼠标滚轮的状态。注意，滚动值向下为正。
+    - 注意，请一定一定<font color='red>不要调用</font>```class ScrollStatus```的```deal()```函数和```peek()```函数和```set()```函数，设计会直接抛错。
+    - 成员函数：
+      - ```scroll```
+        - 让滚轮仿佛滚动了一定值。
+        - param ```scr: int``` 滚动的值。
+      - ```peekScroll```
+        - 跟peek差不多，但是返回值改成```int```类型。
+        - returns ```int``` 当前滚轮滚动的值。
+      - ```dealScroll```
+        - 跟deal差不多，但是返回值改成```int```类型。
+        - returns ```int``` 当前滚轮滚动的值。
+      - ```resetScroll```
+        - 重置滚轮滚动的值为0。
+      
+</details>
+
+<details><summary>item/ 软件包</summary>
+
+- 参考新设计，这一软件包中的代码大概率应当弃用。
+
+</details>
+
+<details><summary>render/ 软件包</summary>
+
+- font.py文件
+  - ```class Font```
+    - 字体类，可以用来绘制文本。
+    - 成员变量：
+      - ```_half: bool``` 标记是否是半尺寸字体，保护成员，不可访问。
+      - ```_addr: str``` 标记文件的路径，保护成员，不可访问。
+      - ```_yOffset: int``` 标记字体的纵向偏移。由于各个字体的上下浮动稍有不同，这一值让不同的字体看起来差不多平行。保护成员，不可访问。
+      - ```_file: File``` python的File对象。
+      - ```_font: pygame.font.Font``` pygame的字体对象。保护成员，不可访问。
+    - 成员函数：
+      - ```close```
+        - 关闭字体文件。正常情况下不应当调用。这个函数会被自动调用。
+      - ```get```
+        - 获取pygame.font.Font对象。
+        - 四个参数就是字面意思。
+        - returns ```pygame.font.Font``` 调整过后的字体，请尽快使用，因为后续如果有其他的改动，这个对象同样会应用新的改动的效果。
+      - ```draw```
+        - 在屏幕上最原始地绘制字符。
+        - 一般使用```RenderableString```绘制文字会更方便一些。
+        - param ```screen: Surface``` 绘制的目标Surface。
+        - param ```string: str``` 要绘制的字符串；
+        - param ```x: int``` 绘制起点，左上角的x坐标。
+        - param ```y: int``` 绘制起点，左上角的y坐标。
+        - param ```color: int``` 字体的颜色，0xAARRGGBB
+        - param ```bold: bool``` 字体是否采用粗体。
+        - param ```italic: bool``` 字体是否采用斜体。
+        - param ```underline: bool``` 字体是否添加下划线。
+        - param ```strikeThrough: bool``` 字体是否添加删除线。
+        - param ```background: int``` 背景颜色，0xAARRGGBB。
+      - ```setHeight```
+        - 设置字体的高度。正常情况不应调用，应当仅在窗口大小改变时被系统自动调用。手动调用可能会出现意料之外的错误。
+        - param ```height: int``` 高度。
+        - 注意，这个函数会自动调用```close```函数，然后重新打开文件。
+  - ```allFonts = {}```
+    - 所有字体的字典。以下为Key-Value对：
+    - 00 - 华文宋体，默认字体。
+    - 01 - 刀剑神域字体，EmsiaetKadosh的私货。
+    - 02 - Yumincho字体，日语的显示会很漂亮。EmsiaetKadosh的私货。
+    - 10，11，12对应以上的半尺寸字体。
+    - 如果想加其他字体请通知EmsiaetKadosh。
+  - ```def setScale```
+    - ```@times``` 这个函数会被计时。
+    - 不应手动调用。窗口大小改变时自动调用。
+    - param ```scale: float``` 缩放比例。
+  - ```def initializeFont```
+    - 不应手动调用。
+    - 仅在main.py中用于初始化字体字典。
+  - ```def finalize```
+    - 程序终止时，调用这个函数。
+    - 不应手动调用。
+    - 但是还没有自动调用。如果你什么时候看到了这句话，告诉EmsiaetKadosh，告诉他这里有一坨屎山。
+- renderable.py文件
+  - ```class Renderable```
+    - 直接继承者```Element``` ```Window``` ```Widget``` ```World``` 还有啥忘了
+    - 所有能渲染的东西都继承这个类。
+    - 成员变量：
+      - ```_texture: Texture``` 保护成员，继承可访问，也可以通过```getTexture```访问。
+    - 成员函数：
+      - ```__init__```
+        - param ```texture: Texture``` 要渲染的纹理。
+      - ```render```
+        - 渲染```_texture```到屏幕上。可以重写。
+        - param ```delta: float``` tick时间偏移，在0~1之间。值为渲染时刻与上一帧渲染时刻的时间差，与每tick时间的比值，用于平滑渲染。
+        - param ```at: Vector | None``` 绘制位置。一般情况下，被渲染的东西知道自己应当渲染到屏幕的具体位置，此时```at=None```，但是有时如果需要渲染物品等，就需要通过这个参数告知其应当渲染的位置。
+      - ```passRender```
+        - 不建议重写，可以重写。不要忘了调用```super().passRender(delta, at)```。
+        - param ```delta: float```
+        - param ```at: Vector | None```
+        - 与```render()```相同。
+      - ```getTexture```
+        - 获取```_texture```。
+        - returns ```Texture```
+- renderer.py文件
+  - ```enum Location```
+    - 继承自```Enum```
+    - 枚举类。标记渲染位置。字如其名。
+  - ```class RenderStack```
+    - 外部不需要使用。目前好像也没用。
+  - ```class Renderer```
+    - 唯一实例定义在文件尾部。
+    - 成员变量：
+      - ```_screen: Surface``` 屏幕。一般不直接在上面渲染。
+      - ```_size: tuple[float, float]``` 即```_screen.get_size()```
+      - ```_canvas: Surface``` 画布。所有的渲染都在画布上进行，然后由系统自动渲染到屏幕上。
+      - ```_canvasSize: Vector``` 画布尺寸。和屏幕尺寸略有不同，因为屏幕长宽比锁定。
+      - ```_canvasCenter: BlockVector``` 画布的中心点。只是为了减少一些计算量。
+      - ```_isRendering: bool``` 标记当前是否正在渲染。有的操作在渲染期间进行会非常容易报错崩溃，采用这种方式可以知道具体哪里的行为容易出错。
+      - ```_renderStack: RenderStack``` 目前没用。用来存储缩放值。
+      - ```_camera: SynchronizedStorage[Vector]``` 相机位置。由于是多线程，所以套壳这个```SynchronizedStorage```防止多线程闪屏。
+      - ```_cameraAt: Union[Entity, None]``` 标记相机追踪的实体。如果为```None```，相机不动；如果不为```None```，
+      - ```_systemScale: int``` 系统缩放比例。这纯粹由窗口决定，所以不要乱设置，虽然确实可以用```setSystemScale()```设置。
+      - ```_systemScaleChanged: bool``` 系统缩放比例是否改变。调用```setSystemScale()```后会自动置为```True```，渲染前会令渲染系统适应新的系统缩放比例。
+      - ```_mapScale: int``` 这是最终的地图缩放比例。值为```_customMapScale * _systemScale```。
+      - ```_mapScaleChanged: bool``` 地图缩放比例是否改变。调用```setMapScale()```后会自动置为```True```，渲染前会令渲染系统适应新的地图缩放比例。
+      - ```_uiScale: int``` 这是最终的UI缩放比例。值为```_customUiScale * _systemScale```。
+      - ```_uiScaleChanged: bool``` UI缩放比例是否改变。调用```setUIScale()```后会自动置为```True```，渲染前会令渲染系统适应新的UI缩放比例。
+      - ```_offset: BlockVector``` 渲染偏移。这是因为屏幕长宽比锁定、```_canvas```和```_screen```尺寸不同，为了把```_canvas```绘制到```_screen```的中间设置了这个变量。
+      - ```_presentOffset: BlockVector``` 这个是跟```_renderStack```一起用的。目前没用。
+      - ```_customMapScale: float``` 地图缩放比例。可以用```setMapScale()```设置，但是缩放过大会导致严重掉帧，过小了又看不见。默认的范围是0.5~8，可能会后续继续修改。
+      - ```_customUIScale: float``` UI缩放比例。可以用```setCustomUiScale()```设置。
+      - ```_is4to3: SynchronizedStorage[bool]``` 标记是否应当渲染为4:3。
+    - 成员函数：
+      - ```ready```
+        - 检查渲染器状态是否良好。一般不需要手动检查，有自动检查的。
+        - returns ```bool```
+      - ```setScreen```
+        - 每当窗口大小改变时，系统自动调用这个函数传入新的目标屏幕。不应手动调用。然后自动更改offset，canvas，canvasSize等。
+        - param ```screen: Surface``` 目标屏幕。
+      - ```cameraAt```
+        - 令渲染器追踪一个实体，始终将目标实体渲染在屏幕中心。
+        - param ```entity: Entity | None``` 要追踪的实体。如果为```None```，则取消追踪。
+        - returns ```Entity | None``` 返回上一个追踪的实体。
+      - ```getCameraAt```
+        - 获取当前追踪的实体。
+      - ```begin```
+        - 开始渲染，不需要手动调用。
+        - 这里会更新camera，更新canvas等等。
+      - ```_updateOffset```
+        - 保护方法，用于更新偏移。不需要手动调用。
+      - ```end```
+        - 渲染结束时调用，把canvas再绘制到屏幕上。不需要手动调用。
+      - ```assertRendering```
+        - 确保当前正在渲染。
+        - 如果不在渲染，抛错。
+        - raises ```InvalidOperationException```
+      - ```assertNotRendering```
+        - 确保当前不在渲染。
+        - 如果正在渲染，抛错。
+        - raises ```InvalidOperationException```
+      - ```getSize```
+        - 获取```_canvas```的尺寸。
+        - returns ```Vector```
+      - ```getCanvas```
+        - 获取```_canvas```。
+        - returns ```Surface```
+      - ```getScreen```
+        - 获取```_screen```。
+        - returns ```Surface```
+      - ```getCamera```
+        - 获取```_camera```的最新位置。
+        - returns ```Vector```
+      - ```getOffset```
+        - 获取```_offset```。其实没什么用，因为不需要手动计算这个偏移。
+        - returns ```BlockVector```
+      - ```render```
+        - 渲染目标，不建议使用，因为值不好算，且效率低下。
+        - 你看代码里的注释吧，我懒得抄了。
+      - ```renderAtMap```
+        - 以地图渲染的比例渲染目标。一般只用于渲染地图。
+        - 手动调用比较少，调用Texture里的renderAtMap就好了。
+        - param ```src: Surface``` 渲染来源Surface。
+        - param ```mapPoint: Vector``` 地图上的位置坐标。
+        - param ```fromPos: Vector | None``` 裁切源src的起始点。默认```None```不裁切。
+        - param ```fromSize: Vector | None``` 裁切源src的大小。默认```None```不裁切。
+      - ```renderAsBlock```
+        - 作为方块渲染。会与```RenderAtMap```的计算方式稍有不同，但是意思都一样。
+      - ```renderString```
+        - 渲染字符串。
+        - param ```text: RenderableString``` 要渲染的字符串。
+        - param ```x: int``` 渲染参考点
+        - param ```y: int``` 渲染参考点
+        - param ```defaultColor: int``` 默认颜色，0xAARRGGBB
+        - param ```location: Location``` 渲染位置，默认为左上角。参考点是RIGHT，那么就是要渲染的字符串右侧纵向中心点与参考点重合。反正就是这个意思。
+      - ```push```
+      - ```pop```
+      - ```setScale```
+        - 目前都没用。
+      - ```setUiScale```
+        - 设置UI缩放比例。
+        - param ```scl: float``` 设置值。
+      - ```setSystemScale```
+        - 设置系统缩放比例。
+        - param ```scl: int``` 设置值。
+      - ```getSystemScale```
+        - 获取当前系统缩放比例。
+        - returns ```float```
+      - ```setCustomMapScale```
+        - 设置地图缩放比例。
+        - param ```scl: float``` 设置值。
+      - ```getCustomMapScale```
+        - 获取当前_customMapScale。
+        - returns ```float```
+      - ```getMapScale```
+        - 获取当前_mapScale。
+        - returns ```float```
+      - 后面的懒得写了。基本上都不需要手动调用。
+
+</details>
+
+

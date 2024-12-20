@@ -1,3 +1,4 @@
+import time
 import types
 from sys import stdout, stderr
 import traceback
@@ -167,4 +168,13 @@ def prints(func):
 		utils.trace(s + f', ret = {ret}')
 		return ret
 	
+	return wrapper
+
+
+def times(func):
+	def wrapper(*args, **kwargs):
+		ns = time.perf_counter_ns()
+		ret = func(*args, **kwargs)
+		utils.trace(f'{func.__name__} takes {(time.perf_counter_ns() - ns) / 1e6} ms')
+		return ret
 	return wrapper

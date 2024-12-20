@@ -31,9 +31,11 @@ def renderThread():
 		try:
 			nowRender = time.perf_counter_ns()
 			if nowRender - lastRender >= 5_000_000:
-				if renderer.dealMapScaleChange():
-					resourceManager.changeMapScale()
-					font.setScale(renderer.getSystemScale() * 0.5)
+				if renderer.peekScaleChange():
+					resourceManager.changeScale()
+					if renderer.systemScaleChanged():
+						font.setScale(renderer.getSystemScale() * 0.6)
+					renderer.dealScaleChange()
 				game.render((nowRender - lastTick) / 60_000_000)
 				lastRender = nowRender
 				count += 1
@@ -99,8 +101,6 @@ def mainThread():
 	# 游戏初始化
 	renderer.setScreen(screen)
 	font.initializeFont()
-	player: Player = Player('Anonymous')
-	renderer.cameraAt(player)
 	game.setWindow(StartWindow())
 	game.floatWindow = FloatWindow()
 	# 游戏初始化

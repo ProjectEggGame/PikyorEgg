@@ -91,14 +91,18 @@ class Renderer:
 		self._camera: SynchronizedStorage[Vector] = SynchronizedStorage[Vector](Vector(0.0, 0.0))
 		self._cameraAt: Union['Entity', None] = None
 		
-		self._systemScale: int = 16  # 方块基本是16px
-		self._customMapScale: int = 16
+		self._systemScale: int = 1  # 系统窗口导致的缩放
+		self._systemScaleChanged: bool = True
+		self._mapScale: int = 1  # 自定义的地图缩放
 		self._mapScaleChanged: bool = True
+		self._uiScale: int = 1  # UI单独的缩放
+		self._uiScaleChanged: bool = True
 		
 		self._offset: BlockVector = BlockVector(0, 0)
 		self._presentOffset: BlockVector = BlockVector(0, 0)
 		
-		self._customScale: float = 1.0
+		self._customMapScale: float = 1.0
+		self._customUiScale: float = 1.0
 		self._is4to3: SynchronizedStorage[bool] = SynchronizedStorage[bool](True)
 	
 	def ready(self) -> bool:
@@ -149,10 +153,10 @@ class Renderer:
 		if self._isRendering:
 			raise IllegalStatusException("尝试开始绘制，但是绘制已经开始。")
 		if noWindow and interact.scroll.peekScroll() != 0:
-			newScale = self._customScale * (0.8 ** interact.scroll.dealScroll())
+			newScale = self._customMapScale * (0.8 ** interact.scroll.dealScroll())
 			newScale = utils.frange(newScale, 0.5, 8)
-			if newScale != self._customScale:
-				self._customScale = newScale
+			if newScale != self._customMapScale:
+				self._customMapScale = newScale
 				self._mapScaleChanged = True
 		self._isRendering = True
 		# begin apply sync
@@ -243,16 +247,16 @@ class Renderer:
 		self.assertRendering()
 		dst = self._canvas
 		if fromPos is None or fromSize is None:
-			dst.blit(src, self._canvasCenter.clone().add((mapPoint - self._camera.get()).subtract(0.5, 0.5).multiply(self._customMapScale).getBlockVector()).getTuple())
+			dst.blit(src, self._canvasCenter.clone().add((mapPoint - self._camera.get()).subtract(0.5, 0.5).multiply(self._mapScale).getBlockVector()).getTuple())
 		else:
-			dst.blit(src, self._canvasCenter.clone().add((mapPoint + fromPos - self._camera.get()).subtract(0.5, 0.5).multiply(self._customMapScale).getBlockVector()).getTuple(), (fromPos.x, fromPos.y, fromSize.x, fromSize.y))
+			dst.blit(src, self._canvasCenter.clone().add((mapPoint + fromPos - self._camera.get()).subtract(0.5, 0.5).multiply(self._mapScale).getBlockVector()).getTuple(), (fromPos.x, fromPos.y, fromSize.x, fromSize.y))
 	
 	def renderAsBlock(self, src: Surface, mapPoint: Vector, fromPos: Vector | None = None, fromSize: Vector | None = None):
 		self.assertRendering()
 		if fromPos is None or fromSize is None:
-			self._canvas.blit(src, self._canvasCenter.clone().add((mapPoint - self._camera.get()).multiply(self._customMapScale).getBlockVector()).getTuple())
+			self._canvas.blit(src, self._canvasCenter.clone().add((mapPoint - self._camera.get()).multiply(self._mapScale).getBlockVector()).getTuple())
 		else:
-			self._canvas.blit(src, self._canvasCenter.clone().add((mapPoint + fromPos - self._camera.get()).multiply(self._customMapScale).getBlockVector()).getTuple(), (fromPos.x, fromPos.y, fromSize.x, fromSize.y))
+			self._canvas.blit(src, self._canvasCenter.clone().add((mapPoint + fromPos - self._camera.get()).multiply(self._mapScale).getBlockVector()).getTuple(), (fromPos.x, fromPos.y, fromSize.x, fromSize.y))
 	
 	def renderString(self, text: RenderableString, x: int, y: int, defaultColor: int, location: Location = Location.LEFT_TOP) -> None:
 		"""
@@ -306,35 +310,63 @@ class Renderer:
 		self.assertRendering()
 		self._renderStack[-1].scale = scl
 		self._updateOffset()
+		
+	def setUiScale(self, scl: float) -> None:
+		self._customUiScale = scl
+		self._uiScaleChanged = True
 	
 	def setSystemScale(self, scl: int) -> None:
 		self._systemScale = int(scl)
+		self._systemScaleChanged = True
+		self._uiScaleChanged = True
 		self._mapScaleChanged = True
 	
 	def getSystemScale(self) -> float:
 		return self._systemScale
 	
-	def setCustomScale(self, scl: float) -> None:
-		self._customScale = scl
+	def setCustomMapScale(self, scl: float) -> None:
+		self._customMapScale = scl
 		self._mapScaleChanged = True
 	
-	def getCustomScale(self) -> float:
-		return self._customScale
-	
-	def getMapScale(self) -> float:
+	def getCustomMapScale(self) -> float:
 		return self._customMapScale
 	
-	def dealMapScaleChange(self) -> bool:
+	def getMapScale(self) -> float:
+		return self._mapScale
+	
+	def peekScaleChange(self) -> bool:
 		"""
 		应当仅在main.py, renderThread中调用
 		:return:
 		"""
+		flag = False
 		if self._mapScaleChanged:
-			self._customMapScale = int(self._customScale * self._systemScale)
-			self._mapScaleChanged = False
-			return True
-		else:
-			return False
+			self._mapScale = int(self._customMapScale * self._systemScale)
+			flag = True
+		if self._uiScaleChanged:
+			self._uiScale = int(self._customUiScale * self._systemScale)
+			flag = True
+		if self._systemScaleChanged:
+			flag = True
+		return flag
+	
+	def uiScaleChanged(self) -> bool:
+		return self._uiScaleChanged
+	
+	def systemScaleChanged(self) -> bool:
+		return self._systemScaleChanged
+	
+	def mapScaleChanged(self) -> bool:
+		return self._mapScaleChanged
+
+	def dealScaleChange(self) -> None:
+		"""
+		应当仅在main.py, renderThread中调用
+		:return:
+		"""
+		self._uiScaleChanged = False
+		self._systemScaleChanged = False
+		self._mapScaleChanged = False
 	
 	def mapScaleSurface(self, s: Surface, size_x: int | float | None = None, size_y: int | float | None = None) -> Surface:
 		"""
@@ -345,12 +377,15 @@ class Renderer:
 		:return: 缩放后的表面
 		"""
 		return pygame.transform.scale(s, (
-			self._customMapScale if size_x is None else (self._customMapScale * size_x) // 16,
-			self._customMapScale if size_y is None else (self._customMapScale * size_y) // 16
+			self._mapScale if size_x is None else (self._mapScale * size_x) // 16,
+			self._mapScale if size_y is None else (self._mapScale * size_y) // 16
 		))
 	
 	def uiScaleSurface(self, s: Surface) -> Surface:
-		return pygame.transform.scale(s, (self._renderStack[-1].scale * s.get_size()[0], self._renderStack[-1].scale * s.get_size()[1]))
+		return pygame.transform.scale_by(s, self._uiScale)
+	
+	def systemScaleSurface(self, s: Surface, off: float) -> Surface:
+		return pygame.transform.scale_by(s, self._systemScale * off)
 	
 	def padding(self, pad: int | float) -> None:
 		self.assertRendering()
@@ -367,12 +402,12 @@ class Renderer:
 	def readConfig(self, config: dict[str, any]) -> None:
 		self._is4to3.set(configs.readElseDefault(config, "screenSize", False, {"4:3": True, "16:9": False}, "screenSize: {} is not supported. Using 4:3."))
 		self._is4to3.apply(self._is4to3.getNew())
-		self.setCustomScale(configs.readElseDefault(config, "customScale", 1, lambda f: utils.frange(f, 0.5, 8)))
+		self.setCustomMapScale(configs.readElseDefault(config, "customScale", 1, lambda f: utils.frange(f, 0.5, 8)))
 		
 	def writeConfig(self) -> dict[str, any]:
 		return {
 			"screenSize": "4:3" if self._is4to3.get() else "16:9",
-			"customScale": self._customScale,
+			"customScale": self._customMapScale,
 		}
 
 

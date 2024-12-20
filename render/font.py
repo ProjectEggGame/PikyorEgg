@@ -1,7 +1,7 @@
 import pygame.font
 from pygame import Surface
 
-from utils import utils
+from utils import utils, times
 
 fontHeight: int = 30
 
@@ -34,17 +34,43 @@ class Font:
 		self._font.set_strikethrough(strikeThrough)
 		return self._font
 	
-	def draw(self, screen: Surface, string: str, x: int, y: int, color: int, bold: bool, italic: bool, underline: bool, strikeThrough: bool) -> int:
-		if color & 0xffffff != 0:
-			surface: Surface = self.get(bold, italic, underline, strikeThrough).render(string, True, ((color >> 16) & 0xff, (color >> 8) & 0xff, color & 0xff))
-			surface.set_colorkey((0, 0, 0))
+	def draw(self, screen: Surface, string: str, x: int, y: int, color: int, bold: bool, italic: bool, underline: bool, strikeThrough: bool, background: int) -> int:
+		if (color & 0xffffff) != (background & 0xffffff):
+			bg = ((background >> 16) & 0xff, (background >> 8) & 0xff, background & 0xff)
+			surface: Surface = self.get(bold, italic, underline, strikeThrough).render(string, True, ((color >> 16) & 0xff, (color >> 8) & 0xff, color & 0xff), bg)
+			surface.set_colorkey(bg)
 			surface.set_alpha(color >> 24)
+			if background & 0xff000000 != 0:
+				bgs = Surface(surface.get_size())
+				bgs.fill(bg)
+				bgs.set_alpha(background >> 24)
+				screen.blit(bgs, (x, y - self._scaledOffset))
 		else:
-			surface: Surface = self.get(bold, italic, underline, strikeThrough).render(string, True, ((color >> 16) & 0xff, (color >> 8) & 0xff, color & 0xff), (0xff, 0xff, 0xff))
-			surface.set_colorkey((0xff, 0xff, 0xff))
+			bg1 = ((background >> 16) & 0xff, (background >> 8) & 0xff, background & 0xff)
+			bg = [(background >> 16) & 0xff, (background >> 8) & 0xff, background & 0xff]
+			if bg[0] < 128:
+				bg[0] += 60
+			else:
+				bg[0] -= 60
+			if bg[1] < 128:
+				bg[1] += 60
+			else:
+				bg[1] -= 60
+			if bg[2] < 128:
+				bg[2] += 60
+			else:
+				bg[2] -= 60
+			bg = (bg[0], bg[1], bg[2])
+			surface: Surface = self.get(bold, italic, underline, strikeThrough).render(string, True, ((color >> 16) & 0xff, (color >> 8) & 0xff, color & 0xff), bg)
+			surface.set_colorkey(bg)
 			surface.set_alpha(color >> 24)
+			if background & 0xff000000 != 0:
+				bgs = Surface(surface.get_size())
+				bgs.fill(bg1)
+				bgs.set_alpha(background >> 24)
+				screen.blit(bgs, (x, y - self._scaledOffset))
 		screen.blit(surface, (x, y - self._scaledOffset))
-		return surface.get_size()[0]
+		return surface.get_width()
 	
 	def setHeight(self, h: int) -> None:
 		self._file.close()
@@ -60,6 +86,7 @@ class Font:
 allFonts: dict[int, Font] = {}
 
 
+@times
 def setScale(scale: float) -> None:
 	global fontHeight
 	fontHeight = int(scale)
@@ -69,15 +96,11 @@ def setScale(scale: float) -> None:
 
 def initializeFont() -> None:
 	allFonts[0] = Font('./assets/font/stsong.ttf', 19)
-	allFonts[1] = Font('./assets/font/stz.ttf', 20)
-	allFonts[2] = Font('./assets/font/sword_art_online.ttf')
-	allFonts[3] = Font('./assets/font/yumindb.ttf', 2)
-	allFonts[4] = Font('./assets/font/jetbrains.ttf', 18)
+	allFonts[1] = Font('./assets/font/sword_art_online.ttf')
+	allFonts[2] = Font('./assets/font/yumindb.ttf', 2)
 	allFonts[10] = Font('./assets/font/stsong.ttf', 19, True)
-	allFonts[11] = Font('./assets/font/stz.ttf', 20, True)
-	allFonts[12] = Font('./assets/font/sword_art_online.ttf', True)
-	allFonts[13] = Font('./assets/font/yumindb.ttf', 2, True)
-	allFonts[14] = Font('./assets/font/jetbrains.ttf', 18, True)
+	allFonts[11] = Font('./assets/font/sword_art_online.ttf', True)
+	allFonts[12] = Font('./assets/font/yumindb.ttf', 2, True)
 
 
 def finalize() -> None:

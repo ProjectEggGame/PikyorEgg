@@ -80,9 +80,10 @@ class Widget(Renderable):
 			colorSelector = self.color.inactive if not self.active else self.color.active if not self._isMouseIn else self.color.hovering
 			head = colorSelector & 0xff000000
 			colorSelector -= head
+			colorSelector = ((colorSelector >> 16) & 0xff, (colorSelector >> 8) & 0xff, colorSelector & 0xff)
 			if head == 0xff000000:
 				renderer.getCanvas().fill(colorSelector, (self._x, self._y, self._w, self._h))
-			else:
+			elif head != 0:
 				s = Surface((self._w, self._h))
 				s.fill(colorSelector)
 				s.set_alpha(head >> 24)

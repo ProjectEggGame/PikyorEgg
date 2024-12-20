@@ -14,6 +14,6 @@ def processKeys():
 		utils.info(interact.mouse)
 	if interact.keys[pygame.K_SPACE].deal():
 		if renderer.getCameraAt() is None:
-			renderer.cameraAt(game.mainWorld.getPlayer())
+			renderer.cameraAt(game.getWorld().getPlayer())
 		else:
 			renderer.cameraAt(None)

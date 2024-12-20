@@ -14,7 +14,7 @@ if TYPE_CHECKING:
 
 class Game:
 	def __init__(self):
-		self.mainWorld: Union['World', None] = None
+		self._mainWorld: Union['World', None] = None
 		self.running: bool = True
 		self.tickCount: int = 0
 		self._window: SynchronizedStorage[Union['Window', None]] = SynchronizedStorage[Union['Window', None]](None)
@@ -26,8 +26,8 @@ class Game:
 			self._window.get().passTick()
 			notPause = not self._window.get().pauseGame()
 		self._window.apply(self._window.getNew())
-		if self.mainWorld is not None and notPause:
-			self.mainWorld.tick()
+		if self._mainWorld is not None and notPause:
+			self._mainWorld.tick()
 		self.processMouse()
 	
 	def render(self, delta: float) -> None:
@@ -40,9 +40,9 @@ class Game:
 			delta = 1
 		if delta < 0:
 			delta = 0
-		renderer.begin(delta, self._window is None)
-		if self.mainWorld is not None:
-			self.mainWorld.passRender(delta)
+		renderer.begin(delta, self._window.get() is None)
+		if self._mainWorld is not None:
+			self._mainWorld.passRender(delta)
 		if self._window.get() is not None:
 			self._window.get().passRender(delta)
 		if self.floatWindow is not None:
@@ -57,6 +57,14 @@ class Game:
 	def getWindow(self) -> Union['Window', None]:
 		return self._window.getNew()
 	
+	def setWorld(self, world: Union['World', None]) -> None:
+		self._mainWorld = world
+		if world is None:
+			renderer.cameraAt(None)
+	
+	def getWorld(self) -> Union['World', None]:
+		return self._mainWorld
+		
 	def quit(self) -> None:
 		self.running = False
 	

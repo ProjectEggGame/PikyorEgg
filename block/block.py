@@ -144,7 +144,7 @@ class GrassBlock(Ground):
 
 class PathBlock(Ground):
 	def __init__(self, position: 'BlockVector'):
-		super().__init__('nature.path', "草陉", Description([RenderableString("\\#FF4BAB25土黄色的道路")]), position, resourceManager.getOrNew('block/path'))
+		super().__init__('nature.path', "草径", Description([RenderableString("\\#FF4BAB25土黄色的道路")]), position, resourceManager.getOrNew('block/path'))
 	
 	@classmethod
 	def load(cls, d: dict, block=None) -> 'PathBlock':

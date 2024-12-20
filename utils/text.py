@@ -24,7 +24,7 @@ class InnerStringConfig:
 	def __init__(self):
 		self.string: str | None = None
 		self.color: int = 0x1_ffff_ffff  # 多打一个一是为了后面的“默认颜色”用的
-		self.background: int = 0xffffffff
+		self.background: int = 0
 		self.font: int = 0
 		self.italic: bool = False
 		self.bold: bool = False
@@ -32,12 +32,12 @@ class InnerStringConfig:
 		self.underline: bool = False
 		
 	def renderAt(self, screen: Surface, x: int, y: int, defaultColor: int) -> int:
-		dx = font.allFonts[self.font].draw(screen, self.string, x, y, defaultColor if self.color == 0x1_ffff_ffff else self.color, self.bold, self.italic, self.underline, self.delete)
+		dx = font.allFonts[self.font].draw(screen, self.string, x, y, defaultColor if self.color == 0x1_ffff_ffff else self.color, self.bold, self.italic, self.underline, self.delete, self.background)
 		return x + dx
 	
 	def renderSmall(self, screen: Surface, x: int, y: int, defaultColor: int) -> int:
 		smallFont = self.font if self.font >= 10 else self.font + 10
-		dx = font.allFonts[smallFont].draw(screen, self.string, x, y, defaultColor if self.color == 0x1_ffff_ffff else self.color, self.bold, self.italic, self.underline, self.delete)
+		dx = font.allFonts[smallFont].draw(screen, self.string, x, y, defaultColor if self.color == 0x1_ffff_ffff else self.color, self.bold, self.italic, self.underline, self.delete, self.background)
 		return x + dx
 	
 	def clone(self) -> 'InnerStringConfig':
@@ -83,7 +83,7 @@ class RenderableString:
 	用于风格化字符串输出。以反斜线开头
 	\\#AARRGGBB
 	\\.AARRGGBB背景色
-	\\f<fontName>
+	\\xx
 	\\-删除线
 	\\_下划线
 	\\/斜体
@@ -154,14 +154,14 @@ class RenderableString:
 				case '0':
 					config.font = 0
 					if len(i) >= 1:
-						if ord('0') <= ord(i[1]) <= ord('4'):
+						if ord('0') <= ord(i[1]) <= ord('2'):
 							config.font = int(i[1])
 					if len(i) >= 2:
 						config.appendString(i[2:])
 				case '1':
 					config.font = 1
 					if len(i) >= 1:
-						if ord('0') <= ord(i[1]) <= ord('4'):
+						if ord('0') <= ord(i[1]) <= ord('2'):
 							config.font = int(i[1]) + 10
 					if len(i) >= 2:
 						config.appendString(i[2:])

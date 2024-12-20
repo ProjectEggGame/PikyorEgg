@@ -4,24 +4,47 @@ import pygame.image
 from pygame import Surface
 from utils.vector import Vector
 from render.renderer import renderer
-from utils import utils
+from utils import utils, times
 
 
 # 锁定窗口比例，要么4:3，要么16:9。主要按高度分配
 
+
 class Texture:
 	"""
-	注意，资源渲染的计算方式不同。如果是基于地图渲染，请使用renderAtMap，会根据game.camera等自动计算相对位置。Point给出相对于地图的位置。如果是基于屏幕渲染，例如额外窗口、UI部分，请使用renderAtInterface，会自动适应margin等，Point给出浮点数的屏幕相对
+	注意，资源渲染的计算方式不同。如果是基于地图渲染，请使用renderAtMap，会根据game.camera等自动计算相对位置。Vector给出相对于地图的位置。如果是基于屏幕渲染，例如额外窗口、UI部分，请使用renderAtInterface，会自动适应margin等，并采用Vector给出浮点数的屏幕相对值。
 	"""
 	
 	def __init__(self, file: str):
+		self._mapObject: bool = True
+		self._uiObject: bool = False
+		self._systemObject: bool = False
 		self._file = open(f'assets/texture/{file}.bmp', 'rb')
 		self._surface: Surface = pygame.image.load_basic(self._file)
-		self._mapScaled: Surface = renderer.mapScaleSurface(self._surface)
+		self._systemScaleOffset: float = 0.025
+		self._mapScaled: Surface | None = renderer.mapScaleSurface(self._surface) if self._mapObject else None
+		self._uiScaled: Surface | None = None
+		self._systemScaled: Surface | None = None
 		self._offset: Vector | None = None
 	
+	def adaptsMap(self, val: bool = True) -> None:
+		if self._mapObject != val:
+			self._mapObject = val
+			self._mapScaled: Surface | None = renderer.mapScaleSurface(self._surface)
+	
+	def adaptsUI(self, val: bool = True) -> None:
+		if self._uiObject != val:
+			self._uiObject = val
+			self._uiScaled: Surface | None = renderer.uiScaleSurface(self._surface)
+	
+	def adaptsSystem(self, val: bool = True) -> None:
+		if self._systemObject != val:
+			self._systemObject = val
+			self._systemScaled: Surface | None = renderer.systemScaleSurface(self._surface, self._systemScaleOffset)
+	
 	def renderAtInterface(self, at: Vector) -> None:
-		renderer.render(self._surface, 0, 0, self._surface.get_width(), self._surface.get_height(), renderer.getCanvas().get_size()[0] * at.x, renderer.getCanvas().get_size()[0] * at.y)
+		s = self._uiScaled if self._uiScaled is not None else self._systemScaled if self._systemScaled is not None else self._surface
+		renderer.getCanvas().blit(s, (0, 0))
 	
 	def renderAsBlock(self, at: Vector, fromPos: Vector | None = None, fromSize: Vector | None = None):
 		"""
@@ -31,8 +54,8 @@ class Texture:
 		:param fromSize: 源图截取大小
 		:return:
 		"""
-		renderer.renderAsBlock(self._mapScaled, at if self._offset is None else at + self._offset, fromPos, fromSize)
-		
+		renderer.renderAsBlock(self._mapScaled if self._mapScaled is not None else self._surface, at if self._offset is None else at + self._offset, fromPos, fromSize)
+	
 	def renderAtMap(self, at: Vector, fromPos: Vector | None = None, fromSize: Vector | None = None):
 		"""
 		相对于地图渲染
@@ -41,10 +64,19 @@ class Texture:
 		:param fromSize: 源图截取大小
 		:return:
 		"""
-		renderer.renderAtMap(self._mapScaled, at if self._offset is None else at + self._offset, fromPos, fromSize)
+		renderer.renderAtMap(self._mapScaled if self._mapScaled is not None else self._surface, at if self._offset is None else at + self._offset, fromPos, fromSize)
 	
 	def changeMapScale(self) -> None:
-		self._mapScaled = renderer.mapScaleSurface(self._surface)
+		if self._mapObject:
+			self._mapScaled = renderer.mapScaleSurface(self._surface)
+	
+	def changeUiScale(self) -> None:
+		if self._uiObject:
+			self._uiScaled = renderer.uiScaleSurface(self._surface)
+	
+	def changeSystemScale(self) -> None:
+		if self._systemObject:
+			self._systemScaled = renderer.systemScaleSurface(self._surface, self._systemScaleOffset)
 	
 	def getSurface(self) -> Surface:
 		"""
@@ -57,6 +89,12 @@ class Texture:
 		获取适应过地图缩放的pygame的Surface。除非必要，尽可能地不要修改Surface
 		"""
 		return self._mapScaled
+	
+	def getUiScaledSurface(self) -> None:
+		"""
+		获取适应过UI缩放的pygame的Surface。除非必要，尽可能地不要修改Surface
+		"""
+		return self._uiScaled
 	
 	def setOffset(self, offset: Vector | None) -> None:
 		"""
@@ -110,11 +148,25 @@ class ResourceManager:
 	def changeMapScale(self) -> None:
 		"""
 		仅在main.py, renderThread中调用
-		:return:
 		"""
 		self._lock.acquire()
 		for texture in self._textures.values():
 			texture.changeMapScale()
+		self._lock.release()
+	
+	@times
+	def changeScale(self) -> None:
+		"""
+		仅在main.py, renderThread中调用
+		"""
+		self._lock.acquire()
+		for texture in self._textures.values():
+			if renderer.uiScaleChanged():
+				texture.changeUiScale()
+			if renderer.systemScaleChanged():
+				texture.changeSystemScale()
+			if renderer.mapScaleChanged():
+				texture.changeMapScale()
 		self._lock.release()
 
 

@@ -1,3 +1,5 @@
-from utils.text import RenderableString
+from utils.vector import Vector
 
-print(RenderableString('\\00P\\01i\\02k\\03y\\04o\\00r \\01E\\02g\\03g\\04!').__str__())
+v1: Vector = Vector(1, 3)
+v2: Vector = Vector(2, 1)
+print(v2 - v1)

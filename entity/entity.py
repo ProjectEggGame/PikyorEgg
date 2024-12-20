@@ -36,7 +36,7 @@ class Entity(Element):
 		if (vLength := self._setVelocity.length()) == 0:
 			self.__velocity.set(0, 0)
 			return
-		rayTraceResult: list[tuple[Union['Block', BlockVector], Vector]] = game.mainWorld.rayTraceBlock(self._position, self._setVelocity, vLength)
+		rayTraceResult: list[tuple[Union['Block', BlockVector], Vector]] = game.getWorld().rayTraceBlock(self._position, self._setVelocity, vLength)
 		for block, vector in rayTraceResult:
 			block: Union['Block', BlockVector]  # 命中方块，或者命中方块坐标
 			vector: Vector  # 起始点->命中点
@@ -52,7 +52,7 @@ class Entity(Element):
 				continue
 			elif isinstance(rel, BlockVector):  # 撞边不撞角
 				vel2: Vector = (Matrices.xOnly if rel.x == 0 else Matrices.yOnly) @ newVelocity
-				for b, v in game.mainWorld.rayTraceBlock(newPosition, vel2, vel2.length()):
+				for b, v in game.getWorld().rayTraceBlock(newPosition, vel2, vel2.length()):
 					if not isinstance(b, BlockVector):
 						if b.canPass(self):
 							continue
@@ -61,7 +61,7 @@ class Entity(Element):
 					grb = b.getRelativeBlock(newPosition + v, v)
 					if not isinstance(grb, list) or len(grb) == 0:
 						continue
-					b2 = game.mainWorld.getBlockAt(grb[0][0])
+					b2 = game.getWorld().getBlockAt(grb[0][0])
 					if b2 is None or not b2.canPass(self):
 						self.__velocity.set(vector + v)
 						return
@@ -73,7 +73,7 @@ class Entity(Element):
 				continue  # 不影响移动
 			else:  # 撞角
 				if len(rel) == 1:  # 碰一边
-					relativeBlock: Union['Block', None] = game.mainWorld.getBlockAt(rel[0][0])
+					relativeBlock: Union['Block', None] = game.getWorld().getBlockAt(rel[0][0])
 					if relativeBlock is None or not relativeBlock.canPass(self):  # 碰一边，然后恰好撞墙
 						self.__velocity.set(vector)
 					else:
@@ -82,9 +82,9 @@ class Entity(Element):
 				# 碰一边处理结束，顶角处理开始
 				# 都能过的话，无脑，0优先。
 				# 然后这里好像还要再trace一次新的方向看看
-				relativeBlock: Union['Block', None] = game.mainWorld.getBlockAt(rel[0][0])
+				relativeBlock: Union['Block', None] = game.getWorld().getBlockAt(rel[0][0])
 				if relativeBlock is not None and relativeBlock.canPass(self):  # 0能过，trace新方向
-					for b, v in game.mainWorld.rayTraceBlock(newPosition, rel[0][1], rel[0][1].length()):
+					for b, v in game.getWorld().rayTraceBlock(newPosition, rel[0][1], rel[0][1].length()):
 						if not isinstance(b, BlockVector):
 							if b.canPass(self):
 								continue
@@ -93,7 +93,7 @@ class Entity(Element):
 						grb = b.getRelativeBlock(newPosition + v, v)
 						if not isinstance(grb, list) or len(grb) == 0:
 							continue
-						b2 = game.mainWorld.getBlockAt(grb[0][0])
+						b2 = game.getWorld().getBlockAt(grb[0][0])
 						if b2 is None or not b2.canPass(self):
 							self.__velocity.set(vector + v)
 							return
@@ -101,9 +101,9 @@ class Entity(Element):
 					# 退出for循环，说明全部通过
 					self.__velocity.set(vector + rel[0][1])
 					return
-				relativeBlock = game.mainWorld.getBlockAt(rel[1][0])
+				relativeBlock = game.getWorld().getBlockAt(rel[1][0])
 				if relativeBlock is not None and relativeBlock.canPass(self):  # 1能过，trace新方向
-					for b, v in game.mainWorld.rayTraceBlock(newPosition, rel[1][1], rel[1][1].length()):
+					for b, v in game.getWorld().rayTraceBlock(newPosition, rel[1][1], rel[1][1].length()):
 						if not isinstance(b, BlockVector):
 							if b.canPass(self):
 								continue
@@ -112,7 +112,7 @@ class Entity(Element):
 						grb = b.getRelativeBlock(newPosition + v, v)
 						if not isinstance(grb, list) or len(grb) == 0:
 							continue
-						b2 = game.mainWorld.getBlockAt(grb[0][0])
+						b2 = game.getWorld().getBlockAt(grb[0][0])
 						if b2 is None or not b2.canPass(self):
 							self.__velocity.set(vector + v)
 							return
@@ -268,9 +268,6 @@ class Player(Entity):
 			if interact.keys[pygame.K_d].peek():
 				v.add(1, 0)
 		self.setVelocity(v.normalize().multiply(self._maxSpeed))
-	
-	def save(self) -> dict:
-		return super().save()
 	
 	@classmethod
 	def load(cls, d: dict, entity=None) -> 'Player':
