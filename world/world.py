@@ -67,7 +67,7 @@ class World(Renderable):
 	def removeEntity(self, entity: 'Entity') -> None:
 		self._entityList.remove(entity)
 	
-	def getBlockAt(self, point: Vector | BlockVector) -> None:
+	def getBlockAt(self, point: Vector | BlockVector) -> Block | None:
 		return self._ground.get(hash(point if isinstance(point, BlockVector) else point.clone().getBlockVector()))
 	
 	def setBlockAt(self, point: BlockVector, block: Block) -> Block | None:

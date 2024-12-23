@@ -28,3 +28,7 @@ class Archive:
 	
 	def close(self) -> None:
 		self._file.close()
+	
+	def __del__(self):
+		if not self._file.closed:
+			self.close()

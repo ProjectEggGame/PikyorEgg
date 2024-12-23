@@ -57,9 +57,9 @@ class Window(Renderable):
 	
 	def passRender(self, delta: float, at: Vector | None = None) -> None:
 		self.renderBackground(delta)
-		for widget in self._widgets:
-			widget.passRender(delta)
 		self.render(delta)
+		for widget in reversed(self._widgets):
+			widget.passRender(delta)
 	
 	def passMouseMove(self, x: int, y: int) -> None:
 		for widget in self._widgets:

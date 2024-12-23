@@ -500,7 +500,557 @@
         - 获取当前_mapScale。
         - returns ```float```
       - 后面的懒得写了。基本上都不需要手动调用。
+- resource.py文件
+  - ```class Texture```
+    - 管理纹理资源，包含了文件的管理。
+    - 不建议直接通过```t = Texture()```来创建新的纹理，应当使用```textureManager.getOrNew()```。
+    - 成员变量：
+      - ```_mapObject: bool``` 默认为```True```，标记是否应当根据renderer的mapScale调整。参考```adaptsMap()```函数。
+      - ```_uiObject: bool``` 默认为```False```，标记是否应当根据renderer的uiScale调整。参考```adaptsUI()```函数。
+      - ```_systemObject: bool``` 默认为```False```，标记是否应当根据renderer的systemScale调整。参考```adaptsSystem()```函数。
+      - ```_file``` python的文件对象。
+      - ```_surface: Surface``` 原图的Surface。
+      - ```_systemScaleOffset: float``` 如果只根据systemScale调整，则额外应用这个offset作为一个系数。
+      - ```_mapScaled: Surface | None``` 根据mapScale调整后的Surface。
+      - ```_uiScaled: Surface | None``` 根据uiScale调整后的Surface。
+      - ```_systemScaled: Surface | None``` 根据systemScale调整后的Surface。
+      - ```_offset: Vector | None``` 渲染时的偏移。按照源图的像素为单位。大概吧，我也忘了，用到了再说。
+    - 成员函数：
+      - ```adaptsMap```
+        - 调整该纹理是否应当适应地图缩放比例而改变。
+        - param ```adapts: bool``` 是否应当适应地图缩放比例而改变。
+        - 注意，如果置False，那么调用```renderAtMap```和```renderAsBlock```时可能会报错。
+      - ```adaptsUI```
+        - 调整该纹理是否应当适应UI缩放比例而改变。
+        - param ```adapts: bool``` 是否应当适应UI缩放比例而改变。
+        - 注意，如果置False，那么调用```renderAtInterface```时会优先使用```_uiScaled```，如果没有，则使用```_systemScaled```，再没有，则使用```_surface```。
+      - ```adaptsSystem```
+        - 调整该纹理是否应当适应系统缩放比例而改变。
+        - param ```adapts: bool``` 是否应当适应系统缩放比例而改变。
+        - 注意，如果置False，那么调用```renderAtInterface```时会优先使用```_systemScaled```，如果没有，则使用```_surface```。
+      - ```renderAtInterface```
+        - 以UI的方式渲染到屏幕上。
+        - param ```at: Vector``` 指定渲染左上角起点。目前没用，要用找EmsiaetKadosh。
+      - ```renderAsBlock```
+        - 以地图地板的方式渲染到屏幕上。
+        - param ```at: Vector``` 在地图上的位置。
+        - param ```fromPos: Vector | None``` 默认None，源图截取起点。
+        - param ```fromSize: Vector | None``` 默认None，源图截取大小。
+        - 注意，如果```_mapScaled```为```None```，那么可能会报错。
+      - ```renderAtMap```
+        - 渲染到地图上。
+        - param ```at: Vector``` 在地图上的位置。
+        - param ```fromPos: Vector | None``` 默认None，源图截取起点。
+        - param ```fromSize: Vector | None``` 默认None，源图截取大小。
+        - 注意，如果```_mapScaled```为```None```，那么可能会报错。
+      - ```change***Scale```
+        - 用不到，不需要手动调用。用来在scale发生改变时刷新。
+      - ```getSurface```
+        - 获取```_surface```
+        - returns ```Surface```
+      - ```get***ScaledSurface```
+        - 获取对应调整过的Surface，可能为None。
+        - returns ```Surface | None```
+      - ```setOffset```
+        - 设置渲染时的偏移。
+        - param ```offset: Vector``` 偏移量。
+  - ```class ResourceManager```
+    - 管理所有的```Texture```对象。
+    - 成员变量：
+      - ```_lock: Lock``` 用于防止多线程冲突，内部自动处理。
+      - ```_textures: dict[str, Texture]``` 纹理字典，一般纹理ID就是对应的文件位置，去掉头的assets/texture/和尾的.bmp。
+    - 成员函数：
+      - ```getOrNew```
+        - 获取纹理对象，如果没有，则当场创建。
+        - 如果没有对应文件，则使用no_texture错误纹理。
+        - param ```key: str``` 即为文件位置，舍去assets/texture和.bmp。
+        - returns ```Texture```
+      - ```get```
+        - 直接获取资源。如果不存在，则抛错。
+        - 所以其实都建议使用```getOrNew```，这个函数就忘了吧
+        - param ```key: str``` 即为文件位置，舍去assets/texture和.bmp。
+        - raises ```KeyError``` 如果不存在。
+        - returns ```Texture```
+      - ```has```
+        - 检查是否存在对应的资源。
+        - param ```key: str``` 即为文件位置，舍去assets/texture和.bmp。
+        - returns ```bool```
+      - ```register```
+        - 直接注册一个资源。还是建议用```getOrNew```，这个函数也可以让它烂掉了。
+        - param ```key: str``` 即为文件位置，舍去assets/texture和.bmp。
+        - raises ```KeyError``` 如果已经存在。
+      - ```changeMapScale```
+      - ```ChangeScale```
+        - 不需要手动调用。
+  - 文件尾部的剩余代码：
+    - 创建了一个唯一的```resourceManager: ResourceManager```对象。不应创建其他同类对象，直接使用这个就行。
+- configs.py文件
+  - ```def readConfig```
+    - 自动调用。读取文件config.json。
+    - 需要使用的话，叨叨EmsiaetKadosh。
+    - 返回一个字典，键为配置名，值为配置值。
+  - ```def writeConfig```
+    - 自动调用。写入文件config.json。
+    - 需要使用的话，叨叨EmsiaetKadosh。
+    - param ```config: dict[str, Any]``` 写入字典。
+  - ```readElseDefault```
+    - 可以帮助读取配置文件。
+    - param ```dic: dict[str, Any]``` 配置字典。
+    - param ```key: str``` 键。
+    - param ```else_: Any``` 键的对应默认值。如果字典里没有这个值，则返回else_。
+    - param ```result_or_judgement: dict[any, any] | Callable[[any], any] | None``` 用来审判对应值是否合法。如果为dict，会将config.json中读取到的值作为键查找dict，返回对应的值；如果不存在，则会输出warningMessage；如果为Callable，则会调用这个函数。这个函数必须接受一个参数，为config.json中读取到的值，返回要设置成的值。如果是None，则直接返回config.json中读取到的值。
+    - param ```warningMessage: str | None``` 键不存在时的警告信息。```
+    - returns ```Any``` 读取到的类型。
+- save.py文件
+  - ```class Archive```
+    - 存档类。基本上不需要手动使用，直接重写类的```save()```和```@staticmethod load()```即可。
+    - 成员变量：
+      - ```dic``` 公开，存档字典。
+      - ```_name``` 存档名称。
+      - ```_file``` 存档文件。
+    - 成员函数
+      - ```read```
+        - 将文件读入存档字典。
+      - ```write```
+        - 将存档字典写入文件。
+      - ```close```
+        - 关闭文件。
 
 </details>
 
+<details><summary>utils/ 软件包</summary>
 
+- __init__.py文件
+  - ```class Utils```
+    - 唯一实例定义于文件尾。不需要创建额外实例。
+    - 成员变量：
+      - ```_lock: Lock``` 防止多线程输出文字的时候排版混乱。
+      - ```_logLevel: int``` 日志等级。可以在配置文件config.py中设置。
+    - 成员函数：
+      - ```__copyFromConfigs```
+        - @staticmethod
+        - 从configs.py中复制。因为会循环引用，所以不得不抄一份来。外部访问不了，外部要用直接用configs.py中的函数。
+      - ```readConfig```
+      - ```writeConfig```
+        - config相关，不需要手动调用。
+      - ```_output```
+        - 输出一些内容到控制台。
+        - 保护方法，外部不应直接使用。
+      - ```trace```
+      - ```debug```
+      - ```info```
+      - ```warn```
+      - ```error```
+        - 发送各个级别的信息到控制台。
+        - 如```print```那样使用。
+      - ```traceStack```
+        - 获取调用栈信息。
+        - param ```e: Exception``` 要分析的异常。
+        - param ```msg: str | None``` 附加在开头的信息。
+        - 如果你想知道某处的调用栈信息，你可以使用```traceStack(Exception())```，而不是```raise Exception()```，就可以在不抛错的情况下获知调用栈信息。
+      - ```printException```
+        - 一般在抛错后自动调用。
+        - 一般不需要手动调用。
+      - ```f***```
+        - 浮点数系列函数。
+        - 判断a和b的关系。
+        - 精度为1e-9。
+        - param ```a: float```
+        - param ```b: float```
+        - returns ```bool```
+  - ```def prints```
+    - 函数装饰器。用法是，在函数的定义处加入@符号使用。
+    - 不会对函数本体和返回值造成什么影响。
+    - 调用完成时，输出函数的入参和返回值。例如：
+```python
+from utils import prints
+@prints
+def func(*args, **kwagrs):
+	print(args[0])
+func(123, 234, 'hello', kw=('EmsiaetKadosh', 213))
+# 输出结果：
+# 123
+# [IKUN] [TRACE] args: (123, 234, 'hello'), kwargs: {'kw': ('EmsiaetKadosh', 213)}, ret = None
+```
+  - ```def times```
+    - 函数装饰器。用法是，在函数的定义处加入@符号使用。
+    - 不会对函数本体和返回值造成什么影响。
+    - 调用完成时，输出函数的运行时间。例如：
+```python
+from utils import times
+@times
+def func(*args, **kwagrs):
+	print(args[0])
+func(123, 234, 'hello', kw=('EmsiaetKadosh', 213))
+# 输出结果：
+# 123
+# [IKUN] [TRACE] func takes 0.0128 ms
+```
+- element.py文件
+  - ```class Element```
+    - 直接继承者```Block``` ```Entity``` ```Item```
+    - 所有的世界上的元素全部继承这个类。这个类现在不太需要被直接使用了，直接继承```Entity``` ```Block``` ```Item```之类的就行了。
+- error.py文件
+  - 存储一些自定义类型的错误。
+  - ```class InvalidOperationError```
+    - 提示代码上目前不能做这样的操作，不能调用这个函数等。
+  - ```class NullPointerException```
+    - 提示代码上传入了本不应该是None但是就是None的变量。
+  - ```class IllegalStatusException```
+    - 提示代码在进行某个操作时，某个状态不正确，例如在渲染期间执行了非渲染期间限定的操作。
+  - ```class CodeBasedException```
+    - 提示在写代码时，可能应当做某些事，但是没有做某些事。
+- game.py文件
+  - 相当于GameManager游戏管理器，只不过命名为game。
+  - 全程只能有一个class Game的实例，定义在文件结尾。
+  - ```class Game```
+    - 管理所有游戏资源。
+    - 成员变量：
+      - ```_mainWorld: World``` 当前世界。可能重构。可以通过```getWorld()```获取。
+      - ```running: bool``` 指示当前游戏是否正在运行。如果置为```False```，三个线程就会退出循环。建议使用```quit()```函数，这样可以在函数里执行一些必要的处理然后再退出。
+      - ```tickCount: int```，运行时自增，指示游戏运行了多少tick。后面还会有隐藏问题，别忘了提醒EmsiaetKadosh。
+      - ```_window: SynchronizedStorage[Union[Window, None]]``` 异步的窗口对象。可以通过```getWindow()```或```setWindow()```访问。
+      - ```floatWindow: Union[FloatWindow, None]``` 浮动窗口，跟随鼠标移动。
+    - 成员函数：
+      - ```__init__```
+        - 无特殊说明。
+      - ```tick```
+        - 不需要手动调用。
+        - 执行所有的游戏tick。
+      - ```render```
+        - 不需要手动调用。
+        - 执行所有的游戏render。
+      - ```setWindow```
+        - 异步地设置窗口。
+        - 注意，设置后不会立即改变，会在下一tick才应用改变。
+        - param ```window: Union[Window, None]``` 为None就是关闭所有窗口。
+      - ```getWindow```
+        - 获取窗口。
+        - 注意，获取的是当前tick的窗口，而不是立即设置的窗口。
+        - returns ```Window```
+      - ```setWorld```
+        - 设置世界。
+        - 如果设置为None，也会同时把```render._cameraAt```设为None。
+        - param ```world: Union[World, None]```
+      - ```getWorld```
+        - 获取当前的世界。
+        - returns ```World```
+      - ```quit```
+        - 退出程序，也就是把```running```设为False
+      - ```readConfig```
+      - ```writeConfig```
+        - ```@staticmethod```
+      - ```processMouse```
+        - 不需要手动调用。
+  - 文件尾部的剩余代码
+    - 定义了唯一的game实例。用这个game就行。尽可能不要重新给这个game赋值。
+- sync.py文件
+  - 主要处理多线程的冲突问题。
+```python
+from utils.sync import SynchronizedStorage
+storage: SynchronizedStorage[int] = SynchronizedStorage(0)
+```
+  - ```class SynchronizedStorage(Generic[_SyncT])```
+    - ```_SyncT``` 模板类。用法是这样的。
+    - 成员变量都是保护成员，不可以直接访问。
+    - 该类包装的变量都是在所有线程都可以设置更改，但大多只有一个线程需要读取并使用的。
+    - 所有线程设置后，设置值都会临时存储，在使用线程调用```apply```后才会应用变化。
+    - 参考下面的方法文档就行。
+    - 成员函数：
+      - ```__init__```
+        - 设置一个初始值，然后deepcopy一个值给newValue。
+        - param ```value: _SyncT```
+      - ```get```
+        - 获取当前值。
+        - 获取的是原对象，所以如果```get().***()```，会改变原对象。不建议，但允许。
+        - returns ```_SyncT```
+      - ```getNew```
+        - 获取最新设置的值。最新值可能尚未应用。
+        - returns ```_SyncT```
+      - ```set```
+        - 设置最新值。
+        - param ```value: _SyncT```
+      - ```apply```
+        - 应用变化。把newValue应用给value。
+        - param ```value: _SyncT``` 会把这个value给newValue，None也可以传入。
+  - ```class SynchronizedModifier(Generic[_SyncT])```
+    - 成员变量都是保护成员，不可以直接访问。
+    - 该类包装的变量都是在所有线程都可以设置更改，但大多只有一个线程需要读取并使用的。
+    - 所有线程设置后，设置值都会临时存储，在使用线程调用```apply```后才会应用变化。
+    - 参考下面的方法文档就行。
+- text.py文件
+  - 与文本有关的处理。
+  - ```class Description```
+    - 描述文本。
+    - 可以继承。
+    - 成员变量：
+      - ```_d: list[RenderableString]``` 描述字符串列表。
+    - 成员函数：
+      - ```__init__```
+        - 构造函数。
+        - param ```d: list[RenderableString]``` 要显示的字符串列表
+      - ```generate```
+        - 用于获取显示文本。不应当手动调用。每当显示时会调用一次，可以与计时相关联。如果你想实现随时间变化的文本，那你可以继承然后重写这个函数。
+        - returns ```list[RenderableString]``` 默认的返回值。
+  - ```class InnerStringConfig```
+    - 不需要外部使用，为了渲染带风格的```InnerStringConfig```方便而创建。
+  - ```class RenderableString```
+    - 可以实现非常丰富的字符串显示。
+    - 具体用法在readme.md中，这里不再重复写。
+    - 传入字符串构造时，会立刻解析字符串生成```InnerStringConfig```列表存储在成员变量中。
+    - 成员变量：
+      - ```set: list[InnerStringConfig]``` 渲染字串列表。必要时可以外部更改，但不建议更改。
+    - 成员函数：
+      - ```__init__```
+        - 初始化创建一个渲染字符串。
+        - param ```string```要渲染的字符串，采用如readme.md中写的格式。不懂的反正也可以叨叨EmsiaetKadosh。
+      - ```_parseAppend```
+        - 解析字符串，然后添加到列表末尾。
+        - 保护函数，外部不能也不需要调用。
+      - ```length```
+        - 计算字符串渲染需要的像素宽度。
+        - returns ```int```
+      - ```lengthSmall```
+        - 强制令字符串以小字体渲染，计算像素宽度。
+        - returns ```int```
+      - ```renderAt```
+        - 渲染这个字符串。
+        - param ```screen: Surface``` 渲染目标。
+        - param ```x: int``` ```y: int``` 渲染坐标。
+        - param ```defaultColor: int``` 0xRRGGBBAA格式。如果字符串没有指定具体颜色，则使用这个颜色。
+        - returns ```int``` 渲染后，右上角的x坐标。
+      - ```renderSmall```
+        - 用法与```renderAt```一样，只不过强制用小字体渲染。
+        - param 同```renderAt```。
+        - returns 同```renderAt```。
+      - ```__str__```
+        - 创建类时debug用。可以忽略。
+- vector.py文件
+  - 这个文件的东西太多了，我真的懒得写了。。。
+  - ```class Matrix```
+    - 参考你学的线性代数。
+    - 成员函数：
+      - ```add``` ```subtract``` ```multiply```
+        - param ```other: Matrix | Vector | BlockVector | int | float```
+        - <font color='red'>注意此处的描述。</font>
+        - 如果传入```Matrix```，则执行矩阵乘法，然后自身修改为结果，返回自身。
+        - 如果传入```Vector | BlockVector```，则执行矩阵乘向量，返回新的```Vector```实例。注意，无论如何不返回```BlockVector```。
+        - 如果传入```int | float```，则将自身所有数字乘以这个传入的整数，自身修改为结果，返回自身。
+      - ```+ - * @```运算符
+        - 其中，```@```是矩阵乘运算符。如果乘以```int | float```，只能使用```*```，而乘以```Vector | BlockVector | Matrix```，只能用```@```。
+        - 与上述的相同。唯一的不同是，不会修改自身，而是在所有情况都创建新的实例然后返回新的实例。
+      - ```==```
+        - 比较两个矩阵的所有数字是否全部相等。
+  - ```class Matrices```
+    - 存储了常用的矩阵。不要修改这里的矩阵。
+  - ```class Vector```
+  - ```class BlockVector```
+    - 前者记录float，后者只记录整数。
+    - 共有成员函数：
+      - ```set```
+        - 顾名思义。可以set((x, y))传入的元组，可以传入set(x, y)分别传入x和y的值，也可以传入另一个Vector或者BlockVector。
+      - ```setX``` ```setY```
+        - 顾名思义。
+      - ```add``` ```subtract``` ```multiply```
+        - 与Matrix相似，自身修改为结果，然后返回自身。
+        - 参数可以传入Vector或者BlockVector，也可以传入数字元组。
+        - ```multiply```只接受数字参数，点乘请用```dot```，没有叉乘。
+      - ```dot```
+        - 点乘另一个向量。
+        - param ```other: Vector```
+        - returns ```float```
+      - ```clone```
+        - 复制一份自身。主要用于链式调用的开头。
+        - returns ```Vector | BlockVector```
+      - ```length```
+        - returns ```float``` 绝对长度。
+      - ```normalize```（BlockVector中是```normalizeClone）
+        - 获取自身的单位向量。Vector会将自身修改为单位向量，BlockVector会创建一个自身单位向量的Vector返回。
+        - returns ```Vector```
+      - ```reverse```
+        - returns ```Vector | BlockVector``` 反向自身。
+      - ```distance```
+        - 传入一个对应向量，计算两个向量末端的距离。
+      - ```distanceManhattan```
+        - 传入一个向量，计算两个向量的曼哈顿距离。也就是abs(x1 - x2) + abs(y1 - y2)
+        - returns ```float```
+      - ```getTuple```（Vector中独特拥有```getBlockTuple，即转化为方块坐标然后返回方块元组。）
+        - 将向量转化成元组。
+        - 注意，getBlockTuple采用floor，即0.5约为0，-0.1约为-1。
+      - Vector中的```getBlockVector```和 BlockVector中的```getVector```
+        - 两种类型相互转换。
+      - ```directionalClone``` ```directionalCloneBlock```
+        - 返回方向性向量。即，返回的向量的x和y分别表示原向量x和y的符号。二者区别在于返回值类型。
+      - ```pointVertcalTo```
+        - 将本坐标视为坐标点，求该点到直线的垂线向量，包含长度。
+        - param ```line: Vector``` 目标直线
+        - return ```Vector``` 垂线向量
+      - ```save```
+      - ```load```
+        - ```@classmethod```
+      - ```+ - * /```
+        - 与Matrix相似。都返回新的实例，不会修改原值。
+      - ```==```
+        - 顾名思义。
+    - Vector中独特函数：
+      - ```xInteger``` ```yInteger```
+        - 检查x和y坐标是否是整数。
+        - returns ```bool```
+      - ```extendX``` ```extendY```
+        - 将x或y修改为传入的值，然后等比放大这个向量。
+        - param ```x | y: int```
+        - returns 自身。
+
+</details>
+
+<details><summary>window/ 软件包</summary>
+
+- widget.py文件
+  - ```class ColorSet```
+    - 就只不过是集成了一下。
+    - 成员变量：
+      - ```inactive``` 控件不活动（不可用）的颜色。
+      - ```active``` 控件活动（可用）的颜色。
+      - ```hover``` 鼠标悬停在控件上时的颜色。
+      - ```click``` 鼠标按下时显示的颜色。
+    - 成员函数：
+      - ```__init__```
+        - param ```isText: bool``` 创建时，会默认将上述的四个成员变量初始化，这个参数可以确定是按照默认背景色的颜色还是按照默认文本颜色进行初始化。
+  - ```class Widget```
+    - 直接继承自```Renderable```
+    - <font color='red'>注：以下类型```(int, int) -> bool```类型标注均表示函数类型，接受鼠标实际位置x, y为参数，返回bool表示是否阻断消息传递。除非特殊情况，返回True即可。</font>
+    - 成员变量：
+      - ```location: Location``` 位置确定方式。参考```class Location```。
+      - ```textLocation: Location``` 文本相对于控件的位置确定方式。
+      - ```x: float``` ```y: float``` 位置。-1~1的小数，实际确定位置的时候会用此处的x和y乘以屏幕的宽高，然后乘以uiScale（目前尚未实施）。
+      - ```width: float``` ```height: float``` 同上。
+      - ```name: RenderableString``` 显示在按钮上的文字。如果继承并重写了```render```函数则另当别论，你可以随意显示你想显示的文字。
+      - ```description: Description``` 鼠标悬浮时显示的提示文字。强制显示为小字。
+      - ```_x, _y, _w, _h``` 保护成员。用于存储实际的位置，以像素为单位。
+      - ```_isMouseIn: bool``` 保护成员。用于标记鼠标是否在控件内部。
+      - ```active: bool``` 表示控件是否可用。
+      - ```onHover: (int, int) -> bool``` 函数类型成员变量，当鼠标悬停在上方且移动时调用。
+      - ```onClick: (int, int) -> bool``` 函数类型成员变量，当鼠标按下时调用。目前不可用。
+      - ```onMouseUp: (int, int) -> bool``` 函数类型成员变量，当鼠标抬起时调用。
+      - ```onMouseDown: (int, int) -> bool``` 函数类型成员变量，当鼠标按下时调用。
+      - ```onTick: () -> int``` 函数类型成员变量，不接受参数，返回值目前没用。每tick都会调用。
+      - ```color: ColorSet``` 背景颜色。
+      - ```textColor: ColorSet``` 文本颜色。
+    - 成员函数：
+      - ```onResize```
+        - 不需要手动调用，也基本不需要重写。可以但不建议重写。
+        - 根据窗口大小重新调整控件大小。
+      - ```isMouseIn```
+        - 不需要手动调用。检查鼠标是否在控件内部。
+        - 注意，这个函数会调整```_isMouseIn```成员变量，不要轻易使用。
+        - param ```x: int, y: int``` 鼠标位置
+        - returns ```bool```
+      - ```tick```
+        - 每tick调用，可以重写。
+      - ```click```
+        - 触发点击。目前没有自动调用，建议暂时不要使用。
+      - ```pass***```
+        - 都是内部调用，不建议重写，也不需要手动调用。
+  - ```class Button```
+    - 其实并没有干什么事。当然以后可能哪次更新会更改，也可能把onClick专门给Button类。
+    - 命名上这个看得舒服，所以按钮就都用Button不要用Widget好了，虽然功能一毛一样。
+- window.py文件
+  - ```class Window```
+    - 窗口类。目前所有的窗口一定占满屏幕，且同时只能显示一个窗口。
+    - 成员变量：
+      - ```_title: str``` 窗口标题，目前没有做显示。
+      - ```_widgets: list[Widget]``` 子组件。注意，index越小的组件相当于在越上层。
+      - ```_catches: Widget | None``` 目前未启用。当前捕捉的组件。所有消息会先传到这个组件，然后再传给其他组件。
+      - ```backgroundColor: int``` 背景颜色。
+    - 成员函数：
+      - ```renderBackground```
+        - 渲染背景。
+        - 默认情况下，会先检查texture是否为None，如果有，则之渲染texture。
+        - 如果没有texture，则会渲染背景颜色。
+        - param ```delta: float``` tick偏移。
+      - ```render```
+        - 可重写。会在渲染背景之后、渲染控件之前调用。如果你不满意你就去重写```passRender```改顺序。
+      - ```pass***```
+        - 内置调用接口，可以但不推荐重写。
+        - 会调用对应的不带pass前缀的成员（或者on成员变量），并令所有子组件调用对应pass成员函数。
+      - ```tick```
+        - 每tick调用一次。
+      - ```pauseGame```
+        - 可重写。有些窗口打开状态下不需要暂停游戏，或者根据不同的需要有时暂停有时不暂停。这个函数就是获取是否暂停游戏的。
+        - returns ```bool```
+  - ```class FloatWindow```
+    - 浮动窗口，随鼠标位置移动。鼠标悬浮显示窗口。
+    - 应当拥有唯一实例，位于game.floatWindow。
+    - 成员变量：
+      - ```_rendering: Description | None``` 要渲染的Description内容。
+    - 成员函数：
+      - ```submit```
+        - 提交一个要渲染的Description。
+        - 及时更改。
+        - param ```contents: Description```
+      - ```render```
+        - 渲染悬浮窗口。不需要手动调用。
+  - ```class PresetColors```
+    - 存储一些静态常用颜色。
+    - 不要更改里面的颜色。
+  - ```class ***Window```
+    - 一些EmsiaetKadosh已经写好的窗口示例，目前也正在使用。可以参考和更改。
+
+</details>
+
+<details><summary>world/ 软件包</summary>
+
+- world.py文件
+  - ```class World```
+    - 管理一个世界，或者也可以称为场景。
+    - 成员变量：
+      - ```_name: str``` 保护成员。这是世界的名字，目前也是存档的名字。
+      - ```_player: Player | None``` 玩家对象。
+      - ```_id: int``` 世界ID，目前好像没有使用。
+      - ```_entityList: set[Entity]``` 所有实体列表。
+      - ```_ground: dict[int, Block]``` 所有地面地图。int指的是hash(BlockVector())。
+      - ```_seed: Random``` 用于随机世界，目前没有采用。后面肯定会用。
+    - 成员函数：
+      - ```generateDefaultWorld```
+        - ```@classmethod```
+        - 用于创建默认世界。目前是用于创建debug世界。
+        - returns ```World```
+      - ```tick``` ```render``` 执行tick和渲染。
+      - ```addPlayer```
+        - 添加玩家，或者说设置玩家。
+        - param ```player: Player | None```
+      - ```getPlayer```
+        - 获取当前玩家，可能是None。
+        - returns ```Player | None```
+      - ```addEntity```
+        - 添加实体。
+        - param ```entity: Entity```
+      - ```removeEntity```
+        - 移除目标实体。
+        - param ```entity: Entity```
+      - ```getBlockAt```
+        - 获取BlockVector对应的方块。
+        - param ```point: BlockVector```
+        - returns ```Block | None```
+      - ```setBlockAt```
+        - 设置BlockVector对应的方块。
+        - param ```point: BlockVector, block: Block```
+        - returns ```Block | None``` 原来此处的方块。
+      - ```rayTraceBlock```
+        - 给定起点、方向、追踪距离，返回所有射线经过的方块。恰好经过方块拐角也会返回。
+        - param ```start: BlockVector```
+        - param ```direction: BlockVector```
+        - param ```length: float```
+        - param ```width: float``` 宽度，默认0。非零时，视为考虑某个矩形覆盖到的所有方块。
+        - returns ```list[tuple[Block | BlockVector, Vector]]``` 元素列表，按距离从小到大。如果方块为None，则元组第一个参数为方块向量；如果方块不为None，则元组第一个参数为方块。第二个参数为起始点方向向的命中点向量。没有宽度偏移。
+      - ```save```
+      - ```load```
+        - ```@classmethod```
+        - 保存和加载世界。
+  - ```def generateRandom```
+    - 原本用于获取随机数生成器，现在没有实际使用。
+
+</details>
+
+- main.py文件
+  - 程序入口点。

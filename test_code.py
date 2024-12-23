@@ -1,5 +1,9 @@
-from utils.vector import Vector
+from utils import prints, times
 
-v1: Vector = Vector(1, 3)
-v2: Vector = Vector(2, 1)
-print(v2 - v1)
+
+@times
+def func(*args, **kwagrs):
+	print(args[0])
+
+
+func(123, 234, 'hello', kw=('EmsiaetKadosh', 213))
