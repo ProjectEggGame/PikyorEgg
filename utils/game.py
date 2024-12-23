@@ -38,8 +38,10 @@ class Game:
 			raise NullPointerException('当前screen为None。')
 		if delta > 1:
 			delta = 1
-		if delta < 0:
+		elif delta < 0:
 			delta = 0
+		elif self._window.get() is not None and self._window.get().pauseGame():
+			delta = 1
 		renderer.begin(delta, self._window.get() is None)
 		if self._mainWorld is not None:
 			self._mainWorld.passRender(delta)

@@ -23,6 +23,14 @@ class ColorSet:
 			self.active: int = 0xff111111
 			self.hovering: int = 0xffeeeeee
 			self.click: int = 0xffcccccc
+	
+	def clone(self) -> 'ColorSet':
+		ret = ColorSet()
+		ret.active = self.active
+		ret.inactive = self.inactive
+		ret.hovering = self.hovering
+		ret.click = self.click
+		return ret
 
 
 class Widget(Renderable):

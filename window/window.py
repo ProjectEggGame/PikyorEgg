@@ -177,10 +177,12 @@ class StartWindow(Window):
 		self._widgets[2].onMouseDown = lambda x, y: game.quit() or True
 		self._widgets[0].color = PresetColors.color
 		self._widgets[1].color = PresetColors.color
-		self._widgets[2].color = PresetColors.color
+		self._widgets[2].color = PresetColors.color.clone()
+		self._widgets[2].color.hovering = 0xffee0000
 		self._widgets[0].textColor = PresetColors.textColor
 		self._widgets[1].textColor = PresetColors.textColor
-		self._widgets[2].textColor = PresetColors.textColor
+		self._widgets[2].textColor = PresetColors.textColor.clone()
+		self._widgets[2].textColor.hovering = 0xffeeeeee
 	
 	def render(self, delta: float, at=None) -> None:
 		super().render(delta)
@@ -233,7 +235,13 @@ class PauseWindow(Window):
 		self._widgets[1].onMouseDown = lambda x, y: game.setWindow(None) or True
 		self._widgets.append(Button(Location.CENTER, 0, -0.1, 0.4, 0.08, RenderableString('\\01???'), Description([RenderableString("？？？")]), Location.CENTER))
 		self._widgets[2].onMouseDown = lambda x, y: game.setWindow(None) or True
-		self._widgets.append(Button(Location.CENTER, 0, 0, 0.4, 0.08, RenderableString('\\01???'), Description([RenderableString("？？？")]), Location.CENTER))
+		self._widgets.append(Button(Location.CENTER, 0, 0, 0.4, 0.08, RenderableString('测试按钮'), Description([
+			RenderableString("\\#ffee0000蠢蠢的狗"),
+			RenderableString("\\#ffee55dd\\/ 只会直线行走"),
+			RenderableString("\\#ffee7766 敌对单位"),
+			RenderableString(f"\\#ffee6677 基础伤害 {8}"),
+			RenderableString(f"\\#ffeedd66 搜索范围 {4}"),
+		]), Location.CENTER))
 		self._widgets[3].onMouseDown = lambda x, y: game.setWindow(None) or True
 		self._widgets.append(Button(Location.CENTER, 0, 0.1, 0.4, 0.08, RenderableString('\\01Save'), Description([RenderableString("保存游戏")]), Location.CENTER))
 		

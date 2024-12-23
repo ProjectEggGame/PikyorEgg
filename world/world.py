@@ -11,7 +11,7 @@ if TYPE_CHECKING:
 
 from render.renderable import Renderable
 from utils.vector import Vector, BlockVector
-from block.block import Block, FarmlandBlock
+from block.block import Block, FarmlandBlock, GrassBlock
 
 
 class World(Renderable):
@@ -32,7 +32,8 @@ class World(Renderable):
 				if j == i:
 					continue
 				v = BlockVector(i, j)
-				w._ground[hash(v)] = FarmlandBlock(v)
+				w._ground[hash(v)] = GrassBlock(v)
+		w.addEntity(entityManager.get('enemy.dog')())
 		return w
 	
 	def tick(self) -> None:
@@ -130,7 +131,7 @@ class World(Renderable):
 			block = blockManager.get(dictBlock['id']).load(dictBlock)
 			world._ground[hash(block.getBlockPosition())] = block
 		for e in d['entity']:
-			world._entityList.add(entityManager.get(e['id']).load(d))
+			world._entityList.add(entityManager.get(e['id']).load(e))
 		return world
 
 	def __str__(self) -> str:

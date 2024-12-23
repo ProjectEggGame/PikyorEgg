@@ -176,6 +176,36 @@
 
 <details><summary>entity/ 软件包</summary>
 
+- enemy.py文件
+  - ```class Enemy```
+    - 所有敌对单位都应当继承这个类。
+    - 成员变量：
+      - ```_attackTimer: int``` 倒计时。为0时可以发起攻击，否则每tick减1。每次发起攻击后，会被修改为```_attackCoolDown```。
+      - ```_attackCoolDown: int``` 攻击冷却。
+      - ```_lockOn: Player | None``` 锁定的玩家。
+      - ```_hasAI: bool``` 是否拥有AI。没有AI的时候不会主动移动。
+      - ```_aiVelocity: Vector``` AI建议的速度。设置为无AI时会将其置0, 0、
+    - 成员函数：
+      - ```ai```
+        - AI判断函数，此处应当写AI逻辑。
+        - 主要用于锁定敌人（玩家）和调整速度。
+      - ```setAI```
+        - param ```enabled: bool``` 设置这个实体是否使用AI。
+  - ```_EnemyUnit: RenderableString```
+    - 不要直接使用，虽然也没什么问题就是了。只不过为了好看，建议使用```enemyUnit()```函数。
+  - ```def enemyUnit```
+    - 返回一个RenderableString，表示这是一个敌对单位。
+    - 用于Description显示。
+  - ```def searchRange```
+    - 返回一个RenderableString，表示索敌范围。
+    - 用于Description显示。
+    - param ```sr: int``` 索敌范围。
+  - ```def basicDamage```
+    - 返回一个RenderableString，表示基础伤害。
+    - 用于Description显示。
+    - param ```bd: int``` 基础伤害。
+  - ```class EnemyDog```
+    - 一个示例敌人。
 - entity.py文件
   - ```class Entity```
     - 直接继承自```Element```
@@ -189,6 +219,14 @@
       - ```_textureSet``` 纹理列表。一般认为0,1是前面，2,3是后，4,5是左，6,7是右。可以参考```class Player```的构造函数
       - ```_id``` 实体ID，与方块ID相似。
     - 成员方法：
+      - ```__init__```
+        - 创建Entity。不应当直接调用，应当继承后生成具体实体。
+        - <font color='red'>每一个特定的实体都应当有一个唯一的ID，且继承后应当在定义完成后调用```entityManager.register(entityID, Type)。```</font>
+        - param ```entityID: str``` 与方块ID相似。
+        - param ```name: str``` 实体名称。
+        - param ```description: Description``` 实体描述。
+        - param ```textureSet: list[Texture]``` 实体纹理列表。参考成员变量```_textureSet```。
+        - param ```speed: float``` 实体速度。
       - ```__processMove```
         - 处理速度，将```_setVelocity```计算后调整给```__velocity```。
         - 私有方法。
@@ -219,8 +257,46 @@
         - param ```d: dict``` 要加载的实体字典。
         - param ```entity: Entity | None``` 实体实例。如果传入了实体实例，则会在实例上加载，否则会创建一个新的实体实例。
         - returns ```Entity``` 被加载的实体。
+  - ```class Damageable```
+    - 所有有血条的实体都要额外继承这个类。
+    - 成员变量：
+      - ```_health: float``` 血量。
+      - ```_maxHealth: float``` 最大血量。
+      - ```_isAlive: bool``` 是否死亡。默认情况下，血量为0时会自动设置为死亡。这是死亡的唯一判定标准，即使血量为零，你也可以强行把这个_isAlive设为True，仍然不判定为死亡。
+    - 成员函数：
+      - ```onDeath```
+        - 死亡时调用。默认，且应当，从世界中删除该实体。当然，如果想做一些死亡特效，可以重写这个函数。
+      - ```onDamage```
+      - ```onHeal```
+        - 在对应被伤害、被治疗时调用。应当在这些函数内部具体应用伤害和治疗。
+        - param ```amount: float``` 伤害值或者治疗值。
+        - returns ```float``` 伤害值或实际治疗值。
+      - ```setHealth```
+        - 设置实体血量。
+        - 自动适应最大值和最小值。
+        - 如果实体已经死亡，则不会应用效果。
+        - param ```health: float```
+      - ```setMaxHealth```
+        - 设置实体最大血量。
+        - ```maxhealth: float```
+      - ```getHealth```
+        - returns ```float``` 当前血量。
+      - ```getMaxHealth```
+        - returns ```float``` 当前最大血量。
+      - ```heal```
+        - 治疗一个实体，但不会超过最大值。
+        - 所有的治疗都应当使用这个函数。
+        - 如果实体已经死亡，则不会应用效果。
+        - param ```amount: float``` 治疗量。
+        - returns ```float``` 实际被治疗的量。有时有治疗削减或者治疗加成，所以返回实际值。
+      - ```damage```
+        - 伤害一个实体。
+        - 所有伤害都应当使用这个函数。
+        - 如果实体已经死亡，则不会应用效果。
+        - param ```amount: float``` 伤害量。
+        - returns ```float``` 实际治疗量。有时候伤害会使血量低于0，此时仍然返回原始伤害值。
   - ```class Player```
-    - 直接继承自```Entity```
+    - 直接继承自```Entity``` ```Damageable```
     - 玩家实体，可以直接创建实例、使用。
     - 成员变量：
       - ```health: float``` 生命值。初始值暂定100，可以修改。
@@ -864,6 +940,8 @@ storage: SynchronizedStorage[int] = SynchronizedStorage(0)
         - returns ```Vector | BlockVector```
       - ```length```
         - returns ```float``` 绝对长度。
+      - ```lengthManhattan```
+        - returns ```float | int``` 曼哈顿长度。
       - ```normalize```（BlockVector中是```normalizeClone）
         - 获取自身的单位向量。Vector会将自身修改为单位向量，BlockVector会创建一个自身单位向量的Vector返回。
         - returns ```Vector```
@@ -916,6 +994,8 @@ storage: SynchronizedStorage[int] = SynchronizedStorage(0)
     - 成员函数：
       - ```__init__```
         - param ```isText: bool``` 创建时，会默认将上述的四个成员变量初始化，这个参数可以确定是按照默认背景色的颜色还是按照默认文本颜色进行初始化。
+      - ```clone```
+        - returns ```ColorSet``` 自身的副本。
   - ```class Widget```
     - 直接继承自```Renderable```
     - <font color='red'>注：以下类型```(int, int) -> bool```类型标注均表示函数类型，接受鼠标实际位置x, y为参数，返回bool表示是否阻断消息传递。除非特殊情况，返回True即可。</font>

@@ -2,6 +2,7 @@ import pygame
 from typing import TYPE_CHECKING, Union
 
 from entity.manager import entityManager
+from utils import utils
 
 if TYPE_CHECKING:
 	from block.block import Block
@@ -24,13 +25,13 @@ class Entity(Element):
 		:param texture: 纹理列表，一般认为[0][1]是前面，[2][3]是后，[4][5]是左，[6][7]是右。可以参考class Player的构造函数
 		"""
 		super().__init__(name, description, texture[0])
+		self.__renderInterval: int = 6
+		self.__velocity: Vector = Vector(0, 0)
 		self._position: Vector = Vector(0, 0)
 		self._maxSpeed: float = speed
-		self.__velocity: Vector = Vector(0, 0)
 		self._setVelocity: Vector = Vector(0, 0)
-		self.__renderInterval: int = 6
 		self._textureSet: list[Texture] = texture
-		self._id = entityID
+		self._id: str = entityID
 		
 	def __processMove(self) -> None:
 		if (vLength := self._setVelocity.length()) == 0:
@@ -213,6 +214,7 @@ class Entity(Element):
 	
 	def save(self) -> dict:
 		return {
+			"id": self._id,
 			"position": self._position.save(),
 			"velocity": self.__velocity.save(),
 			"name": self.name,
@@ -226,6 +228,7 @@ class Entity(Element):
 		:param entity: 默认None，用于区分手动调用和自动调用。手动调用必须传入，理论上不允许自动调用
 		:return: 返回entity
 		"""
+		entity._id = d["id"]
 		entity.__velocity = Vector.load(d["velocity"])
 		entity.name = d["name"]
 		entity._maxSpeed = d["maxSpeed"]
@@ -233,12 +236,103 @@ class Entity(Element):
 		return entity
 
 
-class Player(Entity):
+class Damageable:
+	"""
+	所有有血条的实体都要额外继承这个类
+	"""
+	def __init__(self, maxHealth: float = 100, health: float | None = None):
+		self._health: float = health or maxHealth
+		self._maxHealth: float = maxHealth
+		self._isAlive: bool = True
+	
+	def onDeath(self) -> None:
+		"""
+		死亡时调用，可重写
+		"""
+		game.getWorld().removeEntity(self)
+	
+	def onHeal(self, amount: float) -> float:
+		"""
+		被治疗时调用，并且在这里实际应用回复。如果已经死亡，则即便恢复了也不会调用这个函数。可重写
+		:param amount: 治疗量
+		:return: 实际治疗量
+		"""
+		if amount <= 0:
+			return 0
+		delta: float = self._maxHealth - self._health
+		if amount >= delta:
+			self._health = self._maxHealth
+			return delta
+		else:
+			self._health += amount
+			return amount
+	
+	def onDamage(self, amount: float) -> float:
+		"""
+		被伤害时调用，并且在这里实际应用伤害。如果已经死亡，则即便伤害了也不会调用这个函数。返回时，可以忽略负血量的问题直接返回原始伤害值。可重写
+		:param amount: 伤害量
+		:return: 实际伤害量
+		"""
+		if amount < 0:
+			return 0
+		if amount >= self._health:
+			self._health = 0
+			self._isAlive = False
+			self.onDeath()
+			return amount
+		else:
+			self._health -= amount
+			return amount
+	
+	def setHealth(self, health: float) -> None:
+		"""
+		设置生命值
+		"""
+		if not self._isAlive:
+			return
+		if health <= 0:
+			self._health = 0
+			return
+		if health >= self._maxHealth:
+			self._health = self._maxHealth
+			return
+	
+	def setMaxHealth(self, maxHealth: float) -> None:
+		self._maxHealth = maxHealth
+	
+	def getHealth(self) -> float:
+		return self._health
+	
+	def getMaxHealth(self) -> float:
+		return self._maxHealth
+	
+	def heal(self, amount: float) -> float:
+		"""
+		执行治疗
+		:param amount: 治疗量
+		:return: 实际治疗值
+		"""
+		if not self._isAlive:
+			return 0
+		return self.onHeal(amount)
+	
+	def damage(self, amount: float) -> float:
+		"""
+		执行伤害
+		:param amount: 伤害量
+		:return: 实际伤害量
+		"""
+		if not self._isAlive:
+			return 0
+		return self.onDamage(amount)
+
+
+class Player(Entity, Damageable):
 	def __init__(self, name: str):
 		"""
 		创建玩家
 		"""
-		super().__init__("player", name, Description(), [
+		Entity.__init__(self, "player", name, Description(), [
 			resourceManager.getOrNew('player/no_player_1'),
 			resourceManager.getOrNew('player/no_player_2'),
 			resourceManager.getOrNew('player/no_player_b1'),
@@ -248,13 +342,15 @@ class Player(Entity):
 			resourceManager.getOrNew('player/no_player_r1'),
 			resourceManager.getOrNew('player/no_player_r2'),
 		], 0.16)
-		self.health = 100
-		self.maxHealth = 100
+		Damageable.__init__(self, 100)
 		self.inventory = BackPack()
 		for t in self._textureSet:
 			t.getSurface().set_colorkey((0, 0, 0))
 			t.getMapScaledSurface().set_colorkey((0, 0, 0))
 			t.setOffset(Vector(0, -6))
+	
+	def onDeath(self) -> None:
+		utils.info('死亡')
 	
 	def tick(self) -> None:
 		v: Vector = Vector()

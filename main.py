@@ -15,6 +15,9 @@ from utils import utils
 from utils.game import game
 from window.window import FloatWindow, StartWindow
 
+# 这句是必要的，会注册到entityManager上
+from entity import enemy
+
 nowRender = time.perf_counter_ns()
 lastRender = nowRender
 nowTick = nowRender

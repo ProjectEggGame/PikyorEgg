@@ -158,6 +158,9 @@ class Vector:
 	def length(self) -> float:
 		return float(self.x ** 2 + self.y ** 2) ** 0.5
 	
+	def lengthManhattan(self) -> float:
+		return abs(self.x) + abs(self.y)
+	
 	def normalize(self) -> 'Vector':
 		if self.x == 0 and self.y == 0:
 			return self
@@ -233,7 +236,6 @@ class Vector:
 		if utils.fequal(self.x, 0):
 			if x != 0:
 				utils.warn(f'扩展向量的零值。{self}: {x = }')
-				raise 1
 			return self
 		self.y = self.y / self.x * x
 		self.x = x
@@ -359,6 +361,9 @@ class BlockVector:
 	
 	def length(self) -> float:
 		return float(self.x ** 2 + self.y ** 2) ** 0.5
+	
+	def lengthManhattan(self) -> int:
+		return abs(self.x) + abs(self.y)
 	
 	def distance(self, other: 'BlockVector') -> float:
 		return float((self.x - other.x) ** 2 + (self.y - other.y) ** 2) ** 0.5
