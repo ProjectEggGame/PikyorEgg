@@ -22,17 +22,16 @@ class World(Renderable):
 		self._id: int = worldID
 		self._entityList: set['Entity'] = set['Entity']()
 		self._ground: dict[int, Block] = dict[int, Block]()
-		self._seed: random.Random = seed or 0
+		self._seed: random.Random = random.Random(seed or 0)
 	
-	@classmethod
-	def generateDefaultWorld(cls) -> 'World':
+	@staticmethod
+	def generateDefaultWorld(seed: int | None = None) -> 'World':
 		w: World = World(-1, "__DEFAULT_WORLD__")
-		for i in range(-3, 3):
-			for j in range(-3, 3):
-				if j == i:
-					continue
+		rd = random.Random(seed or 0)
+		for i in range(-10, 10):
+			for j in range(-10, 10):
 				v = BlockVector(i, j)
-				w._ground[hash(v)] = GrassBlock(v)
+				w._ground[hash(v)] = blockManager.dic[rd.sample(blockManager.dic.keys(), 1)[0]](v)
 		w.addEntity(entityManager.get('enemy.dog')())
 		return w
 	

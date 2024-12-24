@@ -157,7 +157,7 @@
   - ```class BlockManager```
     - 方块管理器。用于管理方块ID。
     - 成员变量：
-      - ```_dic: dict``` 字典，以ID作为key，方块类作为value。使用```register()```和```get()```访问。
+      - ```dic: dict``` 字典，以ID作为key，方块类作为value。使用```register()```和```get()```访问。
     - 成员函数：
       - ```register```
         - 注册一个方块ID和方块。
@@ -311,6 +311,7 @@
         - 从字典中加载玩家。
   - 文件尾部的剩余代码
     - 向```entityManager```注册玩家类。```entityManager```与```blockManager```类似。
+    - 调整资源的偏移值。
 - manager.py文件
   - 参考block/manager.py文件。这两个文件基本作用相同，只不过一个管理实体、一个管理方块。
 
@@ -534,6 +535,10 @@
       - ```getOffset```
         - 获取```_offset```。其实没什么用，因为不需要手动计算这个偏移。
         - returns ```BlockVector```
+      - ```fill```
+        - 填充一个矩形区域。
+        - param ```color: int``` 0xAARRGGBB格式的整数。
+        - param ```x: int, y: int, w: int, h: int``` 左上角坐标，以及宽高。
       - ```render```
         - 渲染目标，不建议使用，因为值不好算，且效率低下。
         - 你看代码里的注释吧，我懒得抄了。
@@ -576,6 +581,8 @@
         - 获取当前_mapScale。
         - returns ```float```
       - 后面的懒得写了。基本上都不需要手动调用。
+  - 文件尾部的剩余代码：
+    - 调整资源的偏移值。
 - resource.py文件
   - ```class Texture```
     - 管理纹理资源，包含了文件的管理。
@@ -786,7 +793,8 @@ func(123, 234, 'hello', kw=('EmsiaetKadosh', 213))
       - ```running: bool``` 指示当前游戏是否正在运行。如果置为```False```，三个线程就会退出循环。建议使用```quit()```函数，这样可以在函数里执行一些必要的处理然后再退出。
       - ```tickCount: int```，运行时自增，指示游戏运行了多少tick。后面还会有隐藏问题，别忘了提醒EmsiaetKadosh。
       - ```_window: SynchronizedStorage[Union[Window, None]]``` 异步的窗口对象。可以通过```getWindow()```或```setWindow()```访问。
-      - ```floatWindow: Union[FloatWindow, None]``` 浮动窗口，跟随鼠标移动。
+      - ```floatWindow: FloatWindow``` 浮动窗口，跟随鼠标移动。
+      - ```hud: Hud``` 正常显示在游戏中的信息栏。
     - 成员函数：
       - ```__init__```
         - 无特殊说明。
@@ -983,6 +991,20 @@ storage: SynchronizedStorage[int] = SynchronizedStorage(0)
 
 <details><summary>window/ 软件包</summary>
 
+- hud.py文件
+  - 处理游戏内信息栏。
+  - ```class Hud```
+    - 直接继承自```Renderable```。
+    - 应当拥有唯一实例，位于game.hud。
+    - 成员变量：
+      - ```displayHealth: float``` 当前正在显示的血量。
+      - ```lastDisplayHealth: float``` 用于平滑显示的血量。
+      - ```displayHunger: float``` 同上，饥饿值。
+      - ```lastDisplayHunger: float``` 同上，饥饿值。
+      - ```defaultLength: float``` 表示血条总长度，取值为0~1，默认0.2，乘以屏幕宽度得到实际值。
+    - 成员函数：
+      - ```render```
+        - 执行渲染。不需要手动调用。
 - widget.py文件
   - ```class ColorSet```
     - 就只不过是集成了一下。
@@ -1042,7 +1064,11 @@ storage: SynchronizedStorage[int] = SynchronizedStorage(0)
       - ```_widgets: list[Widget]``` 子组件。注意，index越小的组件相当于在越上层。
       - ```_catches: Widget | None``` 目前未启用。当前捕捉的组件。所有消息会先传到这个组件，然后再传给其他组件。
       - ```backgroundColor: int``` 背景颜色。
+      - ```lastOpen: Window | None``` 上一个打开的窗口。如果不为None，那么按下Esc后默认会切换回该窗口。
     - 成员函数：
+      - ```setLastOpen```
+        - 设置上一个打开的窗口。
+        - 其实可以直接window.
       - ```renderBackground```
         - 渲染背景。
         - 默认情况下，会先检查texture是否为None，如果有，则之渲染texture。
@@ -1092,7 +1118,7 @@ storage: SynchronizedStorage[int] = SynchronizedStorage(0)
       - ```_seed: Random``` 用于随机世界，目前没有采用。后面肯定会用。
     - 成员函数：
       - ```generateDefaultWorld```
-        - ```@classmethod```
+        - ```@staticmethod```
         - 用于创建默认世界。目前是用于创建debug世界。
         - returns ```World```
       - ```tick``` ```render``` 执行tick和渲染。

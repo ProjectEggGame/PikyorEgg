@@ -1,4 +1,5 @@
 import os.path
+from typing import Union
 
 import pygame
 from pygame import Surface
@@ -10,7 +11,7 @@ from render.renderer import renderer
 from save.save import Archive
 from utils.game import game
 from utils.text import RenderableString, Description
-from utils.vector import Vector
+from utils.vector import Vector, BlockVector
 from render.renderable import Renderable
 from render.resource import Texture, resourceManager
 from window.widget import Widget, Button, Location, ColorSet
@@ -34,6 +35,15 @@ class Window(Renderable):
 		self._widgets: list[Widget] = []
 		self._catches: Widget | None = None
 		self.backgroundColor: int = 0x88000000
+		self.lastOpen: Union['Window', None] = None
+	
+	def setLastOpen(self, last: 'Window') -> 'Window':
+		"""
+		:param last: 上一次打开的窗口
+		:return: 自身
+		"""
+		self.lastOpen = last
+		return self
 	
 	def renderBackground(self, delta: float) -> None:
 		"""
@@ -186,7 +196,7 @@ class StartWindow(Window):
 	
 	def render(self, delta: float, at=None) -> None:
 		super().render(delta)
-		size: Vector = renderer.getSize()
+		size: BlockVector = renderer.getSize()
 		renderer.renderString(RenderableString('\\.00FCE8AD\\00捡 蛋'), int(size.x / 2), int(size.y / 4), 0xff000000, Location.CENTER)
 		renderer.renderString(RenderableString('\\.00FCE8AD\\02Pikyor Egg!'), int(size.x / 2), int(size.y / 4) + font.fontHeight + 2, 0xff000000, Location.CENTER)
 		renderer.renderString(RenderableString('\\.00FCE8AD\\02卵を拾って'), int(size.x / 2), int(size.y / 4) + font.fontHeight + font.fontHeight + 4, 0xff000000, Location.CENTER)
@@ -200,7 +210,7 @@ class LoadWindow(Window):
 		super().__init__("Load")
 		self._texture = resourceManager.getOrNew('window/start')
 		self._widgets.append(Button(Location.LEFT_TOP, 0, 0, 0.09, 0.12, RenderableString('Back'), Description([RenderableString("返回")]), Location.CENTER))
-		self._widgets[0].onMouseDown = lambda x, y: game.setWindow(StartWindow()) or True
+		self._widgets[0].onMouseDown = lambda x, y: game.setWindow(self.lastOpen or StartWindow()) or True
 		self._widgets[0].color = PresetColors.color
 		self._widgets[0].textColor = PresetColors.textColor
 		if os.path.exists('user') and os.path.exists('user/archive'):
@@ -223,7 +233,7 @@ class LoadWindow(Window):
 	
 	def tick(self) -> None:
 		if interact.keys[pygame.K_ESCAPE].deal():
-			game.setWindow(StartWindow())
+			game.setWindow(self.lastOpen or StartWindow())
 
 
 class PauseWindow(Window):
@@ -233,8 +243,8 @@ class PauseWindow(Window):
 		self._widgets[0].onMouseDown = lambda x, y: game.setWindow(None) or True
 		self._widgets.append(Button(Location.CENTER, 0, -0.2, 0.4, 0.08, RenderableString('\\01Settings'), Description([RenderableString("设置")]), Location.CENTER))
 		self._widgets[1].onMouseDown = lambda x, y: game.setWindow(None) or True
-		self._widgets.append(Button(Location.CENTER, 0, -0.1, 0.4, 0.08, RenderableString('\\01???'), Description([RenderableString("？？？")]), Location.CENTER))
-		self._widgets[2].onMouseDown = lambda x, y: game.setWindow(None) or True
+		self._widgets.append(Button(Location.CENTER, 0, -0.1, 0.4, 0.08, RenderableString('\\01Load'), Description([RenderableString("\\#ffee0000放弃保存\\r并读取存档")]), Location.CENTER))
+		self._widgets[2].onMouseDown = lambda x, y: game.setWindow(LoadWindow().setLastOpen(self)) or True
 		self._widgets.append(Button(Location.CENTER, 0, 0, 0.4, 0.08, RenderableString('测试按钮'), Description([
 			RenderableString("\\#ffee0000蠢蠢的狗"),
 			RenderableString("\\#ffee55dd\\/ 只会直线行走"),

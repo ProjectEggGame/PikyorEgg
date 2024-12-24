@@ -1,4 +1,4 @@
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, Type
 
 if TYPE_CHECKING:
 	from block.block import Block
@@ -6,15 +6,15 @@ if TYPE_CHECKING:
 
 class BlockManager:
 	def __init__(self):
-		self._dic = {}
+		self.dic = {}
 		
 	def register(self, blockID: str, block: type):
-		if blockID in self._dic:
+		if blockID in self.dic:
 			raise ValueError(f"注册一个已存在的方块ID: {blockID}")
-		self._dic[blockID] = block
+		self.dic[blockID] = block
 	
-	def get(self, blockID: str) -> 'Block':
-		return self._dic[blockID]
+	def get(self, blockID: str) -> Type['Block']:
+		return self.dic[blockID]
 
 
 blockManager: BlockManager = BlockManager()

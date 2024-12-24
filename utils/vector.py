@@ -11,7 +11,7 @@ class Matrix:
 		创建变换矩阵
 		:param M2x2: 可以是((a1, a2), (b1, b2))或[[a1, a2], [b1, b2]]或[a1, a2, b1, b2]的形式
 		"""
-		if isinstance(M2x2, list) and len(M2x2) >= 4 and type(M2x2[0]) == float:
+		if isinstance(M2x2, list) and len(M2x2) >= 4 and isinstance(M2x2[0], float):
 			self._a1: float = float(M2x2[0])
 			self._a2: float = float(M2x2[1])
 			self._b1: float = float(M2x2[2])
@@ -591,4 +591,3 @@ class BlockVector:
 	
 	def __hash__(self) -> int:
 		return (self.x << 32) + (self.y if self.y >= 0 else self.y - 1)
-	

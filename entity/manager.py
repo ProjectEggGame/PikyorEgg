@@ -1,4 +1,4 @@
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, Type
 
 if TYPE_CHECKING:
 	from entity.entity import Entity
@@ -6,15 +6,15 @@ if TYPE_CHECKING:
 
 class EntityManager:
 	def __init__(self):
-		self._dic = {}
+		self.dic = {}
 	
 	def register(self, entityID: str, block: type):
-		if entityID in self._dic:
+		if entityID in self.dic:
 			raise ValueError(f"注册一个已存在的实体ID: {entityID}")
-		self._dic[entityID] = block
+		self.dic[entityID] = block
 	
-	def get(self, entityID: str) -> 'Entity':
-		return self._dic[entityID]
+	def get(self, entityID: str) -> Type['Entity']:
+		return self.dic[entityID]
 
 
 entityManager: EntityManager = EntityManager()

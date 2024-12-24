@@ -9,6 +9,7 @@ from utils.game import game
 from utils.text import Description, RenderableString
 
 from utils.vector import Vector
+from utils.vector import BlockVector
 
 
 class ColorSet:
@@ -120,7 +121,7 @@ class Widget(Renderable):
 		"""
 		根据预设调整具体位置。可以重写，但是注意逻辑和算法不要错了
 		"""
-		windowSize: Vector = renderer.getSize()
+		windowSize: BlockVector = renderer.getSize()
 		self._w, self._h = self.width * windowSize.x, self.height * windowSize.y
 		match self.location:
 			case Location.LEFT_TOP:

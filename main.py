@@ -13,6 +13,7 @@ from render.resource import resourceManager
 from save import configs
 from utils import utils
 from utils.game import game
+from window.hud import Hud
 from window.window import FloatWindow, StartWindow
 
 # 这句是必要的，会注册到entityManager上
@@ -106,6 +107,7 @@ def mainThread():
 	font.initializeFont()
 	game.setWindow(StartWindow())
 	game.floatWindow = FloatWindow()
+	game.hud = Hud()
 	# 游戏初始化
 	# 启动线程
 	gt: Thread = Thread(name="GameThread", target=gameThread)

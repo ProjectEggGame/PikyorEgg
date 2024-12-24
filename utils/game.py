@@ -10,6 +10,7 @@ from utils.sync import SynchronizedStorage
 if TYPE_CHECKING:
 	from world.world import World
 	from window.window import Window, FloatWindow
+	from window.hud import Hud
 
 
 class Game:
@@ -19,6 +20,7 @@ class Game:
 		self.tickCount: int = 0
 		self._window: SynchronizedStorage[Union['Window', None]] = SynchronizedStorage[Union['Window', None]](None)
 		self.floatWindow: Union['FloatWindow', None] = None  # 在主程序中初始化
+		self.hud: Union['Hud', None] = None
 
 	def tick(self) -> None:
 		notPause: bool = True
@@ -45,6 +47,7 @@ class Game:
 		renderer.begin(delta, self._window.get() is None)
 		if self._mainWorld is not None:
 			self._mainWorld.passRender(delta)
+		self.hud.render(delta)
 		if self._window.get() is not None:
 			self._window.get().passRender(delta)
 		if self.floatWindow is not None:
@@ -61,8 +64,7 @@ class Game:
 	
 	def setWorld(self, world: Union['World', None]) -> None:
 		self._mainWorld = world
-		if world is None:
-			renderer.cameraAt(None)
+		renderer.cameraAt(None)
 	
 	def getWorld(self) -> Union['World', None]:
 		return self._mainWorld

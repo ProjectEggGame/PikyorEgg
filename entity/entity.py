@@ -32,7 +32,7 @@ class Entity(Element):
 		self._setVelocity: Vector = Vector(0, 0)
 		self._textureSet: list[Texture] = texture
 		self._id: str = entityID
-		
+	
 	def __processMove(self) -> None:
 		if (vLength := self._setVelocity.length()) == 0:
 			self.__velocity.set(0, 0)
@@ -57,7 +57,7 @@ class Entity(Element):
 					if not isinstance(b, BlockVector):
 						if b.canPass(self):
 							continue
-					# 还得判断钻缝的问题
+						# 还得判断钻缝的问题
 						b = b.getBlockPosition()
 					grb = b.getRelativeBlock(newPosition + v, v)
 					if not isinstance(grb, list) or len(grb) == 0:
@@ -66,7 +66,7 @@ class Entity(Element):
 					if b2 is None or not b2.canPass(self):
 						self.__velocity.set(vector + v)
 						return
-					# 钻缝问题处理结束
+				# 钻缝问题处理结束
 				# 退出for循环，说明全部通过
 				self.__velocity.set(vector + vel2)
 				return
@@ -89,7 +89,7 @@ class Entity(Element):
 						if not isinstance(b, BlockVector):
 							if b.canPass(self):
 								continue
-						# 还得判断钻缝的问题
+							# 还得判断钻缝的问题
 							b = b.getBlockPosition()
 						grb = b.getRelativeBlock(newPosition + v, v)
 						if not isinstance(grb, list) or len(grb) == 0:
@@ -98,7 +98,7 @@ class Entity(Element):
 						if b2 is None or not b2.canPass(self):
 							self.__velocity.set(vector + v)
 							return
-						# 钻缝问题处理结束
+					# 钻缝问题处理结束
 					# 退出for循环，说明全部通过
 					self.__velocity.set(vector + rel[0][1])
 					return
@@ -108,7 +108,7 @@ class Entity(Element):
 						if not isinstance(b, BlockVector):
 							if b.canPass(self):
 								continue
-						# 还得判断钻缝的问题
+							# 还得判断钻缝的问题
 							b = b.getBlockPosition()
 						grb = b.getRelativeBlock(newPosition + v, v)
 						if not isinstance(grb, list) or len(grb) == 0:
@@ -117,7 +117,7 @@ class Entity(Element):
 						if b2 is None or not b2.canPass(self):
 							self.__velocity.set(vector + v)
 							return
-						# 钻缝问题处理结束
+					# 钻缝问题处理结束
 					# 退出for循环，说明全部通过
 					self.__velocity.set(vector + rel[1][1])
 					return
@@ -344,10 +344,7 @@ class Player(Entity, Damageable):
 		], 0.16)
 		Damageable.__init__(self, 100)
 		self.inventory = BackPack()
-		for t in self._textureSet:
-			t.getSurface().set_colorkey((0, 0, 0))
-			t.getMapScaledSurface().set_colorkey((0, 0, 0))
-			t.setOffset(Vector(0, -6))
+		self.hunger = 0
 	
 	def onDeath(self) -> None:
 		utils.info('死亡')
@@ -370,6 +367,22 @@ class Player(Entity, Damageable):
 		p = Player(d['name'])
 		super().load(d, p)
 		return p
-	
+
 
 entityManager.register('player', Player)
+
+for t in [
+	resourceManager.getOrNew('player/no_player_1'),
+	resourceManager.getOrNew('player/no_player_2'),
+	resourceManager.getOrNew('player/no_player_b1'),
+	resourceManager.getOrNew('player/no_player_b2'),
+	resourceManager.getOrNew('player/no_player_l1'),
+	resourceManager.getOrNew('player/no_player_l2'),
+	resourceManager.getOrNew('player/no_player_r1'),
+	resourceManager.getOrNew('player/no_player_r2'),
+]:
+	t.adaptsUI()
+	t.getSurface().set_colorkey((0, 0, 0))
+	t.getMapScaledSurface().set_colorkey((0, 0, 0))
+	t.setOffset(Vector(0, -6))
+	

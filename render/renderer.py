@@ -80,7 +80,7 @@ class Renderer:
 		self._size: tuple[float, float] = (0, 0)
 		
 		self._canvas: Surface | None = None  # 用于预绘制的画布
-		self._canvasSize: Vector = Vector()
+		self._canvasSize: BlockVector = BlockVector()
 		self._canvasCenter: BlockVector = BlockVector()
 		
 		self._isRendering: bool = False
@@ -135,7 +135,7 @@ class Renderer:
 			self.setSystemScale(min(self._size[0] // 16, self._size[1] // 9))
 		self._canvasSize = BlockVector(self._size[0], self._size[1]).subtract(self._offset).subtract(self._offset)
 		self._canvas = Surface(self._canvasSize.getTuple())
-		self._canvasCenter.set(int(self._canvasSize.x / 2), int(self._canvasSize.y / 2))
+		self._canvasCenter.set(self._canvasSize.x >> 1, self._canvasSize.y >> 1)
 		self._updateOffset()
 	
 	def cameraAt(self, entity: Union['Entity', None]) -> 'Entity':
@@ -204,7 +204,7 @@ class Renderer:
 			return
 		raise InvalidOperationException('操作需要在非渲染时进行。当前正在渲染。')
 	
-	def getSize(self) -> Vector:
+	def getSize(self) -> BlockVector:
 		return self._canvasSize
 	
 	def getCanvas(self) -> Surface:
@@ -218,6 +218,15 @@ class Renderer:
 	
 	def getOffset(self) -> BlockVector:
 		return self._offset.clone()
+	
+	def fill(self, color: int, x: int, y: int, w: int, h: int) -> None:
+		if color & 0xff000000 == 0xff000000:
+			self._canvas.fill(((color >> 16) & 0xff, (color >> 8) & 0xff, color & 0xff), (x, y, w, h))
+		else:
+			s = Surface((w, h))
+			s.fill(((color >> 16) & 0xff, (color >> 8) & 0xff, color & 0xff))
+			s.set_alpha(color >> 24)
+			self._canvas.blit(s, (x, y))
 	
 	def render(self, src: Surface, sx: int | float, sy: int | float, sw: int | float, sh: int | float, dx: int | float, dy: int | float, dw: int | float | None = None, dh: int | float | None = None) -> None:
 		"""

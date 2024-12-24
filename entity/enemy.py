@@ -119,7 +119,9 @@ class EnemyDog(Enemy):
 				self._aiVelocity.set(0, 0)
 			elif utils.fless(dist, self._maxSpeed):
 				self._aiVelocity.set(0, 0)
-				self._lockOn.damage(8)
+				if self._attackTimer <= 0:
+					self._lockOn.damage(8)
+					self._attackTimer = self._attackCoolDown
 			else:
 				self._aiVelocity = self._lockOn.getPosition().subtract(self.getPosition()).normalize().multiply(min(self._maxSpeed, self.getPosition().distance(self._lockOn.getPosition())))
 	
@@ -133,4 +135,7 @@ class EnemyDog(Enemy):
 
 entityManager.register('enemy.dog', EnemyDog)
 
+if (k := resourceManager.getOrNew('entity/enemy/dog')) is not None:
+	k.setOffset(Vector(0, -5))
+del k
 
