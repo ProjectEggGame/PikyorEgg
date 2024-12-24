@@ -15,7 +15,7 @@ from utils.vector import Vector, BlockVector
 from render.renderable import Renderable
 from render.resource import Texture, resourceManager
 from window.widget import Widget, Button, Location, ColorSet
-from world.world import World
+from world.world import World,DynamicWorld
 
 
 class Window(Renderable):
@@ -178,9 +178,13 @@ class StartWindow(Window):
 		
 		def _0(*_) -> bool:
 			game.setWindow(None)
-			game.setWorld(World.generateDefaultWorld())
+			game.setWorld(World.generateDefaultWorld(DynamicWorld))
 			game.getWorld().addPlayer(Player('Test'))
 			return True
+		
+
+		
+
 		
 		self._widgets.append(Button(Location.CENTER, 0, 0.05, 0.4, 0.08, RenderableString("\\.00FCE8AD\\01LINK START"), Description([RenderableString("开始游戏")]), textLocation=Location.CENTER))
 		self._widgets[0].onMouseDown = _0
@@ -303,3 +307,37 @@ class PauseWindow(Window):
 		self._widgets[5].textColor.click = 0xff000000
 		self._widgets[5].onMouseDown = _5
 		self._widgets[5].onTick = _5t
+
+
+class DynamicWorld(World):
+    def __init__(self, worldID: str, name: str):
+        super().__init__(worldID, name)
+        self._entityList = []
+        self._position = Vector(0, 0)
+        self.growth_value = 0
+        print("Dynamic World initialized")
+
+    def addPlayer(self, player: Player):
+        player._position = self._position.clone()
+        self._entityList.append(player)
+
+    def passTick(self) -> None:
+        # 实现小鸡的每一帧逻辑
+        # 检查周围是否有米粒实体
+        for entity in self._entityList:
+            if entity._id == 'entity.rice' and self._position.distanceTo(entity._position) < 1:
+                self.removeEntity(entity)
+                self.growth_value += 10  # 每次吃米粒增加10点成长值
+                print(f"小鸡吃掉了一颗米粒，成长值: {self.growth_value}")
+                break
+
+    def move(self, direction: Vector) -> None:
+        new_position = self._position.clone().add(direction)
+        self.setPosition(new_position)
+
+    def moveTo(self, target: Vector) -> None:
+        # 简单的移动逻辑，假设每次移动一个单位
+        while self._position != target:
+            direction = target.subtract(self._position).normalize()
+            self.move(direction)
+            print(f"小鸡移动到: {self._position}")

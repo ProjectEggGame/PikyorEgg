@@ -12,7 +12,7 @@ from interact import interact
 from utils.vector import Vector, BlockVector, Matrices
 from render.resource import resourceManager
 from utils.game import game
-from utils.text import Description
+from utils.text import RenderableString, Description
 from render.resource import Texture
 from utils.element import Element
 
@@ -368,6 +368,83 @@ class Player(Entity, Damageable):
 		super().load(d, p)
 		return p
 
+
+class Rice(Entity):
+    def __init__(self, position: Vector):
+        super().__init__(position)
+        self._id = 'entity.rice'
+        self._description = Description([RenderableString("\\#FFFFD700黄色的米粒")])
+        self._resource = resourceManager.getOrNew('entity/rice')
+
+    def save(self) -> dict:
+        return {
+            'id': self._id,
+            'position': self._position.save()
+        }
+
+    @classmethod
+    def load(cls, d: dict) -> 'Rice':
+        rice = cls(Vector.load(d['position']))
+        return rice
+
+    def render(self, delta: float, at: Vector | None = None) -> None:
+        # 实现米粒的渲染逻辑
+        pass
+
+    def passTick(self) -> None:
+        # 实现米粒的每一帧逻辑
+        pass
+
+
+class Chicken(Entity):
+    def __init__(self, position: Vector):
+        super().__init__(position)
+        self._id = 'entity.chicken'
+        self._description = Description([RenderableString("\\#FFD700黄色的小鸡")])
+        self.texture = resourceManager.getOrNew('egg/dark_red_birth_egg')
+        self.growth_value = 0  # 成长值初始化为0
+
+    def save(self) -> dict:
+        data = super().save()
+        data['growth_value'] = self.growth_value
+        return data
+
+    @classmethod
+    def load(cls, d: dict) -> 'Chicken':
+        chicken = cls(Vector.load(d['position']))
+        chicken.growth_value = d.get('growth_value', 0)
+        return chicken
+
+    def render(self, delta: float, at: Vector | None = None) -> None:
+        # 实现小鸡的渲染逻辑
+        pass
+
+    def passTick(self) -> None:
+        # 实现小鸡的每一帧逻辑
+        # 检查周围是否有米粒实体
+        for entity in self._world._entityList:
+            if entity._id == 'entity.rice' and self._position.distanceTo(entity._position) < 1:
+                self._world.removeEntity(entity)
+                self.growth_value += 10  # 每次吃米粒增加10点成长值
+                print(f"小鸡吃掉了一颗米粒，成长值: {self.growth_value}")
+                break
+
+    def move(self, direction: Vector)-> None:
+        new_position = self._position.clone().add(direction)
+        self.setPosition(new_position)
+
+    def moveTo(self, target: Vector) -> None:
+        # 简单的移动逻辑，假设每次移动一个单位
+        while self._position != target:
+            direction = target.subtract(self._position).normalize()
+            self.move(direction)
+            print(f"小鸡移动到: {self._position}")
+
+
+
+# 注册实体
+entityManager.register('entity.rice', Rice)
+entityManager.register('entity.chicken', Chicken)
 
 entityManager.register('player', Player)
 

@@ -3,15 +3,18 @@ from typing import Union, TYPE_CHECKING
 
 from block.manager import blockManager
 from entity.manager import entityManager
+from render.resource import resourceManager
 from save.save import Archive
 from utils import utils
+from utils.text import RenderableString, Description
 
 if TYPE_CHECKING:
-	from entity.entity import Entity, Player
+	from entity.entity import Entity, Player, Chicken
 
 from render.renderable import Renderable
 from utils.vector import Vector, BlockVector
 from block.block import Block, FarmlandBlock, GrassBlock
+from window.widget import Widget, Button, Location, ColorSet
 
 
 class World(Renderable):
@@ -145,3 +148,119 @@ def generateRandom(seed_or_random=None) -> random.Random:
 	else:
 		r = random.Random(seed_or_random)
 	return r
+
+
+class DynamicWorld(World):
+    def __init__(self, worldID: int, name: str, seed: int | None = None):
+        super().__init__(worldID, name, seed)
+        self._camera_position: Vector = Vector(0, 0)
+        self._lay_egg_button: Button | None = None
+        self._chicken: Chicken | None = None
+        self._chicken_growth = 0  # 小鸡的成长值
+        self._chicken_nest_position = BlockVector(-49, 49)  # 鸡窝位置
+
+        # 初始化地图
+        self.generate_map()
+
+        # 添加小鸡
+        chicken = Chicken(name='Test')
+        self.addEntity(chicken)
+
+        # 添加米粒
+        rice = Entity(_id='entity.rice', _position=Vector(2, 2))
+        rice.texture = resourceManager.getOrNew('else/rice')  # 加载米粒图片
+        self.addEntity(rice)
+
+        # 添加鸡窝
+        coop = Entity(_id='entity.coop', _position=Vector(4, 4))
+        coop.texture = resourceManager.getOrNew('else/coop')  # 加载鸡窝图片
+        self.addEntity(coop)
+
+    def generate_map(self) -> None:
+        # 假设 blockManager.dic 包含所有可用的块类型
+        import random
+        rd = random.Random(self.seed or 0)
+
+        # 生成更大的地图
+        for i in range(-50, 50):  # 假设地图范围扩大到 -50 到 50
+            for j in range(-50, 50):
+                v = BlockVector(i, j)
+                block_type = rd.choice(blockManager.dic.keys())
+                block = Block(v, block_type)
+                self._ground[hash(v)] = block
+
+    def addEntity(self, entity: 'Entity') -> None:
+        super().addEntity(entity)
+        if isinstance(entity, Chicken):
+            self._chicken = entity
+
+    def removeEntity(self, entity: 'Entity') -> None:
+        super().removeEntity(entity)
+        if isinstance(entity, Chicken):
+            self._chicken = None
+
+    def passTick(self) -> None:
+        super().tick()
+        if self._chicken:
+            self.update_camera_position()
+            if self._chicken.growth_value >= 100 and not self._lay_egg_button:
+                self.create_lay_egg_button()
+
+    def render(self, delta: float, at: Union[Vector, None]) -> None:
+        super().render(delta, at)
+        if self._lay_egg_button:
+            self._lay_egg_button.render(delta, at)
+
+    def update_camera_position(self) -> None:
+        if self._chicken:
+            # 设置镜头位置为小鸡位置，但限制在地图范围内
+            self._camera_position = self._chicken.position.clone().subtract(Vector(20, 20))  # 假设镜头跟随小鸡并保持20个单位的距离
+            self._camera_position = self._camera_position.clamp(Vector(-30, -30), Vector(30, 30))  # 限制镜头位置在合理范围内
+
+    def create_lay_egg_button(self) -> None:
+        self._lay_egg_button = Button(
+            Location.LEFT_TOP, 
+            0, 
+            0, 
+            0.09, 
+            0.12, 
+            RenderableString('下蛋'), 
+            Description([RenderableString("立即下蛋")]), 
+            Location.CENTER
+        )
+        self._lay_egg_button.onMouseDown = self.on_lay_egg_button_click
+
+    def on_lay_egg_button_click(self) -> None:
+        if self._chicken:
+            self._chicken.moveTo(self._chicken_nest_position)  # 小鸡跑到世界最左边的鸡窝
+            self.removeEntity(self._chicken)
+            print("小鸡跑到鸡窝下蛋")
+        if self._lay_egg_button:
+            self._lay_egg_button = None  # 移除按钮
+
+    def triggerEggLaying(self) -> None:
+        if self._chicken:
+            self._chicken.moveTo(self._chicken_nest_position)
+            self.removeEntity(self._chicken)
+            print("小鸡跑到鸡窝下蛋")
+        if self._lay_egg_button:
+            self._lay_egg_button = None  # 移除按钮
+
+    def increase_chicken_growth(self, amount: int) -> None:
+        self._chicken_growth += amount
+        if self._chicken_growth >= 100:
+            self.create_lay_egg_button()
+        if self._chicken and self._chicken.growth_value >= 50 and self._chicken.texture.path == 'else/chicken_small':
+            self._chicken.texture = resourceManager.getOrNew('else/chicken_big')  # 更改小鸡图片为大图片
+
+    def getCameraPosition(self) -> Vector:
+        return self._camera_position
+
+    def getLayEggButton(self) -> Button | None:
+        return self._lay_egg_button
+
+    def getChickenGrowth(self) -> int:
+        return self._chicken_growth
+
+    def getChickenNestPosition(self) -> BlockVector:
+        return self._chicken_nest_position
