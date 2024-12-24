@@ -1,4 +1,4 @@
-user/
-user/*
-user/archive/
-user/archive/*
+/user/
+/user/*
+/user/archive/
+/user/archive/*
