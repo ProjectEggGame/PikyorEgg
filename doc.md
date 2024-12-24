@@ -523,6 +523,9 @@
       - ```getSize```
         - 获取```_canvas```的尺寸。
         - returns ```Vector```
+      - ```getCenter```
+        - 获取```_canvas```的中心点坐标。
+        - returns ```BlockVector```
       - ```getCanvas```
         - 获取```_canvas```。
         - returns ```Surface```
@@ -530,8 +533,8 @@
         - 获取```_screen```。
         - returns ```Surface```
       - ```getCamera```
-        - 获取```_camera```的最新位置。
-        - returns ```Vector```
+        - 获取```_camera```的位置。
+        - returns ```SynchronizedStorage[Vector]```
       - ```getOffset```
         - 获取```_offset```。其实没什么用，因为不需要手动计算这个偏移。
         - returns ```BlockVector```
@@ -902,6 +905,7 @@ storage: SynchronizedStorage[int] = SynchronizedStorage(0)
         - param ```screen: Surface``` 渲染目标。
         - param ```x: int``` ```y: int``` 渲染坐标。
         - param ```defaultColor: int``` 0xRRGGBBAA格式。如果字符串没有指定具体颜色，则使用这个颜色。
+        - param ```defaultBackground: int``` 0xRRGGBBAA格式。如果字符串没有指定具体背景颜色，则使用这个颜色。
         - returns ```int``` 渲染后，右上角的x坐标。
       - ```renderSmall```
         - 用法与```renderAt```一样，只不过强制用小字体渲染。
@@ -935,7 +939,8 @@ storage: SynchronizedStorage[int] = SynchronizedStorage(0)
         - 顾名思义。可以set((x, y))传入的元组，可以传入set(x, y)分别传入x和y的值，也可以传入另一个Vector或者BlockVector。
       - ```setX``` ```setY```
         - 顾名思义。
-      - ```add``` ```subtract``` ```multiply```
+      - ```add``` ```subtract``` ```multiply``` ```divide```
+        - 注：目前只有```Vector```拥有```divide```。
         - 与Matrix相似，自身修改为结果，然后返回自身。
         - 参数可以传入Vector或者BlockVector，也可以传入数字元组。
         - ```multiply```只接受数字参数，点乘请用```dot```，没有叉乘。
@@ -1094,6 +1099,9 @@ storage: SynchronizedStorage[int] = SynchronizedStorage(0)
         - 提交一个要渲染的Description。
         - 及时更改。
         - param ```contents: Description```
+      - ```empty```
+        - 查看浮动窗口是否有要渲染的内容。
+        - returns ```bool```
       - ```render```
         - 渲染悬浮窗口。不需要手动调用。
   - ```class PresetColors```

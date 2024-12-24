@@ -132,6 +132,7 @@ def mainThread():
 						interact.mouse.subtract(renderer.getOffset())  # interact不能导入renderer，委托此处修正鼠标位置
 						if game.getWindow() is not None:
 							game.getWindow().passMouseMove(interact.mouse.x, interact.mouse.y)
+						game.processMouse()
 					case pygame.MOUSEBUTTONDOWN:
 						interact.onMouse(event)
 						if game.getWindow() is not None:

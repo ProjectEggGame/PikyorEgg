@@ -130,6 +130,9 @@ class FloatWindow(Renderable):
 		"""
 		self._rendering = contents
 	
+	def empty(self) -> bool:
+		return self._rendering is None
+	
 	def render(self, delta: float, at=None) -> None:
 		if self._rendering is None:
 			return
@@ -143,7 +146,7 @@ class FloatWindow(Renderable):
 		s = Surface((maximum, len(info) * font.fontHeight >> 1))
 		s.fill((60, 60, 60))
 		for i in range(len(info)):
-			info[i][0].renderSmall(s, 0, i * font.fontHeight >> 1, 0xffffffff)
+			info[i][0].renderSmall(s, 0, i * font.fontHeight >> 1, 0xffffffff, 0x222222)
 		x, y = interact.mouse.clone().subtract(0, len(info) * font.fontHeight >> 1).getTuple()
 		if x < 0:
 			x = 0

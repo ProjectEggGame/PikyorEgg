@@ -149,6 +149,11 @@ class Vector:
 		self.y *= mul
 		return self
 	
+	def divide(self, div) -> 'Vector':
+		self.x /= div
+		self.y /= div
+		return self
+	
 	def dot(self, other: 'Vector') -> float:
 		return self.x * other.x + self.y * other.y
 	

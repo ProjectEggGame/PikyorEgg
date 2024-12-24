@@ -1,7 +1,9 @@
 """
 这里相当于游戏资源管理器。所有的游戏资源（列表）都在这里。
 """
+from interact import interact
 from render.renderer import renderer
+from utils import utils
 from utils.error import NullPointerException
 from typing import TYPE_CHECKING, Union
 
@@ -21,7 +23,7 @@ class Game:
 		self._window: SynchronizedStorage[Union['Window', None]] = SynchronizedStorage[Union['Window', None]](None)
 		self.floatWindow: Union['FloatWindow', None] = None  # 在主程序中初始化
 		self.hud: Union['Hud', None] = None
-
+	
 	def tick(self) -> None:
 		notPause: bool = True
 		if self._window.get() is not None:
@@ -50,15 +52,14 @@ class Game:
 		self.hud.render(delta)
 		if self._window.get() is not None:
 			self._window.get().passRender(delta)
-		if self.floatWindow is not None:
-			self.floatWindow.render(delta)
+		self.floatWindow.render(delta)
 		renderer.end()
 	
 	def setWindow(self, window: Union['Window', None]) -> None:
 		self._window.set(window)
 		if window is not None:
 			window.onResize()
-		
+	
 	def getWindow(self) -> Union['Window', None]:
 		return self._window.getNew()
 	
@@ -68,7 +69,7 @@ class Game:
 	
 	def getWorld(self) -> Union['World', None]:
 		return self._mainWorld
-		
+	
 	def quit(self) -> None:
 		self.running = False
 	
@@ -83,7 +84,10 @@ class Game:
 		return {}
 	
 	def processMouse(self):
-		pass
+		if self._mainWorld is not None and self._window.get() is None:
+			block = self._mainWorld.getBlockAt(interact.mouse.clone().subtract(renderer.getCenter()).getVector().divide(renderer.getMapScale()).add(renderer.getCamera().get()).getBlockVector())
+			if block is not None:
+				self.floatWindow.submit(block.description)
 
 
 game = Game()

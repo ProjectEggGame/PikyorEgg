@@ -207,14 +207,17 @@ class Renderer:
 	def getSize(self) -> BlockVector:
 		return self._canvasSize
 	
+	def getCenter(self) -> BlockVector:
+		return self._canvasCenter.clone()
+	
 	def getCanvas(self) -> Surface:
 		return self._canvas
 	
 	def getScreen(self) -> Surface:
 		return self._screen
 	
-	def getCamera(self) -> Vector:
-		return self._camera.getNew()
+	def getCamera(self) -> SynchronizedStorage['Vector']:
+		return self._camera
 	
 	def getOffset(self) -> BlockVector:
 		return self._offset.clone()

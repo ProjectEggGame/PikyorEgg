@@ -24,20 +24,20 @@ class InnerStringConfig:
 	def __init__(self):
 		self.string: str | None = None
 		self.color: int = 0x1_ffff_ffff  # 多打一个一是为了后面的“默认颜色”用的
-		self.background: int = 0
+		self.background: int = 0x1_ffff_ffff  # 同上
 		self.font: int = 0
 		self.italic: bool = False
 		self.bold: bool = False
 		self.delete: bool = False
 		self.underline: bool = False
 		
-	def renderAt(self, screen: Surface, x: int, y: int, defaultColor: int) -> int:
-		dx = font.allFonts[self.font].draw(screen, self.string, x, y, defaultColor if self.color == 0x1_ffff_ffff else self.color, self.bold, self.italic, self.underline, self.delete, self.background)
+	def renderAt(self, screen: Surface, x: int, y: int, defaultColor: int, defaultBackground: int = 0) -> int:
+		dx = font.allFonts[self.font].draw(screen, self.string, x, y, defaultColor if self.color == 0x1_ffff_ffff else self.color, self.bold, self.italic, self.underline, self.delete, defaultBackground if self.background == 0x1_ffff_ffff else self.background)
 		return x + dx
 	
-	def renderSmall(self, screen: Surface, x: int, y: int, defaultColor: int) -> int:
+	def renderSmall(self, screen: Surface, x: int, y: int, defaultColor: int, defaultBackground: int = 0) -> int:
 		smallFont = self.font if self.font >= 10 else self.font + 10
-		dx = font.allFonts[smallFont].draw(screen, self.string, x, y, defaultColor if self.color == 0x1_ffff_ffff else self.color, self.bold, self.italic, self.underline, self.delete, self.background)
+		dx = font.allFonts[smallFont].draw(screen, self.string, x, y, defaultColor if self.color == 0x1_ffff_ffff else self.color, self.bold, self.italic, self.underline, self.delete, defaultBackground if self.background == 0x1_ffff_ffff else self.background)
 		return x + dx
 	
 	def clone(self) -> 'InnerStringConfig':
@@ -182,14 +182,14 @@ class RenderableString:
 			s += i.lengthSmall()
 		return s
 	
-	def renderAt(self, screen: Surface, x: int, y: int, defaultColor: int) -> int:
+	def renderAt(self, screen: Surface, x: int, y: int, defaultColor: int, defaultBackground: int = 0) -> int:
 		for i in self.set:
-			x = i.renderAt(screen, x, y, defaultColor)
+			x = i.renderAt(screen, x, y, defaultColor, defaultBackground)
 		return x
 	
-	def renderSmall(self, screen: Surface, x: int, y: int, defaultColor: int) -> int:
+	def renderSmall(self, screen: Surface, x: int, y: int, defaultColor: int, defaultBackground: int = 0) -> int:
 		for i in self.set:
-			x = i.renderSmall(screen, x, y, defaultColor)
+			x = i.renderSmall(screen, x, y, defaultColor, defaultBackground)
 		return x
 	
 	def __str__(self):
