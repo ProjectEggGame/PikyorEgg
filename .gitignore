@@ -1,4 +1,4 @@
 /user/
 /user/*
 /user/archive/
-/user/archive/*
+/user/archive/__DEFAULT_WORLD__.json
