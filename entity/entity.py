@@ -1,8 +1,11 @@
+import random
+
 import pygame
 from typing import TYPE_CHECKING, Union
 
 from entity.manager import entityManager
 from utils import utils
+from window.window import DeathWindow
 
 if TYPE_CHECKING:
 	from block.block import Block
@@ -18,7 +21,7 @@ from utils.element import Element
 
 
 class Entity(Element):
-	def __init__(self, entityID: str, name: str, description: Description, texture: list[Texture], speed: float = 0):
+	def __init__(self, entityID: str, name: str, description: Description, texture: list[Texture], position: Vector, speed: float = 0):
 		"""
 		:param name: 实体名称
 		:param description: 实体描述，字符串列表
@@ -27,7 +30,7 @@ class Entity(Element):
 		super().__init__(name, description, texture[0])
 		self.__renderInterval: int = 6
 		self.__velocity: Vector = Vector(0, 0)
-		self._position: Vector = Vector(0, 0)
+		self._position: Vector = position
 		self._maxSpeed: float = speed
 		self._setVelocity: Vector = Vector(0, 0)
 		self._textureSet: list[Texture] = texture
@@ -135,59 +138,56 @@ class Entity(Element):
 		"""
 		self._position.add(self.__velocity)
 		self.__processMove()
-		vcb: BlockVector = self.__velocity.directionalCloneBlock()
-		if vcb.x < 0:
-			self.__renderInterval -= 1
-			if self._texture is self._textureSet[4]:
-				if self.__renderInterval <= 0:
-					self.__renderInterval = 6
-					self._texture = self._textureSet[5]
-			elif self._texture is self._textureSet[5]:
-				if self.__renderInterval <= 0:
-					self.__renderInterval = 6
+		if abs(self.__velocity.x) >= abs(self.__velocity.y):
+			if self.__velocity.x < 0:
+				self.__renderInterval -= 1
+				if self._texture is self._textureSet[4]:
+					if self.__renderInterval <= 0:
+						self.__renderInterval = 6
+						self._texture = self._textureSet[5]
+				elif self._texture is self._textureSet[5]:
+					if self.__renderInterval <= 0:
+						self.__renderInterval = 6
+						self._texture = self._textureSet[4]
+				else:
 					self._texture = self._textureSet[4]
-			else:
-				self.__renderInterval = 6
-				self._texture = self._textureSet[4]
-		elif vcb.x > 0:
-			self.__renderInterval -= 1
-			if self._texture is self._textureSet[6]:
-				if self.__renderInterval <= 0:
-					self.__renderInterval = 6
-					self._texture = self._textureSet[7]
-			elif self._texture is self._textureSet[7]:
-				if self.__renderInterval <= 0:
-					self.__renderInterval = 6
+			elif self.__velocity.x > 0:
+				self.__renderInterval -= 1
+				if self._texture is self._textureSet[6]:
+					if self.__renderInterval <= 0:
+						self.__renderInterval = 6
+						self._texture = self._textureSet[7]
+				elif self._texture is self._textureSet[7]:
+					if self.__renderInterval <= 0:
+						self.__renderInterval = 6
+						self._texture = self._textureSet[6]
+				else:
 					self._texture = self._textureSet[6]
-			else:
-				self.__renderInterval = 6
-				self._texture = self._textureSet[6]
-		elif vcb.y < 0:
-			self.__renderInterval -= 1
-			if self._texture is self._textureSet[2]:
-				if self.__renderInterval <= 0:
-					self.__renderInterval = 6
-					self._texture = self._textureSet[3]
-			elif self._texture is self._textureSet[3]:
-				if self.__renderInterval <= 0:
-					self.__renderInterval = 6
+		else:
+			if self.__velocity.y < 0:
+				self.__renderInterval -= 1
+				if self._texture is self._textureSet[2]:
+					if self.__renderInterval <= 0:
+						self.__renderInterval = 6
+						self._texture = self._textureSet[3]
+				elif self._texture is self._textureSet[3]:
+					if self.__renderInterval <= 0:
+						self.__renderInterval = 6
+						self._texture = self._textureSet[2]
+				else:
 					self._texture = self._textureSet[2]
-			else:
-				self.__renderInterval = 6
-				self._texture = self._textureSet[2]
-		elif vcb.y > 0:
-			self.__renderInterval -= 1
-			if self._texture is self._textureSet[0]:
-				if self.__renderInterval <= 0:
-					self.__renderInterval = 6
-					self._texture = self._textureSet[1]
-			elif self._texture is self._textureSet[1]:
-				if self.__renderInterval <= 0:
-					self.__renderInterval = 6
+			elif self.__velocity.y > 0:
+				self.__renderInterval -= 1
+				if self._texture is self._textureSet[0]:
+					if self.__renderInterval <= 0:
+						self.__renderInterval = 6
+						self._texture = self._textureSet[1]
+				elif self._texture is self._textureSet[1]:
+					if self.__renderInterval <= 0:
+						self.__renderInterval = 6
+						self._texture = self._textureSet[0]
+				else:
 					self._texture = self._textureSet[0]
-			else:
-				self.__renderInterval = 6
-				self._texture = self._textureSet[0]
 		self.tick()
 	
 	def tick(self) -> None:
@@ -240,6 +240,7 @@ class Damageable:
 	"""
 	所有有血条的实体都要额外继承这个类
 	"""
+	
 	def __init__(self, maxHealth: float = 100, health: float | None = None):
 		self._health: float = health or maxHealth
 		self._maxHealth: float = maxHealth
@@ -325,9 +326,23 @@ class Damageable:
 		if not self._isAlive:
 			return 0
 		return self.onDamage(amount)
+	
+	def save(self) -> dict:
+		return {
+			"health": self._health,
+			"maxHealth": self._maxHealth,
+			"isAlive": self._isAlive
+		}
+	
+	@classmethod
+	def load(cls, d: dict, entity: Union['Damageable', None]) -> 'Damageable':
+		entity._health = d["health"]
+		entity._maxHealth = d["maxHealth"]
+		entity._isAlive = d["isAlive"]
+		return entity
 
 
-class Player(Entity, Damageable):
+class DeprecatedPlayer(Entity, Damageable):
 	def __init__(self, name: str):
 		"""
 		创建玩家
@@ -341,7 +356,7 @@ class Player(Entity, Damageable):
 			resourceManager.getOrNew('player/no_player_l2'),
 			resourceManager.getOrNew('player/no_player_r1'),
 			resourceManager.getOrNew('player/no_player_r2'),
-		], 0.16)
+		], Vector(), 0.16)
 		Damageable.__init__(self, 100)
 		self.inventory = BackPack()
 		self.hunger = 0
@@ -363,90 +378,107 @@ class Player(Entity, Damageable):
 		self.setVelocity(v.normalize().multiply(self._maxSpeed))
 	
 	@classmethod
-	def load(cls, d: dict, entity=None) -> 'Player':
-		p = Player(d['name'])
+	def load(cls, d: dict, entity=None) -> 'DeprecatedPlayer':
+		p = DeprecatedPlayer(d['name'])
 		super().load(d, p)
 		return p
 
 
 class Rice(Entity):
-    def __init__(self, position: Vector):
-        super().__init__(position)
-        self._id = 'entity.rice'
-        self._description = Description([RenderableString("\\#FFFFD700黄色的米粒")])
-        self._resource = resourceManager.getOrNew('entity/rice')
-
-    def save(self) -> dict:
-        return {
-            'id': self._id,
-            'position': self._position.save()
-        }
-
-    @classmethod
-    def load(cls, d: dict) -> 'Rice':
-        rice = cls(Vector.load(d['position']))
-        return rice
-
-    def render(self, delta: float, at: Vector | None = None) -> None:
-        # 实现米粒的渲染逻辑
-        pass
-
-    def passTick(self) -> None:
-        # 实现米粒的每一帧逻辑
-        pass
+	def __init__(self, position: Vector):
+		super().__init__('entity.rice', '米粒', Description([RenderableString("\\#FFFFD700黄色的米粒")]), [resourceManager.getOrNew('entity/rice')], position, 0)
+	
+	def tick(self) -> None:
+		player = game.getWorld().getPlayer()
+		if player is not None and player.getPosition().distanceManhattan(self.getPosition()) <= 0.6:
+			player.grow(2)
+			game.getWorld().removeEntity(self)
+			game.getWorld().addEntity(Rice(Vector(random.randint(-50, 50), random.randint(-50, 50))))
+	
+	@classmethod
+	def load(cls, d: dict, entity: Union['Entity', None] = None) -> Union['Entity', None]:
+		e = Rice(Vector.load(d['position']))
+		return Entity.load(d, e)
 
 
-class Chicken(Entity):
-    def __init__(self, position: Vector):
-        super().__init__(position)
-        self._id = 'entity.chicken'
-        self._description = Description([RenderableString("\\#FFD700黄色的小鸡")])
-        self.texture = resourceManager.getOrNew('egg/dark_red_birth_egg')
-        self.growth_value = 0  # 成长值初始化为0
+class Player(Entity, Damageable):
+	def __init__(self, position: Vector):
+		Entity.__init__(self, 'player', '小鸡', Description([RenderableString('你'), RenderableString("\\#FFFFD700黄色的小鸡")]), [
+			resourceManager.getOrNew('player/chick_1'),
+			resourceManager.getOrNew('player/chick_1'),
+			resourceManager.getOrNew('player/chick_b1'),
+			resourceManager.getOrNew('player/chick_b1'),
+			resourceManager.getOrNew('player/chick_l1'),
+			resourceManager.getOrNew('player/chick_l1'),
+			resourceManager.getOrNew('player/chick_r1'),
+			resourceManager.getOrNew('player/chick_r1'),
+		], position, 0.16)
+		Damageable.__init__(self, 100)
+		self.growth_value = 0  # 成长值初始化为0
+	
+	def onDeath(self) -> None:
+		utils.info('死亡')
+		game.setWindow(DeathWindow())
+	
+	def save(self) -> dict:
+		data = Entity.save(self)
+		data.update(Damageable.save(self))
+		data['growth_value'] = self.growth_value
+		return data
+	
+	@classmethod
+	def load(cls, d: dict, entity: Union['Player', None] = None) -> 'Player':
+		chicken = Player(Vector.load(d['position']))
+		chicken.growth_value = d['growth_value']
+		Entity.load(d, chicken)
+		Damageable.load(d, chicken)
+		return chicken
+	
+	def grow(self, amount: int) -> int:
+		val = self.growth_value + amount
+		if val > 100:
+			self.growth_value = 100
+			return amount + 100 - self.growth_value
+		else:
+			self.growth_value = val
+			return amount
+	
+	def tick(self) -> None:
+		v: Vector = Vector()
+		if game.getWindow() is None:
+			if interact.keys[pygame.K_w].peek():
+				v.add(0, -1)
+			if interact.keys[pygame.K_a].peek():
+				v.add(-1, 0)
+			if interact.keys[pygame.K_s].peek():
+				v.add(0, 1)
+			if interact.keys[pygame.K_d].peek():
+				v.add(1, 0)
+			if interact.specialKeys[pygame.K_LSHIFT & interact.KEY_COUNT].peek():
+				self._maxSpeed = 0.08
+			elif interact.specialKeys[pygame.K_LCTRL & interact.KEY_COUNT].peek():
+				self._maxSpeed = 0.32
+			else:
+				self._maxSpeed = 0.16
+		self.setVelocity(v.normalize().multiply(self._maxSpeed))
 
-    def save(self) -> dict:
-        data = super().save()
-        data['growth_value'] = self.growth_value
-        return data
 
-    @classmethod
-    def load(cls, d: dict) -> 'Chicken':
-        chicken = cls(Vector.load(d['position']))
-        chicken.growth_value = d.get('growth_value', 0)
-        return chicken
-
-    def render(self, delta: float, at: Vector | None = None) -> None:
-        # 实现小鸡的渲染逻辑
-        pass
-
-    def passTick(self) -> None:
-        # 实现小鸡的每一帧逻辑
-        # 检查周围是否有米粒实体
-        for entity in self._world._entityList:
-            if entity._id == 'entity.rice' and self._position.distanceTo(entity._position) < 1:
-                self._world.removeEntity(entity)
-                self.growth_value += 10  # 每次吃米粒增加10点成长值
-                print(f"小鸡吃掉了一颗米粒，成长值: {self.growth_value}")
-                break
-
-    def move(self, direction: Vector)-> None:
-        new_position = self._position.clone().add(direction)
-        self.setPosition(new_position)
-
-    def moveTo(self, target: Vector) -> None:
-        # 简单的移动逻辑，假设每次移动一个单位
-        while self._position != target:
-            direction = target.subtract(self._position).normalize()
-            self.move(direction)
-            print(f"小鸡移动到: {self._position}")
-
+class Coop(Entity):
+	def __init__(self, position: Vector):
+		super().__init__('entity.coop', '鸡窝', Description([RenderableString('鸡舍')]), [resourceManager.getOrNew('entity/coop')], position, 0)
+	
+	@classmethod
+	def load(cls, d: dict, entity: Union['Entity', None] = None) -> Union['Entity', None]:
+		e = Coop(Vector.load(d['position']))
+		return Entity.load(d, e)
 
 
 # 注册实体
 entityManager.register('entity.rice', Rice)
-entityManager.register('entity.chicken', Chicken)
-
 entityManager.register('player', Player)
+entityManager.register('entity.coop', Coop)
+
+entityManager.register('deprecated', DeprecatedPlayer)
 
 for t in [
 	resourceManager.getOrNew('player/no_player_1'),
@@ -458,8 +490,22 @@ for t in [
 	resourceManager.getOrNew('player/no_player_r1'),
 	resourceManager.getOrNew('player/no_player_r2'),
 ]:
-	t.adaptsUI()
 	t.getSurface().set_colorkey((0, 0, 0))
 	t.getMapScaledSurface().set_colorkey((0, 0, 0))
 	t.setOffset(Vector(0, -6))
-	
+for t in [
+	resourceManager.getOrNew('entity/rice'),
+	resourceManager.getOrNew('entity/coop'),
+]:
+	t.getSurface().set_colorkey((0, 0, 0))
+	t.getMapScaledSurface().set_colorkey((0, 0, 0))
+for t in [
+			resourceManager.getOrNew('player/chick_1'),
+			resourceManager.getOrNew('player/chick_b1'),
+			resourceManager.getOrNew('player/chick_l1'),
+			resourceManager.getOrNew('player/chick_r1'),
+]:
+	t.getSurface().set_colorkey((1, 1, 1))
+	t.getMapScaledSurface().set_colorkey((1, 1, 1))
+	t.setOffset(Vector(0, -4))
+del t

@@ -308,7 +308,7 @@ class BlockVector:
 		:param x: 横坐标，相对左上角。
 		:param y: 纵坐标，相对左上角
 		"""
-		if x >= 0x1_0000_0000 or y >= 0x1_0000_0000 or x <= -0xffff_ffff or y <= -0xffff_ffff:
+		if x >= 0x1_0000 or y >= 0x1_0000 or x <= -0xffff or y <= -0xffff:
 			raise ValueError('BlockVector out of range')
 		self.x = x
 		self.y = y
@@ -595,4 +595,4 @@ class BlockVector:
 		return f'Block({self.x}, {self.y})'
 	
 	def __hash__(self) -> int:
-		return (self.x << 32) + (self.y if self.y >= 0 else self.y - 1)
+		return (self.x << 16) | (self.y if self.y >= 0 else ((self.y - 1) & 0xffff))

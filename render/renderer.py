@@ -89,6 +89,7 @@ class Renderer:
 		self._renderStack.append(RenderStack())
 		
 		self._camera: SynchronizedStorage[Vector] = SynchronizedStorage[Vector](Vector(0.0, 0.0))
+		self.cameraOffset: Vector = Vector(0.0, 0.0)
 		self._cameraAt: Union['Entity', None] = None
 		
 		self._systemScale: int = 1  # 系统窗口导致的缩放
@@ -103,7 +104,7 @@ class Renderer:
 		
 		self._customMapScale: float = 1.0
 		self._customUiScale: float = 1.0
-		self._is4to3: SynchronizedStorage[bool] = SynchronizedStorage[bool](True)
+		self.is4to3: SynchronizedStorage[bool] = SynchronizedStorage[bool](True)
 	
 	def ready(self) -> bool:
 		"""
@@ -117,7 +118,7 @@ class Renderer:
 		"""
 		self._screen = screen
 		self._size = screen.get_size()
-		if self._is4to3.get():
+		if self.is4to3.get():
 			if self._size[0] / self._size[1] > 4 / 3:
 				self._offset = BlockVector(int(self._size[0] - self._size[1] * 4 / 3) >> 1, 0)
 			elif self._size[0] / self._size[1] < 4 / 3:
@@ -161,11 +162,18 @@ class Renderer:
 		self._isRendering = True
 		# begin apply sync
 		if self._cameraAt is None:
-			self._camera.apply(self._camera.getNew().clone())
+			if self._camera.get() == self._camera.getNew():
+				off = self.cameraOffset
+				self.cameraOffset = Vector(0, 0)
+				self._camera.apply(self._camera.getNew().add(off).clone())
+			else:
+				self._camera.apply(self._camera.getNew().clone())
+				self.cameraOffset.set(0, 0)
 		else:
 			self._camera.get().set(self._cameraAt.getPosition() + self._cameraAt.getVelocity() * delta)
 			self._camera.getNew().set(self._camera.get().clone())
-		self._is4to3.apply(self._is4to3.getNew())
+			self._camera.get().add(self.cameraOffset)
+		self.is4to3.apply(self.is4to3.getNew())
 		# end apply sync
 		self._screen.fill(0)
 		self._canvas.fill(0)
@@ -346,6 +354,13 @@ class Renderer:
 	def getMapScale(self) -> float:
 		return self._mapScale
 	
+	def dealScreen4to3Change(self) -> bool:
+		if self.is4to3.get() != self.is4to3.getNew():
+			self.is4to3.apply(self.is4to3.getNew())
+			self.setScreen(self._screen)
+			return True
+		return False
+	
 	def peekScaleChange(self) -> bool:
 		"""
 		应当仅在main.py, renderThread中调用
@@ -412,13 +427,13 @@ class Renderer:
 		self._renderStack[-1].offset.add(x, y)
 	
 	def readConfig(self, config: dict[str, any]) -> None:
-		self._is4to3.set(configs.readElseDefault(config, "screenSize", False, {"4:3": True, "16:9": False}, "screenSize: {} is not supported. Using 4:3."))
-		self._is4to3.apply(self._is4to3.getNew())
+		self.is4to3.set(configs.readElseDefault(config, "screenSize", False, {"4:3": True, "16:9": False}, "screenSize: {} is not supported. Using 4:3."))
+		self.is4to3.apply(self.is4to3.getNew())
 		self.setCustomMapScale(configs.readElseDefault(config, "customScale", 1, lambda f: utils.frange(f, 0.5, 8)))
 		
 	def writeConfig(self) -> dict[str, any]:
 		return {
-			"screenSize": "4:3" if self._is4to3.get() else "16:9",
+			"screenSize": "4:3" if self.is4to3.get() else "16:9",
 			"customScale": self._customMapScale,
 		}
 

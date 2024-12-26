@@ -4,7 +4,7 @@ from block.manager import blockManager
 from render.resource import resourceManager
 from utils.element import Element
 from utils.error import InvalidOperationException, neverCall
-from utils.text import Description, RenderableString
+from utils.text import RenderableString, BlockDescription
 from utils.vector import Vector, BlockVector
 
 if TYPE_CHECKING:
@@ -13,7 +13,7 @@ if TYPE_CHECKING:
 
 
 class Block(Element):
-	def __init__(self, blockID: str, name: str, description: 'Description', position: 'BlockVector', texture: 'Texture'):
+	def __init__(self, blockID: str, name: str, description: 'BlockDescription', position: 'BlockVector', texture: 'Texture'):
 		super().__init__(name, description, texture)
 		self._position: 'BlockVector' = position.clone()
 		self._blockID: str = blockID
@@ -112,7 +112,7 @@ class Ground(Block):
 	类地面方块
 	"""
 	
-	def __init__(self, blockID: str, name: str, description: 'Description', position: 'BlockVector', texture: 'Texture'):
+	def __init__(self, blockID: str, name: str, description: 'BlockDescription', position: 'BlockVector', texture: 'Texture'):
 		super().__init__(blockID, name, description, position, texture)
 	
 	def canPass(self, entity: Union['Entity', None] = None) -> bool:
@@ -124,7 +124,7 @@ class Wall(Block):
 	类墙方块
 	"""
 	
-	def __init__(self, blockID: str, name: str, description: 'Description', position: 'BlockVector', texture: 'Texture'):
+	def __init__(self, blockID: str, name: str, description: 'BlockDescription', position: 'BlockVector', texture: 'Texture'):
 		super().__init__(blockID, name, description, position, texture)
 
 	def canPass(self, entity: Union['Entity', None] = None) -> bool:
@@ -133,7 +133,7 @@ class Wall(Block):
 
 class GrassBlock(Ground):
 	def __init__(self, position: 'BlockVector'):
-		super().__init__('nature.grass', "草地", Description([RenderableString("\\#FF4BAB25青色的草地")]), position, resourceManager.getOrNew('block/grass'))
+		super().__init__('nature.grass', "草地", BlockDescription(self, [RenderableString("\\#FF4BAB25青色的草地")]), position, resourceManager.getOrNew('block/grass'))
 	
 	@classmethod
 	def load(cls, d: dict, block=None) -> 'GrassBlock':
@@ -144,7 +144,7 @@ class GrassBlock(Ground):
 
 class PathBlock(Ground):
 	def __init__(self, position: 'BlockVector'):
-		super().__init__('nature.path', "草径", Description([RenderableString("\\#FF4BAB25土黄色的道路")]), position, resourceManager.getOrNew('block/path'))
+		super().__init__('nature.path', "草径", BlockDescription(self, [RenderableString("\\#FF4BAB25土黄色的道路")]), position, resourceManager.getOrNew('block/path'))
 	
 	@classmethod
 	def load(cls, d: dict, block=None) -> 'PathBlock':
@@ -155,7 +155,7 @@ class PathBlock(Ground):
 
 class FarmlandBlock(Ground):
 	def __init__(self, position: 'BlockVector'):
-		super().__init__('nature.farmland', "耕地", Description([RenderableString("\\#FF733706肥沃的泥土")]), position, resourceManager.getOrNew('block/farmland'))
+		super().__init__('nature.farmland', "耕地", BlockDescription(self, [RenderableString("\\#FF733706肥沃的泥土")]), position, resourceManager.getOrNew('block/farmland'))
 	
 	@classmethod
 	def load(cls, d: dict, block=None) -> 'FarmlandBlock':
@@ -166,7 +166,7 @@ class FarmlandBlock(Ground):
 
 class ErrorBlock(Ground):
 	def __init__(self, position: 'BlockVector'):
-		super().__init__('system.error', "错误方块", Description([RenderableString("\\#FFEE0000错误方块")]), position, resourceManager.getOrNew('no_texture'))
+		super().__init__('system.error', "错误方块", BlockDescription(self, [RenderableString("\\#FFEE0000错误方块")]), position, resourceManager.getOrNew('no_texture'))
 	
 	@classmethod
 	def load(cls, d: dict, block=None) -> 'ErrorBlock':

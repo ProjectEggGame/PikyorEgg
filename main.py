@@ -1,11 +1,10 @@
 import time
 
 import pygame
-from threading import Thread
+from threading import Thread, Lock
 
 from entity.entity import Player
 from interact import interact
-from interact.key_process import processKeys
 from render import font
 
 from render.renderer import renderer
@@ -35,6 +34,8 @@ def renderThread():
 		try:
 			nowRender = time.perf_counter_ns()
 			if nowRender - lastRender >= 5_000_000:
+				if renderer.dealScreen4to3Change():
+					game.getWindow().onResize()
 				if renderer.peekScaleChange():
 					resourceManager.changeScale()
 					if renderer.systemScaleChanged():
@@ -67,7 +68,6 @@ def gameThread():
 			nowTick = time.perf_counter_ns()
 			if nowTick - lastTick >= 45_000_000:
 				game.tick()
-				processKeys()
 				lastTick = nowTick
 				count += 1
 			if nowRender - lastCount >= 1_000_000_000:
@@ -131,16 +131,34 @@ def mainThread():
 						interact.onMouse(event)
 						interact.mouse.subtract(renderer.getOffset())  # interact不能导入renderer，委托此处修正鼠标位置
 						if game.getWindow() is not None:
-							game.getWindow().passMouseMove(interact.mouse.x, interact.mouse.y)
-						game.processMouse()
+							game.getWindow().passMouseMove(interact.mouse.x, interact.mouse.y, event.buttons)
+						game.processMouse(event)
 					case pygame.MOUSEBUTTONDOWN:
 						interact.onMouse(event)
 						if game.getWindow() is not None:
-							game.getWindow().passMouseDown(interact.mouse.x, interact.mouse.y)
+							match event.button:
+								case 1:
+									buttons = (1, 0, 0)
+								case 2:
+									buttons = (0, 1, 0)
+								case 3:
+									buttons = (0, 0, 1)
+								case _:
+									buttons = (0, 0, 0)
+							game.getWindow().passMouseDown(interact.mouse.x, interact.mouse.y, buttons)
 					case pygame.MOUSEBUTTONUP:
 						interact.onMouse(event)
 						if game.getWindow() is not None:
-							game.getWindow().passMouseUp(interact.mouse.x, interact.mouse.y)
+							match event.button:
+								case 1:
+									buttons = (1, 0, 0)
+								case 2:
+									buttons = (0, 1, 0)
+								case 3:
+									buttons = (0, 0, 1)
+								case _:
+									buttons = (0, 0, 0)
+							game.getWindow().passMouseUp(interact.mouse.x, interact.mouse.y, buttons)
 					case pygame.VIDEORESIZE:
 						renderer.setScreen(pygame.display.set_mode(event.size, SCREEN_FLAGS))
 						pygame.display.update()

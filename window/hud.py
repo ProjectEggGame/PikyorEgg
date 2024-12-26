@@ -1,8 +1,10 @@
+import pygame.draw
 from pygame import Surface
 
 from render import font
 from render.renderable import Renderable
 from render.renderer import renderer
+from utils import utils
 from utils.game import game
 from utils.vector import Vector
 
@@ -23,45 +25,104 @@ class Hud(Renderable):
 		if player is None:
 			return
 		self.displayHealth = player.getHealth() / player.getMaxHealth()
-		self.displayHunger = player.hunger / 100
+		self.displayHunger = player.growth_value / 100
 		
 		w, h = renderer.getSize().getTuple()
-		margin = h >> 4
-		renderer.fill(0x88222222, margin >> 1, margin >> 1, int(w * self.defaultLength) << 1, font.fontHeight + margin)
+		margin = h >> 6
+		barLength = int(w * self.defaultLength)
+		sw, sh = (barLength + (margin >> 1), margin << 1)
+		barHeight = sh // 3
+		surface: Surface = Surface((sw, sh))
+		surface.set_colorkey((0, 0, 0))
+		surface.set_alpha(0xcc)
+		pygame.draw.polygon(surface, (0xff, 0xff, 0xff), [(0, 0), (sw, 0), (sw - (sh >> 1), sh), (0, sh)])
+		x0 = (barHeight - 1)
+		up = sw - x0 - (barHeight >> 1)
+		down = sw - x0 - barHeight
+		pygame.draw.polygon(surface, (1, 1, 1), [(x0, x0), (up, x0), (down, h2 := (sh - x0)), (x0, h2)])
+		renderer.getCanvas().blit(surface, (margin, margin))
+		surface.fill((0, 0, 0))
+		surface.set_alpha(0xff)
+		up -= barHeight + 1
+		down -= barHeight + 1
 		
-		barWidth = int(w * self.defaultLength * self.displayHealth)
-		renderer.getCanvas().fill((0x68, 0xa0, 0x10), (margin, margin, barWidth, font.fontHeight >> 1))
+		upNow = barHeight + up * self.displayHealth
+		downNow = barHeight + down * self.displayHealth
+		pygame.draw.polygon(surface, (0x70, 0xb0, 0x10), [
+			(barHeight, barHeight),
+			(upNow, barHeight),
+			(downNow, barHeight << 1),
+			(barHeight, barHeight << 1)
+		])
 		d = self.lastDisplayHealth - self.displayHealth
 		if d < 0:  # 有回血
 			d = -d
-			renderer.getCanvas().fill((0x33, 0x88, 0xff), (barWidth + margin - (w2 := int(w * self.defaultLength * d)), margin, w2, font.fontHeight >> 1))
-			if d <= 0.01:
+			pygame.draw.polygon(surface, (0x33, 0x88, 0xff), [
+				(upNow, barHeight),
+				(barHeight + up * self.lastDisplayHealth, barHeight),
+				(barHeight + down * self.lastDisplayHealth, barHeight << 1),
+				(downNow, barHeight << 1)
+			])
+			if d <= 0.002:
 				self.lastDisplayHealth = self.displayHealth
 			else:
-				self.lastDisplayHealth += 0.001 + d * 0.01
+				self.lastDisplayHealth += 0.002 + d * 0.01
 		elif d > 0:  # 有扣血
-			renderer.getCanvas().fill((0xff, 0x33, 0x33), (barWidth + margin, margin, int(d * w * self.defaultLength), font.fontHeight >> 1))
-			if d <= 0.01:
+			pygame.draw.polygon(surface, (0xff, 0x33, 0x33), [
+				(upNow, barHeight),
+				(barHeight + up * self.lastDisplayHealth, barHeight),
+				(barHeight + down * self.lastDisplayHealth, barHeight << 1),
+				(downNow, barHeight << 1)
+			])
+			if d <= 0.002:
 				self.lastDisplayHealth = self.displayHealth
 			else:
-				self.lastDisplayHealth -= 0.001 + d * 0.01
-		font.allFonts.get(12).draw(renderer.getCanvas(), f'{player.getHealth():.2f}/{player.getMaxHealth():.2f}',  int(self.defaultLength * w + margin), margin, 0xffeeeeee, False, False, False, False, 0)
+				self.lastDisplayHealth -= 0.002 + d * 0.01
 		
-		barWidth = int(w * self.defaultLength * self.displayHunger)
-		posY = margin + (font.fontHeight >> 1) + 1
-		renderer.getCanvas().fill((0xbb, 0x99, 0x44), (margin, posY, barWidth, font.fontHeight >> 1))
+		upStart = barHeight + (up >> 1) - (barHeight >> 2)
+		upEnd = barHeight + up - (barHeight >> 2)
+		downStart = barHeight + (down >> 1)
+		upNow = upStart + (up - (barHeight >> 2) + 1 >> 1) * self.displayHunger
+		downNow = downStart + (down + 1 >> 1) * self.displayHunger
+		h = margin
+		pygame.draw.polygon(surface, (0xc0, 0xb0, 0x10), [
+			(upNow, h),
+			(upStart, h),
+			(downStart, barHeight << 1),
+			(downNow, barHeight << 1)
+		])
 		d = self.lastDisplayHunger - self.displayHunger
 		if d < 0:  # 有回血
 			d = -d
-			renderer.getCanvas().fill((0xff, 0xff, 0x88), (barWidth + margin - (w2 := int(w * self.defaultLength * d)), posY, w2, font.fontHeight >> 1))
-			if d <= 0.01:
+			pygame.draw.polygon(surface, (0xf0, 0xf0, 0x60), [
+				(upNow, h),
+				(upStart + (up - (barHeight >> 2) + 1 >> 1) * self.lastDisplayHunger, h),
+				(downStart + (down + 1 >> 1) * self.lastDisplayHunger, barHeight << 1),
+				(downNow, barHeight << 1)
+			])
+			if d <= 0.002:
 				self.lastDisplayHunger = self.displayHunger
 			else:
-				self.lastDisplayHunger += 0.001 + d * 0.01
+				self.lastDisplayHunger += 0.002 + d * 0.01
 		elif d > 0:  # 有扣血
-			renderer.getCanvas().fill((0xaa, 0x33, 0), (barWidth + margin, posY, int(d * w * self.defaultLength), font.fontHeight >> 1))
-			if d <= 0.01:
+			ur = upStart + (up - (barHeight >> 2) + 1 >> 1) * self.lastDisplayHunger
+			dr = downStart + (down + 1 >> 1) * self.lastDisplayHunger
+			pygame.draw.polygon(surface, (0xee, 0, 0), [
+				(upNow, h),
+				(ur, h),
+				(dr, barHeight << 1),
+				(downNow, barHeight << 1)
+			])
+			if d <= 0.002:
 				self.lastDisplayHunger = self.displayHunger
 			else:
-				self.lastDisplayHunger -= 0.001 + d * 0.01
-		font.allFonts.get(12).draw(renderer.getCanvas(), f'{player.hunger:.2f}/100.00',  int(self.defaultLength * w + margin), posY, 0xffeeeeee, False, False, False, False, 0)
+				self.lastDisplayHunger -= 0.002 + d * 0.01
+			upNow = ur
+			downNow = dr
+		pygame.draw.polygon(surface, (1, 1, 1), [
+			(upEnd, h),
+			(upNow, h),
+			(downNow, barHeight << 1),
+			(barHeight + down, barHeight << 1)
+		])
+		renderer.getCanvas().blit(surface, (margin, margin))

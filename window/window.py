@@ -4,7 +4,7 @@ from typing import Union
 import pygame
 from pygame import Surface
 
-from entity.entity import Player
+from entity.manager import entityManager
 from interact import interact
 from render import font
 from render.renderer import renderer
@@ -15,7 +15,7 @@ from utils.vector import Vector, BlockVector
 from render.renderable import Renderable
 from render.resource import Texture, resourceManager
 from window.widget import Widget, Button, Location, ColorSet
-from world.world import World,DynamicWorld
+from world.world import World, DynamicWorld
 
 
 class Window(Renderable):
@@ -71,20 +71,20 @@ class Window(Renderable):
 		for widget in reversed(self._widgets):
 			widget.passRender(delta)
 	
-	def passMouseMove(self, x: int, y: int) -> None:
+	def passMouseMove(self, x: int, y: int, buttons: tuple[int, int, int]) -> None:
 		for widget in self._widgets:
 			if widget.isMouseIn(x, y):
-				widget.passHover(x, y)
+				widget.passHover(x, y, buttons)
 	
-	def passMouseDown(self, x: int, y: int) -> None:
+	def passMouseDown(self, x: int, y: int, buttons: tuple[int, int, int]) -> None:
 		for widget in self._widgets:
 			if widget.isMouseIn(x, y):
-				widget.passMouseDown(x, y)
+				widget.passMouseDown(x, y, buttons)
 	
-	def passMouseUp(self, x: int, y: int) -> None:
+	def passMouseUp(self, x: int, y: int, buttons: tuple[int, int, int]) -> None:
 		for widget in self._widgets:
 			if widget.isMouseIn(x, y):
-				widget.passMouseUp(x, y)
+				widget.passMouseUp(x, y, buttons)
 	
 	def passTick(self) -> None:
 		if self._catches is not None:
@@ -98,7 +98,7 @@ class Window(Renderable):
 		窗口的tick函数。可以重写。默认情况下，ESC会关闭当前窗口
 		"""
 		if interact.keys[pygame.K_ESCAPE].deal():
-			game.setWindow(None)
+			game.setWindow(self.lastOpen)
 	
 	def onResize(self) -> None:
 		"""
@@ -144,12 +144,14 @@ class FloatWindow(Renderable):
 			if present > maximum:
 				maximum = present
 		s = Surface((maximum, len(info) * font.fontHeight >> 1))
-		s.fill((60, 60, 60))
+		s.fill((0x33, 0x33, 0x33))
 		for i in range(len(info)):
-			info[i][0].renderSmall(s, 0, i * font.fontHeight >> 1, 0xffffffff, 0x222222)
+			info[i][0].renderSmall(s, 0, i * font.fontHeight >> 1, 0xffffffff, 0x333333)
 		x, y = interact.mouse.clone().subtract(0, len(info) * font.fontHeight >> 1).getTuple()
 		if x < 0:
 			x = 0
+		elif x + maximum > renderer.getCanvas().get_width():
+			x = renderer.getCanvas().get_width() - maximum
 		if y < 0:
 			y = 0
 		renderer.getCanvas().blit(s, (x, y))
@@ -166,6 +168,16 @@ class PresetColors:
 	color.hovering = 0xff000000
 	color.inactive = 0
 	color.click = 0
+	exitColor = ColorSet()
+	exitText = ColorSet()
+	exitColor.active = 0xffee0000
+	exitColor.hovering = 0xffee6666
+	exitColor.inactive = 0xff660000
+	exitColor.click = 0xffeeaaaa
+	exitText.active = 0xff000000
+	exitText.hovering = 0xff000000
+	exitText.inactive = 0xff000000
+	exitText.click = 0xff000000
 
 
 class StartWindow(Window):
@@ -176,30 +188,30 @@ class StartWindow(Window):
 		self._texture.adaptsUI(False)
 		self._texture.adaptsSystem(True)
 		
-		def _0(*_) -> bool:
-			game.setWindow(None)
-			game.setWorld(World.generateDefaultWorld(DynamicWorld))
-			game.getWorld().addPlayer(Player('Test'))
+		def _0(x, y, b) -> bool:
+			if b[0] == 1:
+				game.setWindow(None)
+				game.setWorld(DynamicWorld(0, 'DynamicWorld'))
 			return True
-		
-
-		
-
 		
 		self._widgets.append(Button(Location.CENTER, 0, 0.05, 0.4, 0.08, RenderableString("\\.00FCE8AD\\01LINK START"), Description([RenderableString("开始游戏")]), textLocation=Location.CENTER))
 		self._widgets[0].onMouseDown = _0
 		self._widgets.append(Button(Location.CENTER, 0, 0.15, 0.4, 0.08, RenderableString("\\.00FCE8AD\\01LOAD"), Description([RenderableString("加载存档")]), textLocation=Location.CENTER))
-		self._widgets[1].onMouseDown = lambda x, y: game.setWindow(LoadWindow()) or True
-		self._widgets.append(Button(Location.CENTER, 0, 0.25, 0.4, 0.08, RenderableString("\\.00FCE8AD\\01SHUT DOWN"), Description([RenderableString("结束游戏")]), textLocation=Location.CENTER))
-		self._widgets[2].onMouseDown = lambda x, y: game.quit() or True
+		self._widgets[1].onMouseDown = lambda x, y, b: b[0] == 1 and game.setWindow(LoadWindow().setLastOpen(self)) or True
+		self._widgets.append(Button(Location.CENTER, 0, 0.25, 0.4, 0.08, RenderableString("\\.00FCE8AD\\01OPTIONS"), Description([RenderableString("设置")]), textLocation=Location.CENTER))
+		self._widgets[2].onMouseDown = lambda x, y, b: b[0] == 1 and game.setWindow(SettingsWindow().setLastOpen(self)) or True
+		self._widgets.append(Button(Location.CENTER, 0, 0.35, 0.4, 0.08, RenderableString("\\.00FCE8AD\\01SHUT DOWN"), Description([RenderableString("结束游戏")]), textLocation=Location.CENTER))
+		self._widgets[3].onMouseDown = lambda x, y, b: b[0] == 1 and game.quit() or True
 		self._widgets[0].color = PresetColors.color
 		self._widgets[1].color = PresetColors.color
-		self._widgets[2].color = PresetColors.color.clone()
-		self._widgets[2].color.hovering = 0xffee0000
+		self._widgets[2].color = PresetColors.color
+		self._widgets[3].color = PresetColors.color.clone()
+		self._widgets[3].color.hovering = 0xffee0000
 		self._widgets[0].textColor = PresetColors.textColor
 		self._widgets[1].textColor = PresetColors.textColor
-		self._widgets[2].textColor = PresetColors.textColor.clone()
-		self._widgets[2].textColor.hovering = 0xffeeeeee
+		self._widgets[2].textColor = PresetColors.textColor
+		self._widgets[3].textColor = PresetColors.textColor.clone()
+		self._widgets[3].textColor.hovering = 0xffeeeeee
 	
 	def render(self, delta: float, at=None) -> None:
 		super().render(delta)
@@ -215,43 +227,52 @@ class StartWindow(Window):
 class LoadWindow(Window):
 	def __init__(self):
 		super().__init__("Load")
-		self._texture = resourceManager.getOrNew('window/start')
-		self._widgets.append(Button(Location.LEFT_TOP, 0, 0, 0.09, 0.12, RenderableString('Back'), Description([RenderableString("返回")]), Location.CENTER))
-		self._widgets[0].onMouseDown = lambda x, y: game.setWindow(self.lastOpen or StartWindow()) or True
-		self._widgets[0].color = PresetColors.color
-		self._widgets[0].textColor = PresetColors.textColor
+		self._widgets.append(Button(Location.LEFT_TOP, 0, 0, 0.09, 0.12, RenderableString('\\01Back'), Description([RenderableString("返回")]), Location.CENTER))
+		self._widgets[0].onMouseDown = lambda x, y, b: b[0] == 1 and game.setWindow(self.lastOpen) or True
 		if os.path.exists('user') and os.path.exists('user/archive'):
+			def packer(s: str):
+				string = s
+				
+				def _func(x, y, b):
+					if b[0] == 1:
+						archive = Archive(string)
+						archive.read()
+						game.setWorld(World.load(archive.dic))
+						game.setWindow(None)
+						archive.close()
+					return True
+				
+				return _func
+			
 			dl = os.listdir('user/archive')
 			for i in range(len(dl)):
 				button = Button(Location.CENTER, 0, -0.4 + i * 0.1, 0.4, 0.08, RenderableString('\\10' + dl[i][:-5]), Description([RenderableString("加载此存档")]), Location.CENTER)
-				button.color = PresetColors.color
-				button.textColor = PresetColors.textColor
-				
-				def _func(*_):
-					archive = Archive(dl[i][:-5])
-					archive.read()
-					game.setWorld(World.load(archive.dic))
-					game.setWindow(None)
-					archive.close()
-					return True
-				
-				button.onMouseDown = _func
+				button.onMouseDown = packer(dl[i][:-5])
 				self._widgets.append(button)
 	
 	def tick(self) -> None:
 		if interact.keys[pygame.K_ESCAPE].deal():
 			game.setWindow(self.lastOpen or StartWindow())
+	
+	def setLastOpen(self, last: 'Window') -> 'Window':
+		self.lastOpen = last
+		if isinstance(last, StartWindow):
+			self._texture = resourceManager.getOrNew('window/start')
+			for w in self._widgets:
+				w.color = PresetColors.color
+				w.textColor = PresetColors.textColor
+		return self
 
 
 class PauseWindow(Window):
 	def __init__(self):
 		super().__init__("Pause")
 		self._widgets.append(Button(Location.CENTER, 0, -0.3, 0.4, 0.08, RenderableString('\\01Continue'), Description([RenderableString("继续游戏")]), Location.CENTER))
-		self._widgets[0].onMouseDown = lambda x, y: game.setWindow(None) or True
+		self._widgets[0].onMouseDown = lambda x, y, b: b[0] == 1 and game.setWindow(None) or True
 		self._widgets.append(Button(Location.CENTER, 0, -0.2, 0.4, 0.08, RenderableString('\\01Settings'), Description([RenderableString("设置")]), Location.CENTER))
-		self._widgets[1].onMouseDown = lambda x, y: game.setWindow(None) or True
+		self._widgets[1].onMouseDown = lambda x, y, b: b[0] == 1 and game.setWindow(SettingsWindow().setLastOpen(self)) or True
 		self._widgets.append(Button(Location.CENTER, 0, -0.1, 0.4, 0.08, RenderableString('\\01Load'), Description([RenderableString("\\#ffee0000放弃保存\\r并读取存档")]), Location.CENTER))
-		self._widgets[2].onMouseDown = lambda x, y: game.setWindow(LoadWindow().setLastOpen(self)) or True
+		self._widgets[2].onMouseDown = lambda x, y, b: b[0] == 1 and game.setWindow(LoadWindow().setLastOpen(self)) or True
 		self._widgets.append(Button(Location.CENTER, 0, 0, 0.4, 0.08, RenderableString('测试按钮'), Description([
 			RenderableString("\\#ffee0000蠢蠢的狗"),
 			RenderableString("\\#ffee55dd\\/ 只会直线行走"),
@@ -259,13 +280,14 @@ class PauseWindow(Window):
 			RenderableString(f"\\#ffee6677 基础伤害 {8}"),
 			RenderableString(f"\\#ffeedd66 搜索范围 {4}"),
 		]), Location.CENTER))
-		self._widgets[3].onMouseDown = lambda x, y: game.setWindow(None) or True
+		self._widgets[3].onMouseDown = lambda x, y, b: b[0] == 1 and game.setWindow(None) or True
 		self._widgets.append(Button(Location.CENTER, 0, 0.1, 0.4, 0.08, RenderableString('\\01Save'), Description([RenderableString("保存游戏")]), Location.CENTER))
 		
-		def _4(*_) -> bool:
-			self._widgets[4].description = Description([RenderableString("\\#ffFCE8AD保存中……")])
-			game.getWorld().save()
-			self._widgets[4].description = Description([RenderableString("\\#ffFCE8AD保存完成")])
+		def _4(x, y, b) -> bool:
+			if b[0] == 1:
+				self._widgets[4].description = Description([RenderableString("\\#ffFCE8AD保存中……")])
+				game.getWorld().save()
+				self._widgets[4].description = Description([RenderableString("\\#ffFCE8AD保存完成")])
 			return True
 		
 		self._widgets[4].onMouseDown = _4
@@ -283,13 +305,14 @@ class PauseWindow(Window):
 		des = Des()
 		self._widgets.append(Button(Location.CENTER, 0, 0.2, 0.4, 0.08, RenderableString('\\01Exit'), des, Location.CENTER))
 		
-		def _5(*_) -> bool:
-			if des.exitClick == 1:
-				game.setWorld(None)
-				game.setWindow(StartWindow())
-				return True
-			des.exitTime = 20
-			des.exitClick = 1
+		def _5(x, y, b) -> bool:
+			if b[0] == 1:
+				if des.exitClick == 1:
+					game.setWorld(None)
+					game.setWindow(StartWindow())
+					return True
+				des.exitTime = 20
+				des.exitClick = 1
 			return True
 		
 		def _5t():
@@ -297,47 +320,67 @@ class PauseWindow(Window):
 				des.exitClick = 0
 			des.exitTime -= 1
 		
-		self._widgets[5].color.active = 0xffee0000
-		self._widgets[5].color.hovering = 0xffee6666
-		self._widgets[5].color.inactive = 0xff660000
-		self._widgets[5].color.click = 0xffeeaaaa
-		self._widgets[5].textColor.active = 0xff000000
-		self._widgets[5].textColor.hovering = 0xff000000
-		self._widgets[5].textColor.inactive = 0xff000000
-		self._widgets[5].textColor.click = 0xff000000
+		self._widgets[5].color = PresetColors.exitColor
+		self._widgets[5].textColor = PresetColors.exitText
 		self._widgets[5].onMouseDown = _5
 		self._widgets[5].onTick = _5t
 
 
-class DynamicWorld(World):
-    def __init__(self, worldID: str, name: str):
-        super().__init__(worldID, name)
-        self._entityList = []
-        self._position = Vector(0, 0)
-        self.growth_value = 0
-        print("Dynamic World initialized")
+class SettingsWindow(Window):
+	def __init__(self):
+		super().__init__("Settings")
+		
+		class Des(Description):
+			def __init__(self):
+				super().__init__()
+			
+			def generate(self) -> list['RenderableString']:
+				return [
+					RenderableString('\\#ff66ccee使用4:3屏幕比例 <'),
+					RenderableString('\\#ff666666使用16:9屏幕比例')
+				] if renderer.is4to3.get() else [
+					RenderableString('\\#ff666666使用4:3屏幕比例'),
+					RenderableString('\\#ff66ccee使用16:9屏幕比例 <')
+				]
+		
+		self._widgets.append(Button(Location.LEFT_TOP, 0, 0, 0.09, 0.12, RenderableString('\\01Back'), Description([RenderableString("返回")]), Location.CENTER))
+		self._widgets[0].onMouseDown = lambda x, y, b: b[0] == 1 and game.setWindow(self.lastOpen or (StartWindow() if game.getWorld() is None else None)) or True
+		self._widgets.append(Button(Location.CENTER, 0, -0.3, 0.4, 0.08, RenderableString('\\01Screen \\#ff66ccee4:3\\r\\01 | 16:9' if renderer.is4to3.get() else '\\01Screen 4:3 | \\#ff66ccee16:9'), Des(), Location.CENTER))
+		
+		def _1(x, y, b):
+			if b[0] == 1:
+				renderer.is4to3.set(not renderer.is4to3.get())
+				self._widgets[1].name = RenderableString('\\01Screen \\#ff66ccee4:3\\r\\01 | 16:9' if renderer.is4to3.getNew() else '\\01Screen 4:3 | \\#ff66ccee16:9')
+			return True
+		
+		self._widgets[1].onMouseDown = _1
+	
+	def setLastOpen(self, last: 'Window') -> 'Window':
+		self.lastOpen = last
+		if isinstance(last, StartWindow):
+			self._texture = resourceManager.getOrNew('window/start')
+			for w in self._widgets:
+				w.color = PresetColors.color
+				w.textColor = PresetColors.textColor
+		return self
 
-    def addPlayer(self, player: Player):
-        player._position = self._position.clone()
-        self._entityList.append(player)
 
-    def passTick(self) -> None:
-        # 实现小鸡的每一帧逻辑
-        # 检查周围是否有米粒实体
-        for entity in self._entityList:
-            if entity._id == 'entity.rice' and self._position.distanceTo(entity._position) < 1:
-                self.removeEntity(entity)
-                self.growth_value += 10  # 每次吃米粒增加10点成长值
-                print(f"小鸡吃掉了一颗米粒，成长值: {self.growth_value}")
-                break
-
-    def move(self, direction: Vector) -> None:
-        new_position = self._position.clone().add(direction)
-        self.setPosition(new_position)
-
-    def moveTo(self, target: Vector) -> None:
-        # 简单的移动逻辑，假设每次移动一个单位
-        while self._position != target:
-            direction = target.subtract(self._position).normalize()
-            self.move(direction)
-            print(f"小鸡移动到: {self._position}")
+class DeathWindow(Window):
+	def __init__(self):
+		super().__init__("You Died!")
+		self._widgets.append(Button(Location.CENTER, 0, 0.1, 0.4, 0.08, RenderableString('\\01Restart'), Description([RenderableString("复活")]), Location.CENTER))
+		self._widgets[0].onMouseDown = lambda x, y, b: b[0] == 1 and (game.setWindow(None) or game.getWorld().setPlayer(entityManager.get('player')(Vector()))) or True
+		self._widgets.append(Button(Location.CENTER, 0, 0.2, 0.4, 0.08, RenderableString('\\01Load'), Description([RenderableString("加载存档")]), Location.CENTER))
+		self._widgets[1].onMouseDown = lambda x, y, b: b[0] == 1 and game.setWindow(LoadWindow().setLastOpen(self)) or True
+		self._widgets.append(Button(Location.CENTER, 0, 0.3, 0.4, 0.08, RenderableString('\\01Exit'), Description([RenderableString('退出游戏')]), Location.CENTER))
+		self._widgets[2].color = PresetColors.exitColor
+		self._widgets[2].textColor = PresetColors.exitText
+		self._widgets[2].onMouseDown = lambda x, y, b: b[0] == 1 and (game.setWorld(None) or game.setWindow(StartWindow())) or True
+	
+	def render(self, delta: float, at=None) -> None:
+		w, h = renderer.getSize().getTuple()
+		renderer.fill(0xffee0000, int(0.3 * w), int(0.3 * h), int(0.4 * w), int(0.2 * h))
+		renderer.renderString(RenderableString("\\01\\#ff000000You are dead"), int(0.5 * w), int(0.4 * h), 0xff000000, Location.CENTER)
+	
+	def tick(self) -> None:
+		interact.keys[pygame.K_ESCAPE].deal()

@@ -74,10 +74,10 @@ class Widget(Renderable):
 		self._h: int = 0
 		self._isMouseIn: bool = False
 		self.active: bool = True
-		self.onHover: Callable[[int, int], bool] | None = None
-		self.onClick: Callable[[int, int], bool] | None = None
-		self.onMouseUp: Callable[[int, int], bool] | None = None
-		self.onMouseDown: Callable[[int, int], bool] | None = None
+		self.onHover: Callable[[int, int, tuple[int, int, int]], bool] | None = None
+		self.onClick: Callable[[int, int, tuple[int, int, int]], bool] | None = None
+		self.onMouseUp: Callable[[int, int, tuple[int, int, int]], bool] | None = None
+		self.onMouseDown: Callable[[int, int, tuple[int, int, int]], bool] | None = None
 		self.onTick: Callable[[], int] | None = None
 		self.color: ColorSet = ColorSet(False)
 		self.textColor: ColorSet = ColorSet(True)
@@ -157,25 +157,25 @@ class Widget(Renderable):
 		if self.onTick is not None:
 			self.onTick()
 	
-	def click(self, x: int, y: int) -> bool:
+	def click(self, x: int, y: int, buttons: tuple[int, int, int]) -> bool:
 		if self.onClick is not None:
-			return self.onClick(x, y)
+			return self.onClick(x, y, buttons)
 	
-	def passHover(self, x: int, y: int):
+	def passHover(self, x: int, y: int, buttons: tuple[int, int, int]):
 		if self.onHover is not None:
-			return self.onHover(x, y)
+			return self.onHover(x, y, buttons)
 	
-	def passClick(self, x: int, y: int):
+	def passClick(self, x: int, y: int, buttons: tuple[int, int, int]):
 		if self.onClick is not None:
-			return self.onClick(x, y)
+			return self.onClick(x, y, buttons)
 	
-	def passMouseDown(self, x: int, y: int):
+	def passMouseDown(self, x: int, y: int, buttons: tuple[int, int, int]):
 		if self.onMouseDown is not None:
-			return self.onMouseDown(x, y)
+			return self.onMouseDown(x, y, buttons)
 	
-	def passMouseUp(self, x: int, y: int):
+	def passMouseUp(self, x: int, y: int, buttons: tuple[int, int, int]):
 		if self.onMouseUp is not None:
-			return self.onMouseUp(x, y)
+			return self.onMouseUp(x, y, buttons)
 
 
 class Button(Widget):

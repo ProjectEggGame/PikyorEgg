@@ -1,13 +1,16 @@
 """
 这里相当于游戏资源管理器。所有的游戏资源（列表）都在这里。
 """
+import pygame
+
 from interact import interact
 from render.renderer import renderer
-from utils import utils
+from utils import utils, times
 from utils.error import NullPointerException
 from typing import TYPE_CHECKING, Union
 
 from utils.sync import SynchronizedStorage
+from utils.vector import Vector
 
 if TYPE_CHECKING:
 	from world.world import World
@@ -33,6 +36,16 @@ class Game:
 		if self._mainWorld is not None and notPause:
 			self._mainWorld.tick()
 		self.processMouse()
+		if interact.keys[pygame.K_ESCAPE].deal():
+			from window.window import PauseWindow
+			game.setWindow(PauseWindow())
+		if interact.keys[pygame.K_SPACE].deal():
+			if renderer.getCameraAt() is None:
+				renderer.cameraAt(self._mainWorld.getPlayer())
+			elif renderer.cameraOffset.lengthManhattan() == 0:
+				renderer.cameraAt(None)
+			else:
+				renderer.cameraOffset.set(0, 0)
 	
 	def render(self, delta: float) -> None:
 		"""
@@ -65,7 +78,9 @@ class Game:
 	
 	def setWorld(self, world: Union['World', None]) -> None:
 		self._mainWorld = world
-		renderer.cameraAt(None)
+		self.hud.lastDisplayHealth = 0
+		self.hud.lastDisplayHunger = 0
+		renderer.cameraAt(None if world is None else world.getPlayer())
 	
 	def getWorld(self) -> Union['World', None]:
 		return self._mainWorld
@@ -83,11 +98,14 @@ class Game:
 	def writeConfig() -> dict[str, any]:
 		return {}
 	
-	def processMouse(self):
+	def processMouse(self, event: pygame.event.Event | None = None):
 		if self._mainWorld is not None and self._window.get() is None:
 			block = self._mainWorld.getBlockAt(interact.mouse.clone().subtract(renderer.getCenter()).getVector().divide(renderer.getMapScale()).add(renderer.getCamera().get()).getBlockVector())
 			if block is not None:
 				self.floatWindow.submit(block.description)
+		if event is not None:
+			if event.buttons[2] == 1 and self._window.get() is None:
+				renderer.cameraOffset.subtract(Vector(event.rel[0], event.rel[1]).divide(renderer.getMapScale()))
 
 
 game = Game()

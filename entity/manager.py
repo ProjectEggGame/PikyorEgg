@@ -13,7 +13,7 @@ class EntityManager:
 			raise ValueError(f"注册一个已存在的实体ID: {entityID}")
 		self.dic[entityID] = block
 	
-	def get(self, entityID: str) -> Type['Entity']:
+	def get(self, entityID: str):
 		return self.dic[entityID]
 
 

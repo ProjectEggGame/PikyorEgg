@@ -1,7 +1,12 @@
+from typing import TYPE_CHECKING
+
 from pygame import Surface
 
 from render import font
 from utils import utils
+
+if TYPE_CHECKING:
+	from block.block import Block
 
 
 class Description:
@@ -14,6 +19,18 @@ class Description:
 	
 	def generate(self) -> list['RenderableString']:
 		return self._d
+	
+	
+class BlockDescription(Description):
+	"""
+	元素描述。如果重写，可以实现按时间不同变化的
+	"""
+	def __init__(self, block: 'Block', d: list['RenderableString'] | None = None):
+		super().__init__(d)
+		self._block = block
+	
+	def generate(self) -> list['RenderableString']:
+		return [RenderableString('\\#ffaa4499' + self._block.getBlockPosition().getTuple().__str__())] + self._d
 
 
 class InnerStringConfig:

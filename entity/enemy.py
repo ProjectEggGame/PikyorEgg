@@ -10,8 +10,8 @@ from utils.vector import Vector
 
 
 class Enemy(Entity, Damageable):
-	def __init__(self, entityID: str, name: str, description: Description, texture: list[Texture], health: float = 100, speed: float = 0.06):
-		Entity.__init__(self, entityID, name, description, texture, speed)
+	def __init__(self, entityID: str, name: str, description: Description, texture: list[Texture], position: Vector, health: float = 100, speed: float = 0.06):
+		Entity.__init__(self, entityID, name, description, texture, position, speed)
 		Damageable.__init__(self, health)
 		self._attackTimer: int = 0
 		self._attackCoolDown: int = 10
@@ -78,7 +78,7 @@ def basicDamage(bd: float) -> RenderableString:
 
 
 class EnemyDog(Enemy):
-	def __init__(self):
+	def __init__(self, position: Vector):
 		super().__init__("enemy.dog", "蠢蠢的狗", Description([
 			RenderableString("\\#ffee0000蠢蠢的狗"),
 			RenderableString("\\#ffee55dd\\/ 只会直线行走"),
@@ -86,15 +86,15 @@ class EnemyDog(Enemy):
 			basicDamage(8),
 			searchRange(4),
 		]), [
-			resourceManager.getOrNew("entity/enemy/dog"),
-			resourceManager.getOrNew("entity/enemy/dog"),
-			resourceManager.getOrNew("entity/enemy/dog"),
-			resourceManager.getOrNew("entity/enemy/dog"),
-			resourceManager.getOrNew("entity/enemy/dog"),
-			resourceManager.getOrNew("entity/enemy/dog"),
-			resourceManager.getOrNew("entity/enemy/dog"),
-			resourceManager.getOrNew("entity/enemy/dog"),
-		])
+			resourceManager.getOrNew("entity/enemy/dog_1"),
+			resourceManager.getOrNew("entity/enemy/dog_2"),
+			resourceManager.getOrNew("entity/enemy/dog_b1"),
+			resourceManager.getOrNew("entity/enemy/dog_b2"),
+			resourceManager.getOrNew("entity/enemy/dog_l1"),
+			resourceManager.getOrNew("entity/enemy/dog_l2"),
+			resourceManager.getOrNew("entity/enemy/dog_r1"),
+			resourceManager.getOrNew("entity/enemy/dog_r2"),
+		], position)
 		
 	def tick(self) -> None:
 		if self._attackTimer:
@@ -128,14 +128,26 @@ class EnemyDog(Enemy):
 	@classmethod
 	def load(cls, d: dict, entity: Union['Entity', None] = None) -> Union['Entity', None]:
 		assert entity is None
-		e = EnemyDog()
+		e = EnemyDog(d['position'])
 		Enemy.load(d, e)
 		return e
 
 
 entityManager.register('enemy.dog', EnemyDog)
 
-if (k := resourceManager.getOrNew('entity/enemy/dog')) is not None:
+
+for k in [
+	resourceManager.getOrNew("entity/enemy/dog_1"),
+	resourceManager.getOrNew("entity/enemy/dog_2"),
+	resourceManager.getOrNew("entity/enemy/dog_b1"),
+	resourceManager.getOrNew("entity/enemy/dog_b2"),
+	resourceManager.getOrNew("entity/enemy/dog_l1"),
+	resourceManager.getOrNew("entity/enemy/dog_l2"),
+	resourceManager.getOrNew("entity/enemy/dog_r1"),
+	resourceManager.getOrNew("entity/enemy/dog_r2"),
+]:
+	k.getSurface().set_colorkey((0, 0, 0))
+	k.getMapScaledSurface().set_colorkey((0, 0, 0))
 	k.setOffset(Vector(0, -5))
 del k
 

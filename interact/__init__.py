@@ -7,35 +7,36 @@ from utils.vector import BlockVector
 
 class Interact:
 	def __init__(self):
-		self._KEY_COUNT = 256
+		self.KEY_COUNT = 256
 		self.mouse: BlockVector = BlockVector(0, 0)
 		self.left: Status = Status('MouseLeft')
 		self.middle: Status = Status('MouseMiddle')
 		self.right: Status = Status('MouseRight')
 		self.scroll: ScrollStatus = ScrollStatus()
-		self.keys: list[Status | None] = [Status('ERROR_KEY')] * self._KEY_COUNT
-		self.specialKeys: list[Status | None] = [self.keys[0]] * self._KEY_COUNT
+		self.keys: list[Status | None] = [Status('ERROR_KEY')] * self.KEY_COUNT
+		self.specialKeys: list[Status | None] = [self.keys[0]] * self.KEY_COUNT
+		self.KEY_COUNT -= 1
 		for i in pygame.__dict__:
 			if not i.startswith('K_'):
 				continue
 			j = getattr(pygame, i)
-			if j <= self._KEY_COUNT:
+			if j <= self.KEY_COUNT:
 				self.keys[j] = Status(i[2:])
 			else:
-				self.specialKeys[j & (self._KEY_COUNT - 1)] = Status(i[2:])
+				self.specialKeys[j & self.KEY_COUNT] = Status(i[2:])
 		del i, j
 	
 	def onKey(self, event) -> None:
 		if event.type == pygame.KEYDOWN:
-			if event.key <= self._KEY_COUNT:
+			if event.key <= self.KEY_COUNT:
 				self.keys[event.key].set(True)
 			else:
-				self.specialKeys[event.key & (self._KEY_COUNT - 1)].set(True)
+				self.specialKeys[event.key & self.KEY_COUNT].set(True)
 		elif event.type == pygame.KEYUP:
-			if event.key <= self._KEY_COUNT:
+			if event.key <= self.KEY_COUNT:
 				self.keys[event.key].set(False)
 			else:
-				self.specialKeys[event.key & (self._KEY_COUNT - 1)].set(False)
+				self.specialKeys[event.key & self.KEY_COUNT].set(False)
 	
 	def onMouse(self, event) -> None:
 		if event.type == pygame.MOUSEMOTION:
