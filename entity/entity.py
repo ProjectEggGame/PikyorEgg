@@ -509,7 +509,7 @@ class Player(Entity, Damageable):
 					game.hud.sendMessage(RenderableString('你成功下了一个蛋~'))
 					game.getWorld().addEntity(BlueEgg(self._position.clone()))
 					if len(self.__allSkills) > 0:
-						k = game.getWorld().getRandom().sample(self.__allSkills.keys(), 1)
+						k = game.getWorld().getRandom().sample(sorted(self.__allSkills), 1)
 						self.skills[k[0]] = self.__allSkills.pop(k[0])()
 						game.hud.sendMessage(RenderableString('你获得了新的技能：') + self.skills[k[0]].getName())
 		self.setVelocity(v.normalize().multiply(self._maxSpeed))

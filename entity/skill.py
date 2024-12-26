@@ -88,7 +88,7 @@ class SkillResistance(Skill):
 
 class SkillFastGrow(Skill):
 	def __init__(self):
-		super().__init__(3, Description([RenderableString('\\#ffee8844揠苗'), RenderableString('\\#ffee55dd  每秒获得0.00点成长'), RenderableString('\\#ffee0000  但是每秒受到0.00点伤害！'), RenderableString('\\#ff888888当然如果已经完全成长就不会受到伤害')]))
+		super().__init__(3, Description([RenderableString('\\#ffee8844揠苗'), RenderableString('\\#ffee55dd  每秒获得0.00点成长'), RenderableString('\\#ffee0000  但是每秒受到0.00点伤害！'), RenderableString('\\#ff888888  当然如果已经完全成长就不会受到伤害')]))
 		self._player.preTick.append(self.onTick)
 	
 	def getName(self=None) -> RenderableString:
@@ -111,7 +111,7 @@ class SkillFastGrow(Skill):
 
 class SkillRevive(Skill):
 	def __init__(self):
-		super().__init__(4, Description([RenderableString('\\#ffffff66屹立不倒'), RenderableString('\\#ffee55dd  死亡时可以立刻复活'), RenderableString('\\#ffee5555体力回复 0.00%'), RenderableString('\\#ffee0000  冷却时间 ∞')]))
+		super().__init__(4, Description([RenderableString('\\#ffffff66屹立不倒'), RenderableString('\\#ffee55dd  死亡时可以立刻复活'), RenderableString('\\#ffee5555  体力回复 0.00%'), RenderableString('\\#ffee0000  冷却时间 ∞')]))
 		self._player.preTick.append(self.onTick)
 		self._player.preDeath.append(self.onDeath)
 		self._time = 0
