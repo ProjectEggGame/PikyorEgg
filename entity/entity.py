@@ -1,9 +1,10 @@
 import random
 
 import pygame
-from typing import TYPE_CHECKING, Union
+from typing import TYPE_CHECKING, Union, Callable
 
-from entity.manager import entityManager
+from entity.manager import entityManager, skillManager
+from entity.skill import Skill
 from utils import utils
 from window.window import DeathWindow
 
@@ -15,13 +16,13 @@ from interact import interact
 from utils.vector import Vector, BlockVector, Matrices
 from render.resource import resourceManager
 from utils.game import game
-from utils.text import RenderableString, Description
+from utils.text import RenderableString, EntityDescription
 from render.resource import Texture
 from utils.element import Element
 
 
 class Entity(Element):
-	def __init__(self, entityID: str, name: str, description: Description, texture: list[Texture], position: Vector, speed: float = 0):
+	def __init__(self, entityID: str, name: str, description: EntityDescription, texture: list[Texture], position: Vector, speed: float = 0):
 		"""
 		:param name: 实体名称
 		:param description: 实体描述，字符串列表
@@ -31,6 +32,7 @@ class Entity(Element):
 		self.__renderInterval: int = 6
 		self.__velocity: Vector = Vector(0, 0)
 		self._position: Vector = position
+		self._basicMaxSpeed: float = speed
 		self._maxSpeed: float = speed
 		self._setVelocity: Vector = Vector(0, 0)
 		self._textureSet: list[Texture] = texture
@@ -268,10 +270,11 @@ class Damageable:
 			self._health += amount
 			return amount
 	
-	def onDamage(self, amount: float) -> float:
+	def onDamage(self, amount: float, src: Entity) -> float:
 		"""
 		被伤害时调用，并且在这里实际应用伤害。如果已经死亡，则即便伤害了也不会调用这个函数。返回时，可以忽略负血量的问题直接返回原始伤害值。可重写
 		:param amount: 伤害量
+		:param src: 伤害来源
 		:return: 实际伤害量
 		"""
 		if amount < 0:
@@ -289,14 +292,13 @@ class Damageable:
 		"""
 		设置生命值
 		"""
-		if not self._isAlive:
-			return
 		if health <= 0:
 			self._health = 0
 			return
 		if health >= self._maxHealth:
 			self._health = self._maxHealth
 			return
+		self._health = health
 	
 	def setMaxHealth(self, maxHealth: float) -> None:
 		self._maxHealth = maxHealth
@@ -317,15 +319,16 @@ class Damageable:
 			return 0
 		return self.onHeal(amount)
 	
-	def damage(self, amount: float) -> float:
+	def damage(self, amount: float, src: 'Entity') -> float:
 		"""
 		执行伤害
 		:param amount: 伤害量
+		:param src: 伤害来源
 		:return: 实际伤害量
 		"""
 		if not self._isAlive:
 			return 0
-		return self.onDamage(amount)
+		return self.onDamage(amount, src)
 	
 	def save(self) -> dict:
 		return {
@@ -347,7 +350,7 @@ class DeprecatedPlayer(Entity, Damageable):
 		"""
 		创建玩家
 		"""
-		Entity.__init__(self, "player", name, Description(), [
+		Entity.__init__(self, "player", name, EntityDescription(self), [
 			resourceManager.getOrNew('player/no_player_1'),
 			resourceManager.getOrNew('player/no_player_2'),
 			resourceManager.getOrNew('player/no_player_b1'),
@@ -386,12 +389,12 @@ class DeprecatedPlayer(Entity, Damageable):
 
 class Rice(Entity):
 	def __init__(self, position: Vector):
-		super().__init__('entity.rice', '米粒', Description([RenderableString("\\#FFFFD700黄色的米粒")]), [resourceManager.getOrNew('entity/rice')], position, 0)
+		super().__init__('entity.rice', '米粒', EntityDescription(self, [RenderableString("\\#FFFFD700黄色的米粒")]), [resourceManager.getOrNew('entity/rice')], position, 0)
 	
 	def tick(self) -> None:
 		player = game.getWorld().getPlayer()
 		if player is not None and player.getPosition().distanceManhattan(self.getPosition()) <= 0.6:
-			player.grow(2)
+			player.grow(2, self)
 			game.getWorld().removeEntity(self)
 			game.getWorld().addEntity(Rice(Vector(random.randint(-50, 50), random.randint(-50, 50))))
 	
@@ -403,7 +406,7 @@ class Rice(Entity):
 
 class Player(Entity, Damageable):
 	def __init__(self, position: Vector):
-		Entity.__init__(self, 'player', '小鸡', Description([RenderableString('你'), RenderableString("\\#FFFFD700黄色的小鸡")]), [
+		Entity.__init__(self, 'player', '小鸡', EntityDescription(self, [RenderableString('你'), RenderableString("\\#FFFFD700黄色的小鸡")]), [
 			resourceManager.getOrNew('player/chick_1'),
 			resourceManager.getOrNew('player/chick_1'),
 			resourceManager.getOrNew('player/chick_b1'),
@@ -414,11 +417,36 @@ class Player(Entity, Damageable):
 			resourceManager.getOrNew('player/chick_r1'),
 		], position, 0.16)
 		Damageable.__init__(self, 100)
-		self.growth_value = 0  # 成长值初始化为0
-	
+		self.growth_value: float = 0  # 成长值初始化为0
+		self.preDeath: list[Callable[[], bool]] = []  # () -> bool是否取消
+		self.preDamage: list[Callable[[float, Entity], float]] = []  # (float值, Entity来源) -> float更改后的值
+		self.postDamage: list[Callable[[float, Entity], None]] = []  # (float值, Entity来源) -> None
+		self.preTick: list[Callable[[], None]] = []
+		self.postTick: list[Callable[[], None]] = []
+		self.preGrow: list[Callable[[int, Entity | str], int]] = []
+		self.postGrow: list[Callable[[int, Entity | str], None]] = []
+		self.skills: dict[int, Skill] = {}
+		self.__allSkills: dict[int, Skill] = skillManager.dic.copy()
+		self.__allSkills.pop(0)
+
 	def onDeath(self) -> None:
-		utils.info('死亡')
-		game.setWindow(DeathWindow())
+		flag = True
+		for i in self.preDeath:
+			if i():
+				flag = False
+		if flag:
+			utils.info('死亡')
+			game.setWindow(DeathWindow())
+		else:
+			self._isAlive = True
+			
+	def onDamage(self, amount: float, src: Entity) -> float:
+		for i in self.preDamage:
+			amount = i(amount, src)
+		amount = Damageable.onDamage(self, amount, src)
+		for i in self.postDamage:
+			i(amount, src)
+		return amount
 	
 	def save(self) -> dict:
 		data = Entity.save(self)
@@ -434,16 +462,25 @@ class Player(Entity, Damageable):
 		Damageable.load(d, chicken)
 		return chicken
 	
-	def grow(self, amount: int) -> int:
+	def grow(self, amount: float, src: Entity | str) -> float:
+		for i in self.preGrow:
+			amount = i(amount, src)
+		if self.growth_value == 100:
+			return 0
 		val = self.growth_value + amount
 		if val > 100:
 			self.growth_value = 100
-			return amount + 100 - self.growth_value
+			ret = amount + 100 - self.growth_value
 		else:
 			self.growth_value = val
-			return amount
+			ret = amount
+		for i in self.postGrow:
+			i(ret, src)
+		return ret
 	
 	def tick(self) -> None:
+		for i in self.preTick:
+			i()
 		v: Vector = Vector()
 		if game.getWindow() is None:
 			if interact.keys[pygame.K_w].peek():
@@ -455,17 +492,34 @@ class Player(Entity, Damageable):
 			if interact.keys[pygame.K_d].peek():
 				v.add(1, 0)
 			if interact.specialKeys[pygame.K_LSHIFT & interact.KEY_COUNT].peek():
-				self._maxSpeed = 0.08
+				self._maxSpeed = self._basicMaxSpeed * 0.5
 			elif interact.specialKeys[pygame.K_LCTRL & interact.KEY_COUNT].peek():
-				self._maxSpeed = 0.32
+				self._maxSpeed = self._basicMaxSpeed * 2
 			else:
-				self._maxSpeed = 0.16
+				self._maxSpeed = self._basicMaxSpeed
+			## debug
+			if interact.keys[pygame.K_q].deal():
+				self.grow(100, self)
+			## debug
+			if interact.keys[pygame.K_r].deal():
+				if self.growth_value < 100:
+					game.hud.sendMessage(RenderableString('\\#ffee0000你还没长大，不能下蛋~'))
+				else:
+					self.growth_value -= 100
+					game.hud.sendMessage(RenderableString('你成功下了一个蛋~'))
+					game.getWorld().addEntity(BlueEgg(self._position.clone()))
+					if len(self.__allSkills) > 0:
+						k = game.getWorld().getRandom().sample(self.__allSkills.keys(), 1)
+						self.skills[k[0]] = self.__allSkills.pop(k[0])()
+						game.hud.sendMessage(RenderableString('你获得了新的技能：') + self.skills[k[0]].getName())
 		self.setVelocity(v.normalize().multiply(self._maxSpeed))
+		for i in self.postTick:
+			i()
 
 
 class Coop(Entity):
 	def __init__(self, position: Vector):
-		super().__init__('entity.coop', '鸡窝', Description([RenderableString('鸡舍')]), [resourceManager.getOrNew('entity/coop')], position, 0)
+		super().__init__('entity.coop', '鸡窝', EntityDescription(self, [RenderableString('鸡舍')]), [resourceManager.getOrNew('entity/coop')], position, 0)
 	
 	@classmethod
 	def load(cls, d: dict, entity: Union['Entity', None] = None) -> Union['Entity', None]:
@@ -473,10 +527,21 @@ class Coop(Entity):
 		return Entity.load(d, e)
 
 
+class BlueEgg(Entity):
+	def __init__(self, position: Vector):
+		super().__init__('entity.egg.blue', '蓝色的蛋', EntityDescription(self, [RenderableString('\\#FF00D7FF蓝色的蛋'), RenderableString('\\#ff999999\\/  你别管为什么这么大')]), [a := resourceManager.getOrNew('egg/blue_egg'), a, a, a, a, a, a, a], position, 0)
+	
+	@classmethod
+	def load(cls, d: dict, entity: Union['Entity', None] = None) -> Union['Entity', None]:
+		e = BlueEgg(Vector.load(d['position']))
+		return Entity.load(d, e)
+
+
 # 注册实体
 entityManager.register('entity.rice', Rice)
 entityManager.register('player', Player)
 entityManager.register('entity.coop', Coop)
+entityManager.register('entity.egg.blue', BlueEgg)
 
 entityManager.register('deprecated', DeprecatedPlayer)
 
@@ -500,12 +565,20 @@ for t in [
 	t.getSurface().set_colorkey((0, 0, 0))
 	t.getMapScaledSurface().set_colorkey((0, 0, 0))
 for t in [
-			resourceManager.getOrNew('player/chick_1'),
-			resourceManager.getOrNew('player/chick_b1'),
-			resourceManager.getOrNew('player/chick_l1'),
-			resourceManager.getOrNew('player/chick_r1'),
+	resourceManager.getOrNew('player/chick_1'),
+	resourceManager.getOrNew('player/chick_b1'),
+	resourceManager.getOrNew('player/chick_l1'),
+	resourceManager.getOrNew('player/chick_r1'),
 ]:
+	t.systemScaleOffset *= 10
+	t.adaptsSystem()
 	t.getSurface().set_colorkey((1, 1, 1))
 	t.getMapScaledSurface().set_colorkey((1, 1, 1))
 	t.setOffset(Vector(0, -4))
+for t in [
+	resourceManager.getOrNew('egg/blue_egg')
+]:
+	t.getSurface().set_colorkey((0xff, 0xff, 0xff))
+	t.getMapScaledSurface().set_colorkey((0xff, 0xff, 0xff))
+	t.setOffset(Vector(0, -7))
 del t

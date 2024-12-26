@@ -5,11 +5,11 @@ import pygame
 
 from interact import interact
 from render.renderer import renderer
-from utils import utils, times
 from utils.error import NullPointerException
 from typing import TYPE_CHECKING, Union
 
 from utils.sync import SynchronizedStorage
+from utils.text import RenderableString
 from utils.vector import Vector
 
 if TYPE_CHECKING:
@@ -35,17 +35,25 @@ class Game:
 		self._window.apply(self._window.getNew())
 		if self._mainWorld is not None and notPause:
 			self._mainWorld.tick()
-		self.processMouse()
+		self.processMouse()  # 此处以下是额外键盘功能
 		if interact.keys[pygame.K_ESCAPE].deal():
 			from window.window import PauseWindow
-			game.setWindow(PauseWindow())
-		if interact.keys[pygame.K_SPACE].deal():
+			self.setWindow(PauseWindow())
+		if interact.keys[pygame.K_SPACE].deal() and self._mainWorld is not None:
 			if renderer.getCameraAt() is None:
 				renderer.cameraAt(self._mainWorld.getPlayer())
+				self.hud.sendMessage(RenderableString('\\#cc66ccee视角锁定'))
 			elif renderer.cameraOffset.lengthManhattan() == 0:
+				self.hud.sendMessage(RenderableString('\\#cc00cc00视角解锁'))
 				renderer.cameraAt(None)
 			else:
+				self.hud.sendMessage(RenderableString('\\#cc7755ee居中锁定'))
 				renderer.cameraOffset.set(0, 0)
+		if interact.keys[pygame.K_e].deal():
+			if self._mainWorld.getPlayer() is not None:
+				from window.ingame import StatusWindow
+				self.setWindow(StatusWindow())
+		self.tickCount += 1
 	
 	def render(self, delta: float) -> None:
 		"""
@@ -88,21 +96,23 @@ class Game:
 	def quit(self) -> None:
 		self.running = False
 	
-	def readConfig(self, config: dict[str, any]) -> None:
-		"""
-		读取配置文件。
-		"""
-		pass
-	
-	@staticmethod
-	def writeConfig() -> dict[str, any]:
-		return {}
-	
 	def processMouse(self, event: pygame.event.Event | None = None):
 		if self._mainWorld is not None and self._window.get() is None:
-			block = self._mainWorld.getBlockAt(interact.mouse.clone().subtract(renderer.getCenter()).getVector().divide(renderer.getMapScale()).add(renderer.getCamera().get()).getBlockVector())
-			if block is not None:
-				self.floatWindow.submit(block.description)
+			loc = interact.mouse.clone().subtract(renderer.getCenter()).getVector().divide(renderer.getMapScale()).add(renderer.getCamera().get())
+			target = None
+			targetDist = 1
+			for e in self._mainWorld.getEntities():
+				if (dist := e.getPosition().add(e.getTexture().getOffset()).distanceManhattan(loc)) < 0.5 and dist < targetDist:
+					target = e
+					targetDist = dist
+			if (dist := self._mainWorld.getPlayer().getPosition().distanceManhattan(loc)) < 0.5 and dist < targetDist:
+				target = self._mainWorld.getPlayer()
+			if target is None:
+				block = self._mainWorld.getBlockAt(loc.getBlockVector())
+				if block is not None:
+					self.floatWindow.submit(block.description)
+			else:
+				self.floatWindow.submit(target.description)
 		if event is not None:
 			if event.buttons[2] == 1 and self._window.get() is None:
 				renderer.cameraOffset.subtract(Vector(event.rel[0], event.rel[1]).divide(renderer.getMapScale()))

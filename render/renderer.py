@@ -153,7 +153,9 @@ class Renderer:
 		"""
 		if self._isRendering:
 			raise IllegalStatusException("尝试开始绘制，但是绘制已经开始。")
-		if noWindow and interact.scroll.peekScroll() != 0:
+		if not noWindow:
+			interact.scroll.dealScroll()
+		elif interact.scroll.peekScroll() != 0:
 			newScale = self._customMapScale * (0.8 ** interact.scroll.dealScroll())
 			newScale = utils.frange(newScale, 0.5, 8)
 			if newScale != self._customMapScale:
@@ -289,7 +291,7 @@ class Renderer:
 		self.assertRendering()
 		if len(text.set) == 0:
 			return
-		height = font.fontHeight if text.set[0].font < 10 else (font.fontHeight >> 1)
+		height = font.realFontHeight if text.set[0].font < 10 else font.realHalfHeight
 		match location:
 			case Location.LEFT_TOP:
 				text.renderAt(self._canvas, x, y, defaultColor)

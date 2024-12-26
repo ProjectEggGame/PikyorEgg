@@ -50,7 +50,7 @@ class Window(Renderable):
 		渲染背景。可以重写
 		"""
 		if self._texture is not None:
-			self._texture.renderAtInterface(Vector(0, 0))
+			self._texture.renderAtInterface()
 		else:
 			head = self.backgroundColor & 0xff000000
 			if head == 0:
@@ -143,11 +143,11 @@ class FloatWindow(Renderable):
 			info.append((i, present))
 			if present > maximum:
 				maximum = present
-		s = Surface((maximum, len(info) * font.fontHeight >> 1))
+		s = Surface((maximum, len(info) * font.realHalfHeight))
 		s.fill((0x33, 0x33, 0x33))
 		for i in range(len(info)):
-			info[i][0].renderSmall(s, 0, i * font.fontHeight >> 1, 0xffffffff, 0x333333)
-		x, y = interact.mouse.clone().subtract(0, len(info) * font.fontHeight >> 1).getTuple()
+			info[i][0].renderSmall(s, 0, i * font.realHalfHeight, 0xffffffff, 0x333333)
+		x, y = interact.mouse.clone().subtract(0, len(info) * font.realHalfHeight).getTuple()
 		if x < 0:
 			x = 0
 		elif x + maximum > renderer.getCanvas().get_width():
@@ -217,8 +217,8 @@ class StartWindow(Window):
 		super().render(delta)
 		size: BlockVector = renderer.getSize()
 		renderer.renderString(RenderableString('\\.00FCE8AD\\00捡 蛋'), int(size.x / 2), int(size.y / 4), 0xff000000, Location.CENTER)
-		renderer.renderString(RenderableString('\\.00FCE8AD\\02Pikyor Egg!'), int(size.x / 2), int(size.y / 4) + font.fontHeight + 2, 0xff000000, Location.CENTER)
-		renderer.renderString(RenderableString('\\.00FCE8AD\\02卵を拾って'), int(size.x / 2), int(size.y / 4) + font.fontHeight + font.fontHeight + 4, 0xff000000, Location.CENTER)
+		renderer.renderString(RenderableString('\\.00FCE8AD\\02Pikyor Egg!'), int(size.x / 2), int(size.y / 4) + font.realFontHeight + 2, 0xff000000, Location.CENTER)
+		renderer.renderString(RenderableString('\\.00FCE8AD\\02卵を拾って'), int(size.x / 2), int(size.y / 4) + font.realFontHeight + font.realFontHeight + 4, 0xff000000, Location.CENTER)
 	
 	def tick(self) -> None:
 		interact.keys[pygame.K_ESCAPE].deal()  # 舍弃ESC消息
@@ -354,6 +354,40 @@ class SettingsWindow(Window):
 			return True
 		
 		self._widgets[1].onMouseDown = _1
+		from utils import utils
+		
+		class Des2(Description):
+			def __init__(self):
+				super().__init__()
+				self._color = 0
+			
+			def generate(self) -> list['RenderableString']:
+				return [
+					RenderableString('\\#ff66cceeTRACE <' if utils.logLevel == 0 else 'Trace'),
+					RenderableString('\\#ff66cceeDEBUG <' if utils.logLevel == 1 else 'Debug'),
+					RenderableString('\\#ff66cceeINFO <' if utils.logLevel == 2 else 'Info'),
+					RenderableString('\\#ff66cceeWARN <' if utils.logLevel == 3 else 'Warn'),
+					RenderableString('\\#ff66cceeERROR <' if utils.logLevel == 4 else 'Error')
+				]
+		
+		def _2(x, y, b):
+			if b[0] == 1:
+				if utils.logLevel == 4:
+					utils.logLevel = 0
+				else:
+					utils.logLevel += 1
+			elif b[2] == 1:
+				if utils.logLevel == 0:
+					utils.logLevel = 4
+				else:
+					utils.logLevel -= 1
+			else:
+				return True
+			self._widgets[2].name = RenderableString(['\\01LogLevel \\#ff66cceeT\\r\\01|D|I|W|E', '\\01LogLevel T|\\#ff66cceeD\\r\\01|I|W|E', '\\01LogLevel T|D|\\#ff66cceeI\\r\\01|W|E', '\\01LogLevel T|D|I|\\#ff66cceeW\\r\\01|E', '\\01LogLevel T|D|I|W|\\#ff66cceeE'][utils.logLevel])
+			return True
+		
+		self._widgets.append(Button(Location.CENTER, 0, -0.2, 0.4, 0.08, RenderableString(['\\01LogLevel \\#ff66cceeT\\r\\01|D|I|W|E', '\\01LogLevel T|\\#ff66cceeD\\r\\01|I|W|E', '\\01LogLevel T|D|\\#ff66cceeI\\r\\01|W|E', '\\01LogLevel T|D|I|\\#ff66cceeW\\r\\01|E', '\\01LogLevel T|D|I|W|\\#ff66cceeE'][utils.logLevel]), Des2()))
+		self._widgets[2].onMouseDown = _2
 	
 	def setLastOpen(self, last: 'Window') -> 'Window':
 		self.lastOpen = last

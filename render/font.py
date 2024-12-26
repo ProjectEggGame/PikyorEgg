@@ -11,10 +11,6 @@ class Font:
 		self._half: bool = halfSize
 		self._addr: str = file
 		self._yOffset: float = yOffset
-		if self._half:
-			self._scaledOffset: int = int(yOffset * fontHeight * 0.005)
-		else:
-			self._scaledOffset: int = int(yOffset * fontHeight * 0.01)
 		try:
 			self._file = open(file, 'rb')
 			if self._half:
@@ -23,6 +19,10 @@ class Font:
 				self._font = pygame.font.Font(self._file, fontHeight)
 		except Exception as e:
 			utils.printException(e)
+		if self._half:
+			self._scaledOffset: int = int(yOffset * self._font.get_height() * 0.005)
+		else:
+			self._scaledOffset: int = int(yOffset * self._font.get_height() * 0.01)
 	
 	def close(self) -> None:
 		self._file.close()
@@ -35,6 +35,8 @@ class Font:
 		return self._font
 	
 	def draw(self, screen: Surface, string: str, x: int, y: int, color: int, bold: bool, italic: bool, underline: bool, strikeThrough: bool, background: int) -> int:
+		if string is None:
+			return 0
 		if (color & 0xffffff) != (background & 0xffffff):
 			bg = ((background >> 16) & 0xff, (background >> 8) & 0xff, background & 0xff)
 			surface: Surface = self.get(bold, italic, underline, strikeThrough).render(string, True, ((color >> 16) & 0xff, (color >> 8) & 0xff, color & 0xff), bg)
@@ -84,22 +86,26 @@ class Font:
 
 
 allFonts: dict[int, Font] = {}
+realFontHeight: int = 0
+realHalfHeight: int = 0
 
 
 @times
 def setScale(scale: float) -> None:
-	global fontHeight
+	global fontHeight, realFontHeight, realHalfHeight
 	fontHeight = int(scale)
 	for i, f in allFonts.items():
 		f.setHeight(fontHeight)
+	realFontHeight = allFonts[0].get(False, False, False, False).get_height()
+	realHalfHeight = allFonts[10].get(False, False, False, False).get_height()
 
 
 def initializeFont() -> None:
-	allFonts[0] = Font('./assets/font/stsong.ttf', 19)
-	allFonts[1] = Font('./assets/font/sword_art_online.ttf')
+	allFonts[0] = Font('./assets/font/stsong.ttf', 5)
+	allFonts[1] = Font('./assets/font/sword_art_online.ttf', -13)
 	allFonts[2] = Font('./assets/font/yumindb.ttf', 2)
-	allFonts[10] = Font('./assets/font/stsong.ttf', 19, True)
-	allFonts[11] = Font('./assets/font/sword_art_online.ttf', True)
+	allFonts[10] = Font('./assets/font/stsong.ttf', 5, True)
+	allFonts[11] = Font('./assets/font/sword_art_online.ttf', -13, True)
 	allFonts[12] = Font('./assets/font/yumindb.ttf', 2, True)
 
 

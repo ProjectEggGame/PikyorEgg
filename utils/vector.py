@@ -261,7 +261,7 @@ class Vector:
 		return self
 	
 	def toString(self) -> str:
-		return f'Vector({self.x:}, {self.y})'
+		return f'({self.x:.3f}, {self.y:.3f})'
 	
 	def save(self) -> dict:
 		return {

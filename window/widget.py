@@ -84,7 +84,7 @@ class Widget(Renderable):
 	
 	def render(self, delta: float, at: Vector | None = None) -> None:
 		if self._texture is not None:
-			self._texture.renderAtInterface(Vector(self._x, self._y))
+			self._texture.renderAtInterface(BlockVector(self._x, self._y))
 		else:
 			colorSelector = self.color.inactive if not self.active else self.color.active if not self._isMouseIn else self.color.hovering
 			head = colorSelector & 0xff000000
@@ -101,19 +101,19 @@ class Widget(Renderable):
 			case Location.LEFT_TOP:
 				renderer.renderString(self.name, self._x, self._y, self.textColor.inactive if not self.active else self.textColor.active if not self._isMouseIn else self.textColor.hovering, Location.LEFT_TOP)
 			case Location.LEFT:
-				renderer.renderString(self.name, self._x, self._y + self._h // 2, self.textColor.inactive if not self.active else self.textColor.active if not self._isMouseIn else self.textColor.hovering, Location.LEFT)
+				renderer.renderString(self.name, self._x, self._y + (self._h >> 1), self.textColor.inactive if not self.active else self.textColor.active if not self._isMouseIn else self.textColor.hovering, Location.LEFT)
 			case Location.LEFT_BOTTOM:
 				renderer.renderString(self.name, self._x, self._y + self._h, self.textColor.inactive if not self.active else self.textColor.active if not self._isMouseIn else self.textColor.hovering, Location.LEFT_BOTTOM)
 			case Location.TOP:
-				renderer.renderString(self.name, self._x + self._w // 2, self._y, self.textColor.inactive if not self.active else self.textColor.active if not self._isMouseIn else self.textColor.hovering, Location.TOP)
+				renderer.renderString(self.name, self._x + (self._w >> 1), self._y, self.textColor.inactive if not self.active else self.textColor.active if not self._isMouseIn else self.textColor.hovering, Location.TOP)
 			case Location.CENTER:
-				renderer.renderString(self.name, int(self._x + self._w / 2), int(self._y + self._h / 2), self.textColor.inactive if not self.active else self.textColor.active if not self._isMouseIn else self.textColor.hovering, Location.CENTER)
+				renderer.renderString(self.name, self._x + (self._w >> 1), self._y + (self._h >> 1), self.textColor.inactive if not self.active else self.textColor.active if not self._isMouseIn else self.textColor.hovering, Location.CENTER)
 			case Location.BOTTOM:
-				renderer.renderString(self.name, self._x + self._w // 2, self._y + self._h, self.textColor.inactive if not self.active else self.textColor.active if not self._isMouseIn else self.textColor.hovering, Location.BOTTOM)
+				renderer.renderString(self.name, self._x + (self._w >> 1), self._y + self._h, self.textColor.inactive if not self.active else self.textColor.active if not self._isMouseIn else self.textColor.hovering, Location.BOTTOM)
 			case Location.RIGHT_TOP:
 				renderer.renderString(self.name, self._x + self._w, self._y, self.textColor.inactive if not self.active else self.textColor.active if not self._isMouseIn else self.textColor.hovering, Location.RIGHT_TOP)
 			case Location.RIGHT:
-				renderer.renderString(self.name, self._x + self._w, self._y + self._h // 2, self.textColor.inactive if not self.active else self.textColor.active if not self._isMouseIn else self.textColor.hovering, Location.RIGHT)
+				renderer.renderString(self.name, self._x + self._w, self._y + (self._h >> 1), self.textColor.inactive if not self.active else self.textColor.active if not self._isMouseIn else self.textColor.hovering, Location.RIGHT)
 			case Location.RIGHT_BOTTOM:
 				renderer.renderString(self.name, self._x + self._w, self._y + self._h, self.textColor.inactive if not self.active else self.textColor.active if not self._isMouseIn else self.textColor.hovering, Location.RIGHT_BOTTOM)
 	
@@ -122,26 +122,26 @@ class Widget(Renderable):
 		根据预设调整具体位置。可以重写，但是注意逻辑和算法不要错了
 		"""
 		windowSize: BlockVector = renderer.getSize()
-		self._w, self._h = self.width * windowSize.x, self.height * windowSize.y
+		self._w, self._h = int(self.width * windowSize.x), int(self.height * windowSize.y)
 		match self.location:
 			case Location.LEFT_TOP:
-				self._x, self._y = self.x * windowSize.x, self.y * windowSize.y
+				self._x, self._y = int(self.x * windowSize.x), int(self.y * windowSize.y)
 			case Location.LEFT:
-				self._x, self._y = self.x * windowSize.x, (windowSize.y - self._h) * 0.5 + self.y * windowSize.y
+				self._x, self._y = int(self.x * windowSize.x), (windowSize.y - self._h >> 1) + int(self.y * windowSize.y)
 			case Location.LEFT_BOTTOM:
-				self._x, self._y = self.x * windowSize.x, (windowSize.y - self._h) * windowSize.y + self.y * windowSize.y
+				self._x, self._y = int(self.x * windowSize.x), int((windowSize.y - self._h) * windowSize.y + self.y * windowSize.y)
 			case Location.TOP:
-				self._x, self._y = (windowSize.x - self._w) * 0.5 + self.x * windowSize.x, self.y * windowSize.y
+				self._x, self._y = (windowSize.x - self._w >> 1) + int(self.x * windowSize.x), int(self.y * windowSize.y)
 			case Location.CENTER:
-				self._x, self._y = (windowSize.x - self._w) * 0.5 + self.x * windowSize.x, (windowSize.y - self._h) * 0.5 + self.y * windowSize.y
+				self._x, self._y = (windowSize.x - self._w >> 1) + int(self.x * windowSize.x), (windowSize.y - self._h >> 1) + int(self.y * windowSize.y)
 			case Location.BOTTOM:
-				self._x, self._y = (windowSize.x - self._w) * windowSize.x + self.x * windowSize.x, (windowSize.y - self._h) * windowSize.y + self.y * windowSize.y
+				self._x, self._y = int((windowSize.x - self._w) * windowSize.x + self.x * windowSize.x), int((windowSize.y - self._h) * windowSize.y + self.y * windowSize.y)
 			case Location.RIGHT_TOP:
-				self._x, self._y = (windowSize.x - self._w) * windowSize.x + self.x * windowSize.x, self.y * windowSize.y
+				self._x, self._y = int((windowSize.x - self._w) * windowSize.x + self.x * windowSize.x), int(self.y * windowSize.y)
 			case Location.RIGHT:
-				self._x, self._y = (windowSize.x - self._w) * windowSize.x + self.x * windowSize.x, (windowSize.y - self._h) * 0.5 + self.y * windowSize.y
+				self._x, self._y = int((windowSize.x - self._w) * windowSize.x + self.x * windowSize.x), (windowSize.y - self._h >> 1) + int(self.y * windowSize.y)
 			case Location.RIGHT_BOTTOM:
-				self._x, self._y = (windowSize.x - self._w) * windowSize.x + self.x * windowSize.x, (windowSize.y - self._h) * windowSize.y + self.y * windowSize.y
+				self._x, self._y = int((windowSize.x - self._w) * windowSize.x + self.x * windowSize.x), int((windowSize.y - self._h) * windowSize.y + self.y * windowSize.y)
 	
 	def isMouseIn(self, x: int, y: int):
 		self._isMouseIn = self._x <= x <= self._x + self._w and self._y <= y <= self._y + self._h

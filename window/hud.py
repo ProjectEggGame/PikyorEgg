@@ -1,11 +1,12 @@
+from collections import deque
+
 import pygame.draw
 from pygame import Surface
 
-from render import font
 from render.renderable import Renderable
-from render.renderer import renderer
-from utils import utils
+from render.renderer import renderer, Location
 from utils.game import game
+from utils.text import RenderableString
 from utils.vector import Vector
 
 
@@ -17,6 +18,12 @@ class Hud(Renderable):
 		self.displayHunger: float = 1.0
 		self.lastDisplayHunger: float = 0.0
 		self.defaultLength: float = 0.2
+		self.messages: deque[tuple[int, RenderableString]] = deque()
+	
+	def sendMessage(self, message: RenderableString) -> None:
+		self.messages.append((game.tickCount, message))
+		while len(self.messages) > 6:
+			self.messages.popleft()
 	
 	def render(self, delta: float, at: Vector | None = None) -> None:
 		if game.getWorld() is None:
@@ -84,10 +91,10 @@ class Hud(Renderable):
 		downStart = barHeight + (down >> 1)
 		upNow = upStart + (up - (barHeight >> 2) + 1 >> 1) * self.displayHunger
 		downNow = downStart + (down + 1 >> 1) * self.displayHunger
-		h = margin
+		h2 = margin
 		pygame.draw.polygon(surface, (0xc0, 0xb0, 0x10), [
-			(upNow, h),
-			(upStart, h),
+			(upNow, h2),
+			(upStart, h2),
 			(downStart, barHeight << 1),
 			(downNow, barHeight << 1)
 		])
@@ -95,8 +102,8 @@ class Hud(Renderable):
 		if d < 0:  # 有回血
 			d = -d
 			pygame.draw.polygon(surface, (0xf0, 0xf0, 0x60), [
-				(upNow, h),
-				(upStart + (up - (barHeight >> 2) + 1 >> 1) * self.lastDisplayHunger, h),
+				(upNow, h2),
+				(upStart + (up - (barHeight >> 2) + 1 >> 1) * self.lastDisplayHunger, h2),
 				(downStart + (down + 1 >> 1) * self.lastDisplayHunger, barHeight << 1),
 				(downNow, barHeight << 1)
 			])
@@ -108,8 +115,8 @@ class Hud(Renderable):
 			ur = upStart + (up - (barHeight >> 2) + 1 >> 1) * self.lastDisplayHunger
 			dr = downStart + (down + 1 >> 1) * self.lastDisplayHunger
 			pygame.draw.polygon(surface, (0xee, 0, 0), [
-				(upNow, h),
-				(ur, h),
+				(upNow, h2),
+				(ur, h2),
 				(dr, barHeight << 1),
 				(downNow, barHeight << 1)
 			])
@@ -120,9 +127,16 @@ class Hud(Renderable):
 			upNow = ur
 			downNow = dr
 		pygame.draw.polygon(surface, (1, 1, 1), [
-			(upEnd, h),
-			(upNow, h),
+			(upEnd, h2),
+			(upNow, h2),
 			(downNow, barHeight << 1),
 			(barHeight + down, barHeight << 1)
 		])
 		renderer.getCanvas().blit(surface, (margin, margin))
+		while len(self.messages) != 0 and game.tickCount - self.messages[0][0] > 80:
+			self.messages.popleft()
+		p = h >> 3
+		from render import font
+		for tick, message in self.messages:
+			message.renderSmall(renderer.getCanvas(), w - message.lengthSmall() >> 1, p, 0xff000000, 0xccffffff)
+			p += font.realHalfHeight

@@ -11,7 +11,7 @@ class Utils:
 		self._lock = Lock()
 		if self._lock.locked():
 			self._lock.release()
-		self._logLevel = 0
+		self.logLevel = 0
 	
 	@staticmethod
 	def __copyFromConfigs(dic: dict[str, any], key: str, else_: any, result_or_judgement: dict[any, any] | Callable[[any], any] | None, warningMessage: str | None = None) -> any:
@@ -33,10 +33,10 @@ class Utils:
 			return else_
 	
 	def readConfig(self, config: dict) -> None:
-		self._logLevel = self.__copyFromConfigs(config, 'logLevel', 0, {'trace': 0, 'debug': 1, 'info': 2, 'warn': 3, 'error': 4}, 'Invalid log level: {}')
+		self.logLevel = self.__copyFromConfigs(config, 'logLevel', 0, {'trace': 0, 'debug': 1, 'info': 2, 'warn': 3, 'error': 4}, 'Invalid log level: {}')
 	
 	def writeConfig(self) -> dict:
-		match self._logLevel:
+		match self.logLevel:
 			case 0:
 				return {'logLevel': 'trace'}
 			case 1:
@@ -55,27 +55,27 @@ class Utils:
 		self._lock.release()
 	
 	def trace(self, *args, sep=' ', end='\n') -> None:
-		if self._logLevel > 0:
+		if self.logLevel > 0:
 			return
 		self._output('[IKUN] [TRACE] ', *args, sep=sep, end=end)
 	
 	def debug(self, *args, sep=' ', end='\n') -> None:
-		if self._logLevel > 1:
+		if self.logLevel > 1:
 			return
 		self._output('[IKUN] [DEBUG] ', *args, sep=sep, end=end)
 	
 	def info(self, *args, sep=' ', end='\n') -> None:
-		if self._logLevel > 2:
+		if self.logLevel > 2:
 			return
 		self._output('[IKUN] [INFO]  ', *args, sep=sep, end=end)
 	
 	def warn(self, *args, sep=' ', end='\n') -> None:
-		if self._logLevel > 3:
+		if self.logLevel > 3:
 			return
 		self._output('[IKUN] [WARN]  ', *args, sep=sep, end=end, file=stderr)
 	
 	def error(self, *args, sep=' ', end='\n') -> None:
-		if self._logLevel > 4:
+		if self.logLevel > 4:
 			return
 		self._output('[IKUN] [ERROR] ', *args, sep=sep, end=end, file=stderr)
 	

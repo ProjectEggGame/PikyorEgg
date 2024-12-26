@@ -2,7 +2,7 @@ from threading import Lock
 
 import pygame.image
 from pygame import Surface
-from utils.vector import Vector
+from utils.vector import Vector, BlockVector
 from render.renderer import renderer
 from utils import utils, times
 
@@ -21,7 +21,7 @@ class Texture:
 		self._systemObject: bool = False
 		self._file = open(f'assets/texture/{file}.bmp', 'rb')
 		self._surface: Surface = pygame.image.load_basic(self._file)
-		self._systemScaleOffset: float = 0.025
+		self.systemScaleOffset: float = 0.025
 		self._mapScaled: Surface | None = renderer.mapScaleSurface(self._surface) if self._mapObject else None
 		self._uiScaled: Surface | None = None
 		self._systemScaled: Surface | None = None
@@ -40,11 +40,11 @@ class Texture:
 	def adaptsSystem(self, val: bool = True) -> None:
 		if self._systemObject != val:
 			self._systemObject = val
-			self._systemScaled: Surface | None = renderer.systemScaleSurface(self._surface, self._systemScaleOffset)
+			self._systemScaled: Surface | None = renderer.systemScaleSurface(self._surface, self.systemScaleOffset)
 	
-	def renderAtInterface(self, at: Vector) -> None:
+	def renderAtInterface(self, at: BlockVector = BlockVector()) -> None:
 		s = self._uiScaled if self._uiScaled is not None else self._systemScaled if self._systemScaled is not None else self._surface
-		renderer.getCanvas().blit(s, (0, 0))
+		renderer.getCanvas().blit(s, at.getTuple())
 	
 	def renderAsBlock(self, at: Vector, fromPos: Vector | None = None, fromSize: Vector | None = None):
 		"""
@@ -76,7 +76,7 @@ class Texture:
 	
 	def changeSystemScale(self) -> None:
 		if self._systemObject:
-			self._systemScaled = renderer.systemScaleSurface(self._surface, self._systemScaleOffset)
+			self._systemScaled = renderer.systemScaleSurface(self._surface, self.systemScaleOffset)
 	
 	def getSurface(self) -> Surface:
 		"""
@@ -102,6 +102,9 @@ class Texture:
 		:param offset: 偏移量
 		"""
 		self._offset = None if offset is None else (offset / 16)
+	
+	def getOffset(self) -> Vector:
+		return Vector() if self._offset is None else self._offset.clone()
 
 
 class ResourceManager:

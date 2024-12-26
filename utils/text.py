@@ -7,30 +7,37 @@ from utils import utils
 
 if TYPE_CHECKING:
 	from block.block import Block
+	from entity.entity import Entity
 
 
 class Description:
 	"""
-	元素描述。如果重写，可以实现按时间不同变化的
+	元素描述。如果重写，可以实现按时间不同变化的文字
 	"""
 	
 	def __init__(self, d: list['RenderableString'] | None = None):
-		self._d = [] if d is None else d
+		self.d = [] if d is None else d
 	
 	def generate(self) -> list['RenderableString']:
-		return self._d
+		return self.d
 	
 	
 class BlockDescription(Description):
-	"""
-	元素描述。如果重写，可以实现按时间不同变化的
-	"""
 	def __init__(self, block: 'Block', d: list['RenderableString'] | None = None):
 		super().__init__(d)
 		self._block = block
 	
 	def generate(self) -> list['RenderableString']:
-		return [RenderableString('\\#ffaa4499' + self._block.getBlockPosition().getTuple().__str__())] + self._d
+		return [RenderableString('\\#ffaa4499' + self._block.getBlockPosition().getTuple().__str__())] + self.d
+
+
+class EntityDescription(Description):
+	def __init__(self, entity: 'Entity', d: list['RenderableString'] | None = None):
+		super().__init__(d)
+		self._entity = entity
+	
+	def generate(self) -> list['RenderableString']:
+		return [RenderableString('\\#ffaa4499' + self._entity.getPosition().toString())] + self.d
 
 
 class InnerStringConfig:
@@ -119,8 +126,8 @@ class RenderableString:
 			return
 		if subs[0] != '':
 			config.appendString(subs[0])
-		self.set.append(config)
-		config = config.clone()
+			self.set.append(config)
+			config = config.clone()
 		for index in range(1, len(subs)):
 			i = subs[index]
 			if config.string is not None:
@@ -209,5 +216,89 @@ class RenderableString:
 			x = i.renderSmall(screen, x, y, defaultColor, defaultBackground)
 		return x
 	
+	def __add__(self, other: 'RenderableString') -> 'RenderableString':
+		r = RenderableString('')
+		r.set = self.set + other.set
+		return r
+	
 	def __str__(self):
 		return '\n'.join([str(i) for i in self.set])
+
+
+def toRomanNumeral(value: int) -> str:
+	if value == 0:
+		return "N"
+	if value >= 4000:
+		return str(value)
+	k = value // 1000
+	h = value % 1000 // 100
+	t = value % 100 // 10
+	a = value % 10
+	if k == 0:
+		ret = ''
+	elif k == 1:
+		ret = "M"
+	elif k == 2:
+		ret = "MM"
+	elif k == 3:
+		ret = "MMM"
+	else:
+		return str(value)
+	if h != 0:
+		if h == 1:
+			ret += "C"
+		elif h == 2:
+			ret += "CC"
+		elif h == 3:
+			ret += "CCC"
+		elif h == 4:
+			ret += "CD"
+		elif h == 5:
+			ret += "D"
+		elif h == 6:
+			ret += "DC"
+		elif h == 7:
+			ret += "DCC"
+		elif h == 8:
+			ret += "DCCC"
+		else:
+			ret += "CM"
+	if t != 0:
+		if t == 1:
+			ret += "X"
+		elif t == 2:
+			ret += "XX"
+		elif t == 3:
+			ret += "XXX"
+		elif t == 4:
+			ret += "XL"
+		elif t == 5:
+			ret += "L"
+		elif t == 6:
+			ret += "LX"
+		elif t == 7:
+			ret += "LXX"
+		elif t == 8:
+			ret += "LXXX"
+		else:
+			ret += "XC"
+	if a != 0:
+		if a == 1:
+			ret += "I"
+		elif a == 2:
+			ret += "II"
+		elif a == 3:
+			ret += "III"
+		elif a == 4:
+			ret += "IV"
+		elif a == 5:
+			ret += "V"
+		elif a == 6:
+			ret += "VI"
+		elif a == 7:
+			ret += "VII"
+		elif a == 8:
+			ret += "VIII"
+		else:
+			ret += "IX"
+	return ret

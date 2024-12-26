@@ -95,7 +95,6 @@ def mainThread():
 	# begin 读取设置
 	try:
 		config: dict[str, any] = configs.readConfig()
-		game.readConfig(config)
 		renderer.readConfig(config)
 		utils.readConfig(config)
 	except Exception as e:
@@ -189,7 +188,7 @@ def mainThread():
 		rt.join()
 	# begin 写入设置
 	try:
-		config: dict[str, any] = game.writeConfig()
+		config: dict[str, any] = {}
 		config.update(renderer.writeConfig())
 		config.update(utils.writeConfig())
 		configs.writeConfig(config)

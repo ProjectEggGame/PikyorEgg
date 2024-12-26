@@ -85,6 +85,9 @@ class World(Renderable):
 	def removeEntity(self, entity: 'Entity') -> None:
 		self._entityList.remove(entity)
 	
+	def getEntities(self) -> list['Entity']:
+		return list(self._entityList)
+	
 	def getBlockAt(self, point: Vector | BlockVector) -> Block | None:
 		return self._ground.get(hash(point if isinstance(point, BlockVector) else point.clone().getBlockVector()))
 	
@@ -95,6 +98,9 @@ class World(Renderable):
 		b = self._ground[hash(point)]
 		self._ground[hash(point)] = block
 		return b
+	
+	def getRandom(self) -> random.Random:
+		return self._seed
 	
 	def rayTraceBlock(self, start: Vector, direction: Vector, length: float, width: float = 0) -> list[tuple[Block | BlockVector, Vector]]:
 		"""

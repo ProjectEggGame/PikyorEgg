@@ -5,12 +5,12 @@ from entity.manager import entityManager
 from render.resource import Texture, resourceManager
 from utils import utils
 from utils.game import game
-from utils.text import Description, RenderableString
+from utils.text import RenderableString, EntityDescription
 from utils.vector import Vector
 
 
 class Enemy(Entity, Damageable):
-	def __init__(self, entityID: str, name: str, description: Description, texture: list[Texture], position: Vector, health: float = 100, speed: float = 0.06):
+	def __init__(self, entityID: str, name: str, description: EntityDescription, texture: list[Texture], position: Vector, health: float = 100, speed: float = 0.06):
 		Entity.__init__(self, entityID, name, description, texture, position, speed)
 		Damageable.__init__(self, health)
 		self._attackTimer: int = 0
@@ -62,7 +62,7 @@ class Enemy(Entity, Damageable):
 		return entity
 
 
-_EnemyUnit: RenderableString = RenderableString("\\#ffee7766 敌对单位")
+_EnemyUnit: RenderableString = RenderableString("\\#ffee7766  敌对单位")
 
 
 def enemyUnit() -> RenderableString:
@@ -70,18 +70,18 @@ def enemyUnit() -> RenderableString:
 
 
 def searchRange(sr: int) -> RenderableString:
-	return RenderableString(f"\\#ffeedd66 搜索范围 {sr}")
+	return RenderableString(f"\\#ffeedd66  搜索范围 {sr}")
 
 
 def basicDamage(bd: float) -> RenderableString:
-	return RenderableString(f"\\#ffee6677 基础伤害 {bd}")
+	return RenderableString(f"\\#ffee6677  基础伤害 {bd}")
 
 
 class EnemyDog(Enemy):
 	def __init__(self, position: Vector):
-		super().__init__("enemy.dog", "蠢蠢的狗", Description([
+		super().__init__("enemy.dog", "蠢蠢的狗", EntityDescription(self, [
 			RenderableString("\\#ffee0000蠢蠢的狗"),
-			RenderableString("\\#ffee55dd\\/ 只会直线行走"),
+			RenderableString("\\#ffee55dd\\/  只会直线行走"),
 			enemyUnit(),
 			basicDamage(8),
 			searchRange(4),
@@ -120,7 +120,7 @@ class EnemyDog(Enemy):
 			elif utils.fless(dist, self._maxSpeed):
 				self._aiVelocity.set(0, 0)
 				if self._attackTimer <= 0:
-					self._lockOn.damage(8)
+					self._lockOn.damage(8, self)
 					self._attackTimer = self._attackCoolDown
 			else:
 				self._aiVelocity = self._lockOn.getPosition().subtract(self.getPosition()).normalize().multiply(min(self._maxSpeed, self.getPosition().distance(self._lockOn.getPosition())))
@@ -150,4 +150,3 @@ for k in [
 	k.getMapScaledSurface().set_colorkey((0, 0, 0))
 	k.setOffset(Vector(0, -5))
 del k
-
