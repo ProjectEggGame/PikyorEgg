@@ -189,6 +189,11 @@ class DynamicWorld(World):
 		self.setPlayer(player)
 		for i in range(400):
 			self.addEntity(entityManager.get('entity.rice')(Vector(self._seed.random() * 100 - 50, self._seed.random() * 100 - 50)))
+		for i in range(40):
+			self.addEntity(entityManager.get('entity.stick')(Vector(self._seed.random() * 100 - 50, self._seed.random() * 100 - 50)))
+		for i in range(-49,-39):
+			for j in [3,-3]:
+				self.addEntity(entityManager.get('entity.fence')(Vector(i,j)))
 		self.addEntity(entityManager.get('entity.coop')(Vector(4, 4)))
 		for i in range(10):
 			self.addEntity(entityManager.get('enemy.dog')(Vector(self._seed.random() * 100 - 50, self._seed.random() * 100 - 50)))
