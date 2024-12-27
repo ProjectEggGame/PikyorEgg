@@ -53,9 +53,15 @@ class World(Renderable):
 		ct = renderer.getCenter().getVector().divide(renderer.getMapScale())
 		block2 = ct.clone().add(renderer.getCamera().get()).getBlockVector().add(1, 1)
 		block1 = ct.reverse().add(renderer.getCamera().get()).getBlockVector().subtract(1, 1)
-		newList = list(self._entityList)
+		newList2 = list(self._entityList)
 		if self._player is not None:
-			newList.append(self._player)
+			newList2.append(self._player)
+		newList = []
+		for e in newList2:
+			p = e.getPosition()
+			if p.x < block1.x or p.x > block2.x or p.y < block1.y or p.y > block2.y:
+				continue
+			newList.append(e)
 		newList.sort(key=lambda k: k.getPosition().y)
 		e = 0
 		for j in range(block1.y, block2.y + 1):
@@ -181,10 +187,11 @@ class DynamicWorld(World):
 		self.generate_map()  # 初始化地图
 		player = entityManager.get('player')(Vector(0, 0))
 		self.setPlayer(player)
-		for i in range(100):
+		for i in range(400):
 			self.addEntity(entityManager.get('entity.rice')(Vector(self._seed.random() * 100 - 50, self._seed.random() * 100 - 50)))
 		self.addEntity(entityManager.get('entity.coop')(Vector(4, 4)))
-		self.addEntity(entityManager.get('enemy.dog')(Vector(self._seed.random() * 100 - 50, self._seed.random() * 100 - 50)))
+		for i in range(10):
+			self.addEntity(entityManager.get('enemy.dog')(Vector(self._seed.random() * 100 - 50, self._seed.random() * 100 - 50)))
 	
 	def generate_map(self) -> None:
 		for i in range(-50, 50):

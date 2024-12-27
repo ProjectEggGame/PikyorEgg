@@ -105,7 +105,12 @@ class Renderer:
 		self._customMapScale: float = 1.0
 		self._customUiScale: float = 1.0
 		self.is4to3: SynchronizedStorage[bool] = SynchronizedStorage[bool](True)
-	
+		
+		self.displayFPS: bool = False
+		self.displayTPS: bool = False
+		self.tps: float = 0
+		self.fps: float = 0
+
 	def ready(self) -> bool:
 		"""
 		检查渲染器状态是否良好
@@ -191,6 +196,15 @@ class Renderer:
 		if not self._isRendering:
 			raise IllegalStatusException("尝试结束绘制，但是绘制尚未开始。")
 		self._screen.blit(self._canvas, self._offset.getTuple())
+		if self.displayFPS:
+			r = RenderableString(f"\\12{self.fps:.2f} FPS")
+			r.renderAt(self._screen, int(self._size[0] - r.length()), 0, 0xffee0000)
+			if self.displayTPS:
+				r = RenderableString(f"\\12{self.tps:.2f} TPS")
+				r.renderAt(self._screen, int(self._size[0] - r.length()), font.realHalfHeight, 0xffee0000)
+		elif self.displayTPS:
+			r = RenderableString(f"\\12{self.tps:.2f} TPS")
+			r.renderAt(self._screen, int(self._size[0] - r.length()), 0, 0xffee0000)
 		pygame.display.flip()
 		if len(self._renderStack) != 1:
 			raise IllegalStatusException("渲染帧结束时有栈没有弹出。请检查是否缺失了renderer.pop()")
@@ -432,11 +446,15 @@ class Renderer:
 		self.is4to3.set(configs.readElseDefault(config, "screenSize", False, {"4:3": True, "16:9": False}, "screenSize: {} is not supported. Using 4:3."))
 		self.is4to3.apply(self.is4to3.getNew())
 		self.setCustomMapScale(configs.readElseDefault(config, "customScale", 1, lambda f: utils.frange(f, 0.5, 8)))
+		self.displayFPS = configs.readElseDefault(config, "displayFPS", False, {True: True, False: False}, "displayFPS: {} is not supported. Using false.")
+		self.displayTPS = configs.readElseDefault(config, "displayTPS", False, {True: True, False: False}, "displayTPS: {} is not supported. Using false.")
 		
 	def writeConfig(self) -> dict[str, any]:
 		return {
 			"screenSize": "4:3" if self.is4to3.get() else "16:9",
 			"customScale": self._customMapScale,
+			"displayFPS": self.displayFPS,
+			"displayTPS": self.displayTPS
 		}
 
 

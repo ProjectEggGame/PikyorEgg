@@ -388,6 +388,24 @@ class SettingsWindow(Window):
 		
 		self._widgets.append(Button(Location.CENTER, 0, -0.2, 0.4, 0.08, RenderableString(['\\01LogLevel \\#ff66cceeT\\r\\01|D|I|W|E', '\\01LogLevel T|\\#ff66cceeD\\r\\01|I|W|E', '\\01LogLevel T|D|\\#ff66cceeI\\r\\01|W|E', '\\01LogLevel T|D|I|\\#ff66cceeW\\r\\01|E', '\\01LogLevel T|D|I|W|\\#ff66cceeE'][utils.logLevel]), Des2()))
 		self._widgets[2].onMouseDown = _2
+		self._widgets.append(Button(Location.CENTER, -0.1, -0.1, 0.2, 0.08, RenderableString('\\01Show FPS' if renderer.displayFPS else '\\01Hide FPS'), Description([RenderableString("是否显示FPS")]), Location.CENTER))
+		
+		def _3(x, y, b):
+			if b[0] == 1:
+				renderer.displayFPS = not renderer.displayFPS
+				self._widgets[3].name = RenderableString('\\01Show FPS' if renderer.displayFPS else '\\01Hide FPS')
+			return True
+		
+		self._widgets[3].onMouseDown = _3
+		self._widgets.append(Button(Location.CENTER, 0.1, -0.1, 0.2, 0.08, RenderableString('\\01Show TPS' if renderer.displayFPS else '\\01Hide TPS'), Description([RenderableString("是否显示TPS")]), Location.CENTER))
+		
+		def _4(x, y, b):
+			if b[0] == 1:
+				renderer.displayTPS = not renderer.displayTPS
+				self._widgets[4].name = RenderableString('\\01Show TPS' if renderer.displayTPS else '\\01Hide TPS')
+			return True
+		
+		self._widgets[4].onMouseDown = _4
 	
 	def setLastOpen(self, last: 'Window') -> 'Window':
 		self.lastOpen = last

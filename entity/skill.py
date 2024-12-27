@@ -20,7 +20,6 @@ class Skill:
 		from entity.entity import Player
 		self._player: Player = game.getWorld().getPlayer()
 		self.description: Description = description
-		self.description.d.append(RenderableString('\\#ffee0000  尚未学习此技能'))
 		self.texture = resourceManager.getOrNew(f'skill/{self._id}')
 		self.texture.adaptsSystem()
 		self.texture.adaptsMap(False)
@@ -185,6 +184,11 @@ class SkillSwift(Skill):
 			self.description.d[0] = self.getName()
 			return True
 		return False
+
+
+class SkillTarget(Skill):
+	def __init__(self):
+		super().__init__(6, Description([RenderableString('\\#ffeeee00目标'), RenderableString('\\#ffee55dd  可以用鼠标点击地图来控制你的小鸡'), RenderableString('\\#ffee55dd  但是会消耗一点体力'), RenderableString('\\#ffee55dd  并且会多消耗一点成长')]))
 
 
 skillManager.register(0, Skill)

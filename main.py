@@ -47,7 +47,7 @@ def renderThread():
 			else:
 				time.sleep(0.0001)
 			if nowRender - lastCount >= 1_000_000_000:
-				utils.trace(f"{count}帧/秒")
+				renderer.fps = count * 1_000_000_000 / (nowRender - lastCount)
 				count = 0
 				lastCount = nowRender
 		except Exception as e:
@@ -70,10 +70,10 @@ def gameThread():
 				game.tick()
 				lastTick = nowTick
 				count += 1
-			if nowRender - lastCount >= 1_000_000_000:
-				utils.trace(f"{count}tick/秒")
+			if nowTick - lastCount >= 1_000_000_000:
+				renderer.tps = count * 1_000_000_000 / (nowTick - lastCount)
 				count = 0
-				lastCount = nowRender
+				lastCount = nowTick
 			else:
 				time.sleep(0.0001)
 		except Exception as e:
