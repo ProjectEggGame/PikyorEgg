@@ -90,11 +90,14 @@ class Texture:
 		"""
 		return self._mapScaled
 	
-	def getUiScaledSurface(self) -> None:
+	def getUiScaledSurface(self) -> Surface:
 		"""
 		获取适应过UI缩放的pygame的Surface。除非必要，尽可能地不要修改Surface
 		"""
 		return self._uiScaled
+	
+	def getSystemScaledSurface(self) -> Surface:
+		return self._systemScaled
 	
 	def setOffset(self, offset: Vector | None) -> None:
 		"""

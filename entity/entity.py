@@ -32,7 +32,7 @@ class Entity(Element):
 		self.__renderInterval: int = 6
 		self.__velocity: Vector = Vector(0, 0)
 		self._position: Vector = position
-		self._basicMaxSpeed: float = speed
+		self.basicMaxSpeed: float = speed
 		self._maxSpeed: float = speed
 		self._setVelocity: Vector = Vector(0, 0)
 		self._textureSet: list[Texture] = texture
@@ -492,11 +492,11 @@ class Player(Entity, Damageable):
 			if interact.keys[pygame.K_d].peek():
 				v.add(1, 0)
 			if interact.specialKeys[pygame.K_LSHIFT & interact.KEY_COUNT].peek():
-				self._maxSpeed = self._basicMaxSpeed * 0.5
+				self._maxSpeed = self.basicMaxSpeed * 0.5
 			elif interact.specialKeys[pygame.K_LCTRL & interact.KEY_COUNT].peek():
-				self._maxSpeed = self._basicMaxSpeed * 2
+				self._maxSpeed = self.basicMaxSpeed * 2
 			else:
-				self._maxSpeed = self._basicMaxSpeed
+				self._maxSpeed = self.basicMaxSpeed
 			## debug
 			if interact.keys[pygame.K_q].deal():
 				self.grow(100, self)
@@ -511,6 +511,7 @@ class Player(Entity, Damageable):
 					if len(self.__allSkills) > 0:
 						k = game.getWorld().getRandom().sample(sorted(self.__allSkills), 1)
 						self.skills[k[0]] = self.__allSkills.pop(k[0])()
+						self.skills[k[0]].upgrade()
 						game.hud.sendMessage(RenderableString('你获得了新的技能：') + self.skills[k[0]].getName())
 		self.setVelocity(v.normalize().multiply(self._maxSpeed))
 		for i in self.postTick:

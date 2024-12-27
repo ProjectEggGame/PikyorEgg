@@ -37,7 +37,11 @@ class EntityDescription(Description):
 		self._entity = entity
 	
 	def generate(self) -> list['RenderableString']:
-		return [RenderableString('\\#ffaa4499' + self._entity.getPosition().toString())] + self.d
+		from entity.entity import Damageable
+		if isinstance(self._entity, Damageable):
+			return [RenderableString('\\#ffaa4499' + self._entity.getPosition().toString()), RenderableString(f'\\#ffee4444HP {self._entity.getHealth():.2f}/{self._entity.getMaxHealth():.2f}')] + self.d
+		else:
+			return [RenderableString('\\#ffaa4499' + self._entity.getPosition().toString())] + self.d
 
 
 class InnerStringConfig:

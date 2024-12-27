@@ -7,7 +7,7 @@ from render.renderable import Renderable
 from render.renderer import renderer, Location
 from utils.game import game
 from utils.text import RenderableString
-from utils.vector import Vector
+from utils.vector import Vector, BlockVector
 
 
 class Hud(Renderable):
@@ -133,10 +133,16 @@ class Hud(Renderable):
 			(barHeight + down, barHeight << 1)
 		])
 		renderer.getCanvas().blit(surface, (margin, margin))
+		
+		if (p := game.getWorld()) is not None and (p := p.getPlayer()) is not None:
+			pos: BlockVector = BlockVector(margin, margin << 2)
+			for s in p.skills.values():
+				pos.x += s.render(delta, pos)
+		
 		while len(self.messages) != 0 and game.tickCount - self.messages[0][0] > 80:
 			self.messages.popleft()
 		p = h >> 3
 		from render import font
-		for tick, message in self.messages:
+		for tick, message in self.messages.copy():
 			message.renderSmall(renderer.getCanvas(), w - message.lengthSmall() >> 1, p, 0xff000000, 0xccffffff)
 			p += font.realHalfHeight

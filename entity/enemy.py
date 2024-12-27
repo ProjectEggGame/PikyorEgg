@@ -79,8 +79,8 @@ def basicDamage(bd: float) -> RenderableString:
 
 class EnemyDog(Enemy):
 	def __init__(self, position: Vector):
-		super().__init__("enemy.dog", "蠢蠢的狗", EntityDescription(self, [
-			RenderableString("\\#ffee0000蠢蠢的狗"),
+		super().__init__("enemy.dog", "蠢蠢的狐狸", EntityDescription(self, [
+			RenderableString("\\#ffee0000蠢蠢的狐狸"),
 			RenderableString("\\#ffee55dd\\/  只会直线行走"),
 			enemyUnit(),
 			basicDamage(8),
