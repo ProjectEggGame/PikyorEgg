@@ -403,6 +403,22 @@ class Rice(Entity):
 		e = Rice(Vector.load(d['position']))
 		return Entity.load(d, e)
 
+class Stick(Entity):
+	def __init__(self, position: Vector):
+		super().__init__('entity.stick', '树枝', EntityDescription(self, [RenderableString("\\#FFFFD700坚硬的树枝")]), [resourceManager.getOrNew('entity/stick')], position, 0)
+	
+	def tick(self) -> None:
+		player = game.getWorld().getPlayer()
+		if player is not None and player.getPosition().distanceManhattan(self.getPosition()) <= 0.6:
+			player.grow(2, self)
+			game.getWorld().removeEntity(self)
+			game.getWorld().addEntity(Stick(Vector(random.randint(-50, 50), random.randint(-50, 50))))
+	
+	@classmethod
+	def load(cls, d: dict, entity: Union['Entity', None] = None) -> Union['Entity', None]:
+		e = Stick(Vector.load(d['position']))
+		return Entity.load(d, e)
+
 
 class Player(Entity, Damageable):
 	def __init__(self, position: Vector):
@@ -418,6 +434,7 @@ class Player(Entity, Damageable):
 		], position, 0.16)
 		Damageable.__init__(self, 100)
 		self.growth_value: float = 0  # 成长值初始化为0
+		self.backpack_stick: float = 0 # 背包里树枝数量初始化为0
 		self.preDeath: list[Callable[[], bool]] = []  # () -> bool是否取消
 		self.preDamage: list[Callable[[float, Entity], float]] = []  # (float值, Entity来源) -> float更改后的值
 		self.postDamage: list[Callable[[float, Entity], None]] = []  # (float值, Entity来源) -> None
@@ -425,6 +442,8 @@ class Player(Entity, Damageable):
 		self.postTick: list[Callable[[], None]] = []
 		self.preGrow: list[Callable[[int, Entity | str], int]] = []
 		self.postGrow: list[Callable[[int, Entity | str], None]] = []
+		self.prePick: list[Callable[[int, Entity | str], None]] = []   
+		self.postPick: list[Callable[[int, Entity | str], None]] = []
 		self.skills: dict[int, Skill] = {}
 		self.__allSkills: dict[int, Skill] = skillManager.dic.copy()
 		self.__allSkills.pop(0)
@@ -478,6 +497,22 @@ class Player(Entity, Damageable):
 			i(ret, src)
 		return ret
 	
+	def pick(self, amount: float, src: Entity | str) -> float:
+		for i in self.prePick:
+			amount = i(amount, src)
+		if self.backpack_stick == 100:
+			return 0
+		val = self.backpack_stick + amount
+		if val > 100:
+			self.backpack_stick = 100
+			ret = amount + 100 - self.backpack_stick
+		else:
+			self.backpack_stick = val
+			ret = amount
+		for i in self.postPick:
+			i(ret, src)
+		return ret
+	
 	def tick(self) -> None:
 		for i in self.preTick:
 			i()
@@ -527,6 +562,15 @@ class Coop(Entity):
 		e = Coop(Vector.load(d['position']))
 		return Entity.load(d, e)
 
+class Fence(Entity):
+	def __init__(self, position: Vector):
+		super().__init__('entity.fence', '家', EntityDescription(self, [RenderableString('家')]), [resourceManager.getOrNew('entity/fence')], position, 0)
+	
+	@classmethod
+	def load(cls, d: dict, entity: Union['Entity', None] = None) -> Union['Entity', None]:
+		e = Fence(Vector.load(d['position']))
+		return Entity.load(d, e)
+
 
 class BlueEgg(Entity):
 	def __init__(self, position: Vector):
@@ -540,10 +584,11 @@ class BlueEgg(Entity):
 
 # 注册实体
 entityManager.register('entity.rice', Rice)
+entityManager.register('entity.stick', Stick)
+entityManager.register('entity.fence', Fence)
 entityManager.register('player', Player)
 entityManager.register('entity.coop', Coop)
 entityManager.register('entity.egg.blue', BlueEgg)
-
 entityManager.register('deprecated', DeprecatedPlayer)
 
 for t in [
@@ -562,6 +607,8 @@ for t in [
 for t in [
 	resourceManager.getOrNew('entity/rice'),
 	resourceManager.getOrNew('entity/coop'),
+	resourceManager.getOrNew('entity/stick'),
+	resourceManager.getOrNew('entity/fence')
 ]:
 	t.getSurface().set_colorkey((0, 0, 0))
 	t.getMapScaledSurface().set_colorkey((0, 0, 0))
