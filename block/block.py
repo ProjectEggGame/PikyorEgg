@@ -4,7 +4,7 @@ from block.manager import blockManager
 from render.resource import resourceManager
 from utils.element import Element
 from utils.error import InvalidOperationException, neverCall
-from utils.text import RenderableString, BlockDescription
+from utils.text import RenderableString, BlockDescription, Description
 from utils.vector import Vector, BlockVector
 
 if TYPE_CHECKING:
@@ -28,6 +28,9 @@ class Block(Element):
 	
 	def render(self, delta: float, at: 'Vector | None') -> None:
 		self.getTexture().renderAsBlock(self._position.getVector())
+		if len(self._holding) > 0:
+			for h in self._holding:
+				h.render(delta, at)
 	
 	def canPass(self, entity: Union['Entity', None] = None) -> bool:
 		"""
@@ -42,6 +45,9 @@ class Block(Element):
 	
 	def getBlockPosition(self) -> 'BlockVector':
 		return self._position.clone()
+	
+	def getDescription(self) -> list[Description]:
+		return [self.description] + [b.description for b in self._holding]
 	
 	def tryHold(self, block: Element) -> bool:
 		"""
@@ -115,7 +121,18 @@ class Ground(Block):
 	def __init__(self, blockID: str, name: str, description: 'BlockDescription', position: 'BlockVector', texture: 'Texture'):
 		super().__init__(blockID, name, description, position, texture)
 	
+	def tryHold(self, block: Element) -> bool:
+		if len(self._holding) < 1:
+			if isinstance(block, Block) and block._blockID.startswith('hold.'):
+				return True
+		return False
+	
 	def canPass(self, entity: Union['Entity', None] = None) -> bool:
+		if len(self._holding) == 0:
+			return True
+		for h in self._holding:
+			if not h.canPass(entity):
+				return False
 		return True
 
 
@@ -126,7 +143,7 @@ class Wall(Block):
 	
 	def __init__(self, blockID: str, name: str, description: 'BlockDescription', position: 'BlockVector', texture: 'Texture'):
 		super().__init__(blockID, name, description, position, texture)
-
+	
 	def canPass(self, entity: Union['Entity', None] = None) -> bool:
 		return False
 
@@ -175,7 +192,48 @@ class ErrorBlock(Ground):
 		return ret
 
 
+class Fence(Wall):
+	def __init__(self, position: BlockVector):
+		super().__init__('hold.fence', '栅栏', BlockDescription(self, [RenderableString('栅栏'), RenderableString('\\/    家的感觉，家的舒适，家的安全')]), position, resourceManager.getOrNew('block/fence'))
+	
+	@classmethod
+	def load(cls, d: dict, block=None) -> 'Block':
+		block = Fence(BlockVector.load(d['position']))
+		return super().load(d, block)
+
+
+class SafetyLine(Wall):
+	def __init__(self, position: BlockVector):
+		super().__init__('hold.safety_line', '栅栏', BlockDescription(self, [RenderableString('栅栏'), RenderableString('  \\/    关门，关狗！')]), position, resourceManager.getOrNew('block/safety_line'))
+	
+	def canPass(self, entity: Union['Entity', None] = None) -> bool:
+		from entity.entity import Player
+		if isinstance(entity, Player):
+			return True
+		return False
+	
+	@classmethod
+	def load(cls, d: dict, block=None) -> 'Block':
+		block = SafetyLine(BlockVector.load(d['position']))
+		return super().load(d, block)
+
+
 blockManager.register('nature.grass', GrassBlock)
 blockManager.register('nature.path', PathBlock)
 blockManager.register('nature.farmland', FarmlandBlock)
 blockManager.register('system.error', ErrorBlock)
+blockManager.register('hold.fence', Fence)
+blockManager.register('hold.safety_line', SafetyLine)
+
+for t in [
+	resourceManager.getOrNew('block/fence')
+]:
+	t.getSurface().set_colorkey((0, 0, 0))
+	t.getMapScaledSurface().set_colorkey((0, 0, 0))
+	t.setOffset(Vector(0, -8))
+for t in [
+	resourceManager.getOrNew('block/safety_line')
+]:
+	t.getSurface().set_colorkey((0, 0, 0))
+	t.getMapScaledSurface().set_colorkey((0, 0, 0))
+del t

@@ -396,12 +396,13 @@ class Rice(Entity):
 		if player is not None and player.getPosition().distanceManhattan(self.getPosition()) <= 0.6:
 			player.grow(2, self)
 			game.getWorld().removeEntity(self)
-			game.getWorld().addEntity(Rice(Vector(random.randint(-50, 50), random.randint(-50, 50))))
+			game.getWorld().addEntity(Rice(Vector(game.getWorld().getRandom().uniform(-50, 50), game.getWorld().getRandom().uniform(-50, 50))))
 	
 	@classmethod
 	def load(cls, d: dict, entity: Union['Entity', None] = None) -> Union['Entity', None]:
 		e = Rice(Vector.load(d['position']))
 		return Entity.load(d, e)
+
 
 class Stick(Entity):
 	def __init__(self, position: Vector):
@@ -412,7 +413,7 @@ class Stick(Entity):
 		if player is not None and player.getPosition().distanceManhattan(self.getPosition()) <= 0.6:
 			player.grow(2, self)
 			game.getWorld().removeEntity(self)
-			game.getWorld().addEntity(Stick(Vector(random.randint(-50, 50), random.randint(-50, 50))))
+			game.getWorld().addEntity(Stick(Vector(game.getWorld().getRandom().uniform(-50, 50), game.getWorld().getRandom().uniform(-50, 50))))
 	
 	@classmethod
 	def load(cls, d: dict, entity: Union['Entity', None] = None) -> Union['Entity', None]:
@@ -422,7 +423,7 @@ class Stick(Entity):
 
 class Player(Entity, Damageable):
 	def __init__(self, position: Vector):
-		Entity.__init__(self, 'player', '小鸡', EntityDescription(self, [RenderableString('你'), RenderableString("\\#FFFFD700黄色的小鸡")]), [
+		Entity.__init__(self, 'player', '小鸡', EntityDescription(self, [RenderableString("\\#FFFFD700黄色的小鸡"), RenderableString('\\/    也就是你')]), [
 			resourceManager.getOrNew('player/chick_1'),
 			resourceManager.getOrNew('player/chick_1'),
 			resourceManager.getOrNew('player/chick_b1'),
@@ -562,15 +563,6 @@ class Coop(Entity):
 		e = Coop(Vector.load(d['position']))
 		return Entity.load(d, e)
 
-class Fence(Entity):
-	def __init__(self, position: Vector):
-		super().__init__('entity.fence', '家', EntityDescription(self, [RenderableString('家')]), [resourceManager.getOrNew('entity/fence')], position, 0)
-	
-	@classmethod
-	def load(cls, d: dict, entity: Union['Entity', None] = None) -> Union['Entity', None]:
-		e = Fence(Vector.load(d['position']))
-		return Entity.load(d, e)
-
 
 class BlueEgg(Entity):
 	def __init__(self, position: Vector):
@@ -585,7 +577,6 @@ class BlueEgg(Entity):
 # 注册实体
 entityManager.register('entity.rice', Rice)
 entityManager.register('entity.stick', Stick)
-entityManager.register('entity.fence', Fence)
 entityManager.register('player', Player)
 entityManager.register('entity.coop', Coop)
 entityManager.register('entity.egg.blue', BlueEgg)
@@ -606,12 +597,13 @@ for t in [
 	t.setOffset(Vector(0, -6))
 for t in [
 	resourceManager.getOrNew('entity/rice'),
-	resourceManager.getOrNew('entity/coop'),
 	resourceManager.getOrNew('entity/stick'),
-	resourceManager.getOrNew('entity/fence')
+	resourceManager.getOrNew('entity/coop')
 ]:
 	t.getSurface().set_colorkey((0, 0, 0))
 	t.getMapScaledSurface().set_colorkey((0, 0, 0))
+	t.setOffset(Vector(0, -2))
+resourceManager.getOrNew('entity/coop').setOffset(Vector(0, -5))
 for t in [
 	resourceManager.getOrNew('player/chick_1'),
 	resourceManager.getOrNew('player/chick_b1'),

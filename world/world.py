@@ -7,6 +7,7 @@ from render.renderer import renderer
 from render.resource import resourceManager
 from save.save import Archive
 from utils import utils
+from utils.game import game
 from utils.text import RenderableString, Description
 
 if TYPE_CHECKING:
@@ -70,8 +71,9 @@ class World(Renderable):
 				if b is None:
 					continue
 				b.render(delta, at)
+			j += 1
 			while e < len(newList):
-				if newList[e].getPosition().y < j:
+				if newList[e].getPosition().y <= j:
 					newList[e].render(delta, at)
 					e += 1
 				else:
@@ -187,13 +189,16 @@ class DynamicWorld(World):
 		self.generate_map()  # 初始化地图
 		player = entityManager.get('player')(Vector(0, 0))
 		self.setPlayer(player)
-		for i in range(400):
+		for i in range(200):
 			self.addEntity(entityManager.get('entity.rice')(Vector(self._seed.random() * 100 - 50, self._seed.random() * 100 - 50)))
 		for i in range(40):
 			self.addEntity(entityManager.get('entity.stick')(Vector(self._seed.random() * 100 - 50, self._seed.random() * 100 - 50)))
-		for i in range(-49,-39):
-			for j in [3,-3]:
-				self.addEntity(entityManager.get('entity.fence')(Vector(i,j)))
+		for i in range(-50, -39):
+			self.getBlockAt(BlockVector(i, 3)).holdAppend(blockManager.get('hold.fence')(BlockVector(i, 3)))
+			self.getBlockAt(BlockVector(i, -3)).holdAppend(blockManager.get('hold.fence')(BlockVector(i, -3)))
+		for i in range(-2, 3):
+			self.getBlockAt(BlockVector(-50, i)).holdAppend(blockManager.get('hold.fence')(BlockVector(-50, i)))
+			self.getBlockAt(BlockVector(-40, i)).holdAppend(blockManager.get('hold.safety_line')(BlockVector(-40, i)))
 		self.addEntity(entityManager.get('entity.coop')(Vector(4, 4)))
 		for i in range(10):
 			self.addEntity(entityManager.get('enemy.dog')(Vector(self._seed.random() * 100 - 50, self._seed.random() * 100 - 50)))

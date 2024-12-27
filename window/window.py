@@ -121,28 +121,35 @@ class FloatWindow(Renderable):
 	
 	def __init__(self):
 		super().__init__(None)
-		self._rendering: Description | None = None
+		self._rendering: list[Description | None] = []
 	
-	def submit(self, contents: Description | None) -> None:
+	def submit(self, contents: list[Description] | Description | None) -> None:
 		"""
 		把要显示的东西提交给FloatWindow
 		:param contents: 要显示的RenderableString，每一行一个元素，每个RenderableString不要包含换行符
 		"""
-		self._rendering = contents
+		if isinstance(contents, list):
+			self._rendering = self._rendering + contents
+		else:
+			self._rendering.append(contents)
+	
+	def clear(self) -> None:
+		self._rendering = []
 	
 	def empty(self) -> bool:
-		return self._rendering is None
+		return len(self._rendering) == 0
 	
 	def render(self, delta: float, at=None) -> None:
 		if self._rendering is None:
 			return
 		info = []
 		maximum = 0
-		for i in self._rendering.generate():
-			present = i.lengthSmall()
-			info.append((i, present))
-			if present > maximum:
-				maximum = present
+		for r in self._rendering:
+			for i in r.generate():
+				present = i.lengthSmall()
+				info.append((i, present))
+				if present > maximum:
+					maximum = present
 		s = Surface((maximum, len(info) * font.realHalfHeight))
 		s.fill((0x33, 0x33, 0x33))
 		for i in range(len(info)):

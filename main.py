@@ -126,13 +126,14 @@ def mainThread():
 					case pygame.KEYUP:
 						interact.onKey(event)
 					case pygame.MOUSEMOTION:
-						game.floatWindow.submit(None)  # 移动更新floatWindow
+						game.floatWindow.clear()  # 移动更新floatWindow
 						interact.onMouse(event)
 						interact.mouse.subtract(renderer.getOffset())  # interact不能导入renderer，委托此处修正鼠标位置
 						if game.getWindow() is not None:
 							game.getWindow().passMouseMove(interact.mouse.x, interact.mouse.y, event.buttons)
 						game.processMouse(event)
 					case pygame.MOUSEBUTTONDOWN:
+						game.floatWindow.clear()
 						interact.onMouse(event)
 						if game.getWindow() is not None:
 							match event.button:
@@ -146,6 +147,7 @@ def mainThread():
 									buttons = (0, 0, 0)
 							game.getWindow().passMouseDown(interact.mouse.x, interact.mouse.y, buttons)
 					case pygame.MOUSEBUTTONUP:
+						game.floatWindow.clear()
 						interact.onMouse(event)
 						if game.getWindow() is not None:
 							match event.button:

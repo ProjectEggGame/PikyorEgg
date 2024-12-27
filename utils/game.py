@@ -98,21 +98,26 @@ class Game:
 	
 	def processMouse(self, event: pygame.event.Event | None = None):
 		if self._mainWorld is not None and self._window.get() is None:
+			self.floatWindow.clear()
 			loc = interact.mouse.clone().subtract(renderer.getCenter()).getVector().divide(renderer.getMapScale()).add(renderer.getCamera().get())
-			target = None
-			targetDist = 1
-			for e in self._mainWorld.getEntities():
-				if (dist := e.getPosition().add(e.getTexture().getOffset()).distanceManhattan(loc)) < 0.5 and dist < targetDist:
-					target = e
-					targetDist = dist
-			if (dist := self._mainWorld.getPlayer().getPosition().distanceManhattan(loc)) < 0.5 and dist < targetDist:
-				target = self._mainWorld.getPlayer()
-			if target is None:
-				block = self._mainWorld.getBlockAt(loc.getBlockVector())
-				if block is not None:
-					self.floatWindow.submit(block.description)
-			else:
-				self.floatWindow.submit(target.description)
+			target1, target2 = None, None
+			targetDist1, targetDist2 = 1, 1
+			for e in (self._mainWorld.getEntities() + [self._mainWorld.getPlayer()]):
+				if (dist := e.getPosition().add(e.getTexture().getOffset()).distanceManhattan(loc)) < 0.5 and dist < targetDist2:
+					if dist < targetDist1:
+						target1, target2 = e, target1
+						targetDist1, targetDist2 = dist, targetDist1
+					else:
+						target2 = e
+						targetDist2 = dist
+			if target2 is not None:
+				self.floatWindow.submit(target1.description)
+				self.floatWindow.submit(target2.description)
+			elif target1 is not None:
+				self.floatWindow.submit(target1.description)
+			block = self._mainWorld.getBlockAt(loc.getBlockVector())
+			if block is not None:
+				self.floatWindow.submit(block.getDescription())
 		if event is not None:
 			if event.buttons[2] == 1 and self._window.get() is None:
 				renderer.cameraOffset.subtract(Vector(event.rel[0], event.rel[1]).divide(renderer.getMapScale()))

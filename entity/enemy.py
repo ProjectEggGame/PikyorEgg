@@ -62,7 +62,7 @@ class Enemy(Entity, Damageable):
 		return entity
 
 
-_EnemyUnit: RenderableString = RenderableString("\\#ffee7766  敌对单位")
+_EnemyUnit: RenderableString = RenderableString("\\#ffee7766    敌对单位")
 
 
 def enemyUnit() -> RenderableString:
@@ -70,18 +70,18 @@ def enemyUnit() -> RenderableString:
 
 
 def searchRange(sr: int) -> RenderableString:
-	return RenderableString(f"\\#ffeedd66  搜索范围 {sr}")
+	return RenderableString(f"\\#ffeedd66    搜索范围 {sr}")
 
 
 def basicDamage(bd: float) -> RenderableString:
-	return RenderableString(f"\\#ffee6677  基础伤害 {bd}")
+	return RenderableString(f"\\#ffee6677    基础伤害 {bd}")
 
 
 class EnemyDog(Enemy):
 	def __init__(self, position: Vector):
 		super().__init__("enemy.dog", "蠢蠢的狐狸", EntityDescription(self, [
 			RenderableString("\\#ffee0000蠢蠢的狐狸"),
-			RenderableString("\\#ffee55dd\\/  只会直线行走"),
+			RenderableString("\\#ffee55dd\\/    只会直线行走"),
 			enemyUnit(),
 			basicDamage(8),
 			searchRange(4),

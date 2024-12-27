@@ -51,7 +51,7 @@ class Skill:
 
 class SkillEasySatisfaction(Skill):
 	def __init__(self):
-		super().__init__(1, Description([RenderableString('\\#ffeeee00爱米'), RenderableString('\\#ffee55dd  可以从米粒中获得额外成长')]))
+		super().__init__(1, Description([RenderableString('\\#ffeeee00爱米'), RenderableString('\\#ffee55dd    可以从米粒中获得额外成长')]))
 		self._player.preGrow.append(self.onGrow)
 	
 	def getName(self=None) -> RenderableString:
@@ -63,7 +63,7 @@ class SkillEasySatisfaction(Skill):
 	def upgrade(self) -> bool:
 		if super().upgrade():
 			self.description.d[0] = self.getName()
-			self.description.d[1] = RenderableString(f'\\#ffee55dd  从米粒中获得额外{self._level}点成长')
+			self.description.d[1] = RenderableString(f'\\#ffee55dd    从米粒中获得额外{self._level}点成长')
 			return True
 		return False
 	
@@ -76,7 +76,7 @@ class SkillEasySatisfaction(Skill):
 
 class SkillResistance(Skill):
 	def __init__(self):
-		super().__init__(2, Description([RenderableString('\\#ffeeee00坚毅'), RenderableString(f'\\#ffee55dd  减少受到的0.00%伤害')]))
+		super().__init__(2, Description([RenderableString('\\#ffeeee00坚毅'), RenderableString(f'\\#ffee55dd    减少受到的0.00%伤害')]))
 		self._player.preDamage.append(self.onDamage)
 	
 	def getName(self=None) -> RenderableString:
@@ -88,7 +88,7 @@ class SkillResistance(Skill):
 	def upgrade(self) -> bool:
 		if super().upgrade():
 			self.description.d[0] = self.getName()
-			self.description.d[1] = RenderableString(f'\\#ffee55dd  减少受到的{float(self._level * 100 / (10 + self._level)):.2f}%伤害')
+			self.description.d[1] = RenderableString(f'\\#ffee55dd    减少受到的{float(self._level * 100 / (10 + self._level)):.2f}%伤害')
 			return True
 		return False
 	
@@ -101,7 +101,7 @@ class SkillResistance(Skill):
 
 class SkillFastGrow(Skill):
 	def __init__(self):
-		super().__init__(3, Description([RenderableString('\\#ffee8844揠苗'), RenderableString('\\#ffee55dd  每秒获得0.00点成长'), RenderableString('\\#ffee0000  但是每秒受到0.00点伤害！'), RenderableString('\\#ff888888  当然如果已经完全成长就不会受到伤害')]))
+		super().__init__(3, Description([RenderableString('\\#ffee8844揠苗'), RenderableString('\\#ffee55dd  每秒获得0.00点成长'), RenderableString('\\#ffee0000    但是每秒受到0.00点伤害！'), RenderableString('\\#ff888888    当然如果已经完全成长就不会受到伤害')]))
 		self._player.preTick.append(self.onTick)
 	
 	def getName(self=None) -> RenderableString:
@@ -113,8 +113,8 @@ class SkillFastGrow(Skill):
 	def upgrade(self) -> bool:
 		if super().upgrade():
 			self.description.d[0] = self.getName()
-			self.description.d[1] = RenderableString(f'\\#ffee55dd  每秒获得{self._level / 5:.2f}点成长')
-			self.description.d[2] = RenderableString(f'\\#ffee0000  但是每秒受到{self._level * 20 / (200 + self._level << 1):.2f}点伤害！')
+			self.description.d[1] = RenderableString(f'\\#ffee55dd    每秒获得{self._level / 5:.2f}点成长')
+			self.description.d[2] = RenderableString(f'\\#ffee0000    但是每秒受到{self._level * 20 / (200 + self._level << 1):.2f}点伤害！')
 			return True
 		return False
 	
@@ -125,7 +125,7 @@ class SkillFastGrow(Skill):
 
 class SkillRevive(Skill):
 	def __init__(self):
-		super().__init__(4, Description([RenderableString('\\#ffffff66屹立不倒'), RenderableString('\\#ffee55dd  死亡时可以立刻复活'), RenderableString('\\#ffee5555  体力回复 0.00%'), RenderableString('\\#ffee0000  冷却时间 ∞')]))
+		super().__init__(4, Description([RenderableString('\\#ffffff66屹立不倒'), RenderableString('\\#ffee55dd    死亡时可以立刻复活'), RenderableString('\\#ffee5555    体力回复 0.00%'), RenderableString('\\#ffee0000    冷却时间 ∞')]))
 		self._player.preTick.append(self.onTick)
 		self._player.preDeath.append(self.onDeath)
 		self._time = 0
@@ -149,8 +149,8 @@ class SkillRevive(Skill):
 		if self._level < 20:
 			self._level += 1
 			self.description.d[0] = self.getName()
-			self.description.d[2] = RenderableString(f'\\#ffee5555  体力回复 {20 + 3 * self._level:.2f}%')
-			self.description.d[3] = RenderableString(f'\\#ffee0000  冷却时间 {int(125 - self._level * 5):.2f}秒')
+			self.description.d[2] = RenderableString(f'\\#ffee5555    体力回复 {20 + 3 * self._level:.2f}%')
+			self.description.d[3] = RenderableString(f'\\#ffee0000    冷却时间 {int(125 - self._level * 5):.2f}秒')
 			return True
 		return False
 	
@@ -169,7 +169,7 @@ class SkillRevive(Skill):
 
 class SkillSwift(Skill):
 	def __init__(self):
-		super().__init__(5, Description([RenderableString('\\#ff96F8F5迅捷'), RenderableString('\\#ffee55dd  快，快，快')]))
+		super().__init__(5, Description([RenderableString('\\#ff96F8F5迅捷'), RenderableString('\\#ffee55dd    快，快，快')]))
 	
 	def getName(self=None) -> RenderableString:
 		if self is None or self._level == 0:
@@ -188,7 +188,7 @@ class SkillSwift(Skill):
 
 class SkillTarget(Skill):
 	def __init__(self):
-		super().__init__(6, Description([RenderableString('\\#ffeeee00目标'), RenderableString('\\#ffee55dd  可以用鼠标点击地图来控制你的小鸡'), RenderableString('\\#ffee55dd  但是会消耗一点体力'), RenderableString('\\#ffee55dd  并且会多消耗一点成长')]))
+		super().__init__(6, Description([RenderableString('\\#ffeeee00目标'), RenderableString('\\#ffee55dd    可以用鼠标点击地图来控制你的小鸡'), RenderableString('\\#ffee55dd    但是会消耗一点体力'), RenderableString('\\#ffee55dd    并且会多消耗一点成长')]))
 
 
 skillManager.register(0, Skill)
