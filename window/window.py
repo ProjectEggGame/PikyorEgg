@@ -133,6 +133,14 @@ class FloatWindow(Renderable):
 		else:
 			self._rendering.append(contents)
 	
+	def change(self, contents: list[Description] | Description | None) -> None:
+		if contents is None:
+			self._rendering = []
+		elif isinstance(contents, list):
+			self._rendering = contents
+		else:
+			self._rendering = [contents]
+	
 	def clear(self) -> None:
 		self._rendering = []
 	
@@ -413,6 +421,16 @@ class SettingsWindow(Window):
 			return True
 		
 		self._widgets[4].onMouseDown = _4
+		self._widgets.append(Button(Location.CENTER, -0.1, 0, 0.2, 0.08, RenderableString('\\01ScrollLock' if renderer.lockScroll else '\\01ScrollRelease'), Description([RenderableString("地图缩放锁定" if renderer.lockScroll else '滚动滚轮以改变地图缩放')]), Location.CENTER))
+		
+		def _5(x, y, b):
+			if b[0] == 1:
+				renderer.lockScroll = not renderer.lockScroll
+				self._widgets[5].description = Description([RenderableString('地图缩放锁定' if renderer.lockScroll else '滚动滚轮以改变地图缩放')])
+				self._widgets[5].name = RenderableString('\\01ScrollLock' if renderer.lockScroll else '\\01ScrollRelease')
+			return True
+		
+		self._widgets[5].onMouseDown = _5
 	
 	def setLastOpen(self, last: 'Window') -> 'Window':
 		self.lastOpen = last

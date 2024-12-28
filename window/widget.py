@@ -146,7 +146,7 @@ class Widget(Renderable):
 	def isMouseIn(self, x: int, y: int):
 		self._isMouseIn = self._x <= x <= self._x + self._w and self._y <= y <= self._y + self._h
 		if self._isMouseIn:
-			game.floatWindow.submit(self.description)
+			game.floatWindow.change(self.description)
 		return self._isMouseIn
 	
 	def tick(self) -> None:

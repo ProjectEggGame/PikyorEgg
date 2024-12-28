@@ -6,20 +6,20 @@ from entity.manager import skillManager
 from render.renderer import renderer, Location
 from render.resource import resourceManager
 from utils.game import game
-from utils.text import Description, RenderableString, toRomanNumeral
-from utils.vector import BlockVector
+from utils.text import SkillDescription, RenderableString, toRomanNumeral
+from utils.vector import BlockVector, Vector
 
 if TYPE_CHECKING:
 	from entity.entity import Entity
 
 
 class Skill:
-	def __init__(self, skillID: int, description: Description):
+	def __init__(self, skillID: int, description: SkillDescription):
 		self._level: int = 0
 		self._id: int = skillID
 		from entity.entity import Player
 		self._player: Player = game.getWorld().getPlayer()
-		self.description: Description = description
+		self.description: SkillDescription = description
 		self.texture = resourceManager.getOrNew(f'skill/{self._id}')
 		self.texture.adaptsSystem()
 		self.texture.adaptsMap(False)
@@ -51,7 +51,7 @@ class Skill:
 
 class SkillEasySatisfaction(Skill):
 	def __init__(self):
-		super().__init__(1, Description([RenderableString('\\#ffeeee00爱米'), RenderableString('\\#ffee55dd    可以从米粒中获得额外成长')]))
+		super().__init__(1, SkillDescription([RenderableString('\\#ffeeee00爱米'), RenderableString('\\#ffee55dd    可以从米粒中获得额外成长')]))
 		self._player.preGrow.append(self.onGrow)
 	
 	def getName(self=None) -> RenderableString:
@@ -76,7 +76,7 @@ class SkillEasySatisfaction(Skill):
 
 class SkillResistance(Skill):
 	def __init__(self):
-		super().__init__(2, Description([RenderableString('\\#ffeeee00坚毅'), RenderableString(f'\\#ffee55dd    减少受到的0.00%伤害')]))
+		super().__init__(2, SkillDescription([RenderableString('\\#ffeeee00坚毅'), RenderableString(f'\\#ffee55dd    减少受到的0.00%伤害')]))
 		self._player.preDamage.append(self.onDamage)
 	
 	def getName(self=None) -> RenderableString:
@@ -101,7 +101,7 @@ class SkillResistance(Skill):
 
 class SkillFastGrow(Skill):
 	def __init__(self):
-		super().__init__(3, Description([RenderableString('\\#ffee8844揠苗'), RenderableString('\\#ffee55dd  每秒获得0.00点成长'), RenderableString('\\#ffee0000    但是每秒受到0.00点伤害！'), RenderableString('\\#ff888888    当然如果已经完全成长就不会受到伤害')]))
+		super().__init__(3, SkillDescription([RenderableString('\\#ffee8844揠苗'), RenderableString('\\#ffee55dd  每秒获得0.00点成长'), RenderableString('\\#ffee0000    但是每秒受到0.00点伤害！'), RenderableString('\\#ff888888    当然如果已经完全成长就不会受到伤害')]))
 		self._player.preTick.append(self.onTick)
 	
 	def getName(self=None) -> RenderableString:
@@ -125,7 +125,7 @@ class SkillFastGrow(Skill):
 
 class SkillRevive(Skill):
 	def __init__(self):
-		super().__init__(4, Description([RenderableString('\\#ffffff66屹立不倒'), RenderableString('\\#ffee55dd    死亡时可以立刻复活'), RenderableString('\\#ffee5555    体力回复 0.00%'), RenderableString('\\#ffee0000    冷却时间 ∞')]))
+		super().__init__(4, SkillDescription([RenderableString('\\#ffffff66屹立不倒'), RenderableString('\\#ffee55dd    死亡时可以立刻复活'), RenderableString('\\#ffee5555    体力回复 0.00%'), RenderableString('\\#ffee0000    冷却时间 ∞')]))
 		self._player.preTick.append(self.onTick)
 		self._player.preDeath.append(self.onDeath)
 		self._time = 0
@@ -169,7 +169,7 @@ class SkillRevive(Skill):
 
 class SkillSwift(Skill):
 	def __init__(self):
-		super().__init__(5, Description([RenderableString('\\#ff96F8F5迅捷'), RenderableString('\\#ffee55dd    快，快，快')]))
+		super().__init__(5, SkillDescription([RenderableString('\\#ff96F8F5迅捷'), RenderableString('\\#ffee55dd    快，快，快')]))
 	
 	def getName(self=None) -> RenderableString:
 		if self is None or self._level == 0:
@@ -184,11 +184,6 @@ class SkillSwift(Skill):
 			self.description.d[0] = self.getName()
 			return True
 		return False
-
-
-class SkillTarget(Skill):
-	def __init__(self):
-		super().__init__(6, Description([RenderableString('\\#ffeeee00目标'), RenderableString('\\#ffee55dd    可以用鼠标点击地图来控制你的小鸡'), RenderableString('\\#ffee55dd    但是会消耗一点体力'), RenderableString('\\#ffee55dd    并且会多消耗一点成长')]))
 
 
 skillManager.register(0, Skill)

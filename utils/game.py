@@ -119,7 +119,7 @@ class Game:
 			if block is not None:
 				self.floatWindow.submit(block.getDescription())
 		if event is not None:
-			if event.buttons[2] == 1 and self._window.get() is None:
+			if event.buttons[1] == 1 and self._window.get() is None:
 				renderer.cameraOffset.subtract(Vector(event.rel[0], event.rel[1]).divide(renderer.getMapScale()))
 
 

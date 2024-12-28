@@ -110,6 +110,7 @@ class Renderer:
 		self.displayTPS: bool = False
 		self.tps: float = 0
 		self.fps: float = 0
+		self.lockScroll: bool = False
 
 	def ready(self) -> bool:
 		"""
@@ -158,7 +159,7 @@ class Renderer:
 		"""
 		if self._isRendering:
 			raise IllegalStatusException("尝试开始绘制，但是绘制已经开始。")
-		if not noWindow:
+		if not noWindow or self.lockScroll:
 			interact.scroll.dealScroll()
 		elif interact.scroll.peekScroll() != 0:
 			newScale = self._customMapScale * (0.8 ** interact.scroll.dealScroll())
@@ -448,13 +449,15 @@ class Renderer:
 		self.setCustomMapScale(configs.readElseDefault(config, "customScale", 1, lambda f: utils.frange(f, 0.5, 8)))
 		self.displayFPS = configs.readElseDefault(config, "displayFPS", False, {True: True, False: False}, "displayFPS: {} is not supported. Using false.")
 		self.displayTPS = configs.readElseDefault(config, "displayTPS", False, {True: True, False: False}, "displayTPS: {} is not supported. Using false.")
+		self.lockScroll = configs.readElseDefault(config, "lockScroll", False, {True: True, False: False}, "lockScroll: {} is not supported. Using false.")
 		
 	def writeConfig(self) -> dict[str, any]:
 		return {
 			"screenSize": "4:3" if self.is4to3.get() else "16:9",
 			"customScale": self._customMapScale,
 			"displayFPS": self.displayFPS,
-			"displayTPS": self.displayTPS
+			"displayTPS": self.displayTPS,
+			"lockScroll": self.lockScroll
 		}
 
 

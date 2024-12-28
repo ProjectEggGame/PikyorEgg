@@ -423,7 +423,7 @@ class Stick(Entity):
 
 class Player(Entity, Damageable):
 	def __init__(self, position: Vector):
-		Entity.__init__(self, 'player', '小鸡', EntityDescription(self, [RenderableString("\\#FFFFD700黄色的小鸡"), RenderableString('\\/    也就是你')]), [
+		Entity.__init__(self, 'player', 'Chick', EntityDescription(self, [RenderableString("\\#FFFFD700黄色的小鸡"), RenderableString('\\/    也就是你')]), [
 			resourceManager.getOrNew('player/chick_1'),
 			resourceManager.getOrNew('player/chick_1'),
 			resourceManager.getOrNew('player/chick_b1'),
@@ -435,7 +435,7 @@ class Player(Entity, Damageable):
 		], position, 0.16)
 		Damageable.__init__(self, 100)
 		self.growth_value: float = 0  # 成长值初始化为0
-		self.backpack_stick: float = 0 # 背包里树枝数量初始化为0
+		self.backpack_stick: float = 0  # 背包里树枝数量初始化为0
 		self.preDeath: list[Callable[[], bool]] = []  # () -> bool是否取消
 		self.preDamage: list[Callable[[float, Entity], float]] = []  # (float值, Entity来源) -> float更改后的值
 		self.postDamage: list[Callable[[float, Entity], None]] = []  # (float值, Entity来源) -> None
@@ -443,7 +443,7 @@ class Player(Entity, Damageable):
 		self.postTick: list[Callable[[], None]] = []
 		self.preGrow: list[Callable[[int, Entity | str], int]] = []
 		self.postGrow: list[Callable[[int, Entity | str], None]] = []
-		self.prePick: list[Callable[[int, Entity | str], None]] = []   
+		self.prePick: list[Callable[[int, Entity | str], None]] = []
 		self.postPick: list[Callable[[int, Entity | str], None]] = []
 		self.skills: dict[int, Skill] = {}
 		self.__allSkills: dict[int, Skill] = skillManager.dic.copy()
@@ -498,7 +498,7 @@ class Player(Entity, Damageable):
 			i(ret, src)
 		return ret
 	
-	def pick(self, amount: float, src: Entity | str) -> float:
+	def pick(self, amount: int, src: Entity | str) -> int:
 		for i in self.prePick:
 			amount = i(amount, src)
 		if self.backpack_stick == 100:

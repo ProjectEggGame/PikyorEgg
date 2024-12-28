@@ -1,4 +1,4 @@
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, Union
 
 from pygame import Surface
 
@@ -8,6 +8,7 @@ from utils import utils
 if TYPE_CHECKING:
 	from block.block import Block
 	from entity.entity import Entity
+	from entity.skill import Skill
 
 
 class Description:
@@ -23,7 +24,7 @@ class Description:
 	
 	
 class BlockDescription(Description):
-	def __init__(self, block: 'Block', d: list['RenderableString'] | None = None):
+	def __init__(self, block: 'Block', d: Union[list['RenderableString'], None] = None):
 		super().__init__(d)
 		self._block = block
 	
@@ -32,7 +33,7 @@ class BlockDescription(Description):
 
 
 class EntityDescription(Description):
-	def __init__(self, entity: 'Entity', d: list['RenderableString'] | None = None):
+	def __init__(self, entity: 'Entity', d: Union[list['RenderableString'], None] = None):
 		super().__init__(d)
 		self._entity = entity
 	
@@ -42,6 +43,12 @@ class EntityDescription(Description):
 			return [RenderableString('\\#ffaa4499' + self._entity.getPosition().toString()), RenderableString(f'\\#ffee4444HP {self._entity.getHealth():.2f}/{self._entity.getMaxHealth():.2f}')] + self.d
 		else:
 			return [RenderableString('\\#ffaa4499' + self._entity.getPosition().toString())] + self.d
+
+
+class SkillDescription(Description):
+	def __init__(self, skill: 'Skill', d: Union[list['RenderableString'], None] = None):
+		self._skill = skill
+		super().__init__(d)
 
 
 class InnerStringConfig:
