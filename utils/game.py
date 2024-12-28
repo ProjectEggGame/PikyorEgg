@@ -39,6 +39,9 @@ class Game:
 		if interact.keys[pygame.K_ESCAPE].deal():
 			from window.window import PauseWindow
 			self.setWindow(PauseWindow())
+		if interact.keys[pygame.K_m].deal():
+			from window.window import TaskWindow
+			self.setWindow(TaskWindow(4))
 		if interact.keys[pygame.K_SPACE].deal() and self._mainWorld is not None:
 			if renderer.getCameraAt() is None:
 				renderer.cameraAt(self._mainWorld.getPlayer())

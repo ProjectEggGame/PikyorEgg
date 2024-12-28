@@ -216,6 +216,7 @@ class DynamicWorld(World):
 			self.update_camera_position()
 			if self._player.growth_value >= 100 and not self._lay_egg_button:
 				self.create_lay_egg_button()
+		
 	
 	def render(self, delta: float, at: Union[Vector, None]) -> None:
 		super().render(delta, at)

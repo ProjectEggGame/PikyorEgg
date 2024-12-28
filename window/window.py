@@ -295,7 +295,7 @@ class PauseWindow(Window):
 			RenderableString(f"\\#ffee6677 基础伤害 {8}"),
 			RenderableString(f"\\#ffeedd66 搜索范围 {4}"),
 		]), Location.CENTER))
-		self._widgets[3].onMouseDown = lambda x, y, b: b[0] == 1 and game.setWindow(None) or True
+		self._widgets[3].onMouseDown = lambda x, y, b: b[0] == 1 and game.setWindow(TaskWindow(3).setLastOpen(self)) or True
 		self._widgets.append(Button(Location.CENTER, 0, 0.1, 0.4, 0.08, RenderableString('\\01Save'), Description([RenderableString("保存游戏")]), Location.CENTER))
 		
 		def _4(x, y, b) -> bool:
@@ -461,3 +461,83 @@ class DeathWindow(Window):
 	
 	def tick(self) -> None:
 		interact.keys[pygame.K_ESCAPE].deal()
+
+
+class TaskWindow(Window):
+	def __init__(self, progress_X):
+		super().__init__("Task")
+		self._texture = resourceManager.getOrNew('window/task')
+		self._texture.adaptsMap(False)
+		self._texture.adaptsSystem(True)
+		self._texture.systemScaleOffset = 0.02
+		self._texture.renderAtInterface(BlockVector(10, 10))
+		self.progress = progress_X
+		self.looking = 2
+						
+		X = ["暂未解锁"] * 5
+		for i in range(self.progress):
+			X[i] = "解锁"
+
+		self._widgets.append(Button(Location.LEFT_TOP, 0, 0.05, 0.12, 0.08, RenderableString("\\.00FCE8AD\\01TASK 1"), Description([RenderableString(X[0])]), textLocation=Location.CENTER))
+		self._widgets.append(Button(Location.LEFT_TOP, 0, 0.15, 0.12, 0.08, RenderableString("\\.00FCE8AD\\01TASK 2"), Description([RenderableString(X[1])]), textLocation=Location.CENTER))
+		self._widgets.append(Button(Location.LEFT_TOP, 0, 0.25, 0.12, 0.08, RenderableString("\\.00FCE8AD\\01TASK 3"), Description([RenderableString(X[2])]), textLocation=Location.CENTER))
+		self._widgets.append(Button(Location.LEFT_TOP, 0, 0.35, 0.12, 0.08, RenderableString("\\.00FCE8AD\\01TASK 4"), Description([RenderableString(X[3])]), textLocation=Location.CENTER))
+		self._widgets.append(Button(Location.LEFT_TOP, 0, 0.45, 0.12, 0.08, RenderableString("\\.00FCE8AD\\01TASK 5"), Description([RenderableString(X[4])]), textLocation=Location.CENTER))
+
+		
+		self._widgets[0].color = PresetColors.color
+		self._widgets[1].color = PresetColors.color
+		self._widgets[2].color = PresetColors.color
+		self._widgets[3].color = PresetColors.color
+		self._widgets[4].color = PresetColors.color
+		self._widgets[0].textColor = PresetColors.textColor
+		self._widgets[1].textColor = PresetColors.textColor
+		self._widgets[2].textColor = PresetColors.textColor
+		self._widgets[3].textColor = PresetColors.textColor
+		self._widgets[4].textColor = PresetColors.textColor
+
+		def _1(x, y, b) -> bool:
+			self.looking = 1
+			return True
+		
+		def _2(x, y, b) -> bool:
+			self.looking = 2
+			return True
+		
+		def _3(x, y, b) -> bool:
+			self.looking = 3
+			return True
+		
+		def _4(x, y, b) -> bool:
+			self.looking = 4
+			return True
+		
+		def _5(x, y, b) -> bool:
+			self.looking = 5
+			return True
+		
+		if self.progress == 5:
+			self._widgets[4].onMouseDown = _5
+		elif self.progress >= 4:
+			self._widgets[3].onMouseDown = _4
+		elif self.progress >= 3:
+			self._widgets[2].onMouseDown = _3
+		elif self.progress >= 2:
+			self._widgets[1].onMouseDown = _2
+		elif self.progress >= 1:
+			self._widgets[0].onMouseDown = _1
+	
+	def render(self, delta: float, at=None) -> None:
+		super().render(delta)
+		if self.looking == 1:
+			size: BlockVector = renderer.getSize()
+			renderer.renderString(RenderableString('\\.00FCE8AD\\00任务1：'), int(size.x / 2), int(size.y / 4), 0xff000000, Location.RIGHT)
+			renderer.renderString(RenderableString('\\.00FCE8AD\\02你需要吃到100颗米粒'), int(size.x / 2), int(size.y / 4) + font.realFontHeight + 2, 0xff000000, Location.RIGHT)
+			
+		elif self.looking == 2:
+			size: BlockVector = renderer.getSize()
+			renderer.renderString(RenderableString('\\.00FCE8AD\\00任务2：'), int(size.x / 2), int(size.y / 4), 0xff000000, Location.RIGHT)
+			renderer.renderString(RenderableString('\\.00FCE8AD\\02你需要织鸡窝'), int(size.x / 2), int(size.y / 4) + font.realFontHeight + 2, 0xff000000, Location.RIGHT)
+	
+	def tick(self) -> None:
+		interact.keys[pygame.K_ESCAPE].deal()  # 舍弃ESC消息
