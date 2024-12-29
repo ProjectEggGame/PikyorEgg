@@ -33,10 +33,10 @@ class Window(Renderable):
 		super().__init__(texture)
 		self._title: str = title
 		self._widgets: list[Widget] = []
-		self._catches: Widget | None = None
 		self.backgroundColor: int = 0x88000000
 		self.lastOpen: Union['Window', None] = None
-		self._backgroundPosition = BlockVector()
+		self._backgroundPosition = Vector()
+		self._backgroundLocation = Location.LEFT_TOP
 	
 	def setLastOpen(self, last: 'Window') -> 'Window':
 		"""
@@ -46,12 +46,33 @@ class Window(Renderable):
 		self.lastOpen = last
 		return self
 	
-	def renderBackground(self, delta: float,at: BlockVector = BlockVector()) -> None:
+	def renderBackground(self, delta: float, at: BlockVector = BlockVector()) -> None:
 		"""
 		渲染背景。可以重写
 		"""
 		if self._texture is not None:
-			self._texture.renderAtInterface(self._backgroundPosition)
+			w, h = renderer.getCanvas().get_size()
+			pos = BlockVector()
+			match self._backgroundLocation:
+				case Location.LEFT_TOP:
+					pos = BlockVector(int(w * self._backgroundPosition.x), int(h * self._backgroundPosition.y))
+				case Location.LEFT:
+					pos = BlockVector(int(w * self._backgroundPosition.x), int(h * self._backgroundPosition.y + (h - self._texture.getUiScaledSurface().get_size()[1] >> 1)))
+				case Location.LEFT_BOTTOM:
+					pos = BlockVector(int(w * self._backgroundPosition.x), int(h * self._backgroundPosition.y - self._texture.getUiScaledSurface().get_size()[1]))
+				case Location.TOP:
+					pos = BlockVector(int(w * self._backgroundPosition.x + (w - self._texture.getUiScaledSurface().get_size()[0] >> 1)), int(h * self._backgroundPosition.y))
+				case Location.CENTER:
+					pos = BlockVector(int(w * self._backgroundPosition.x + (w - self._texture.getUiScaledSurface().get_size()[0] >> 1)), int(h * self._backgroundPosition.y + (h - self._texture.getUiScaledSurface().get_size()[1] >> 1)))
+				case Location.BOTTOM:
+					pos = BlockVector(int(w * self._backgroundPosition.x + (w - self._texture.getUiScaledSurface().get_size()[0] >> 1)), int(h * self._backgroundPosition.y - self._texture.getUiScaledSurface().get_size()[1]))
+				case Location.RIGHT:
+					pos = BlockVector(int(w * self._backgroundPosition.x - self._texture.getUiScaledSurface().get_size()[0]), int(h * self._backgroundPosition.y))
+				case Location.RIGHT_TOP:
+					pos = BlockVector(int(w * self._backgroundPosition.x - self._texture.getUiScaledSurface().get_size()[0]), int(h * self._backgroundPosition.y + (h - self._texture.getUiScaledSurface().get_size()[1] >> 1)))
+				case Location.RIGHT_BOTTOM:
+					pos = BlockVector(int(w * self._backgroundPosition.x - self._texture.getUiScaledSurface().get_size()[0]), int(h * self._backgroundPosition.y - self._texture.getUiScaledSurface().get_size()[1]))
+			self._texture.renderAtInterface(pos)
 		else:
 			head = self.backgroundColor & 0xff000000
 			if head == 0:
@@ -479,23 +500,28 @@ class TaskWindow(Window):
 		for i in range(self.progress):
 			X[i] = "解锁"
 
-		self._widgets.append(Button(Location.LEFT_TOP, 0, 0.05, 0.12, 0.08, RenderableString("\\.00FCE8AD\\01TASK 1"), Description([RenderableString(X[0])]), textLocation=Location.CENTER))
-		self._widgets.append(Button(Location.LEFT_TOP, 0, 0.15, 0.12, 0.08, RenderableString("\\.00FCE8AD\\01TASK 2"), Description([RenderableString(X[1])]), textLocation=Location.CENTER))
-		self._widgets.append(Button(Location.LEFT_TOP, 0, 0.25, 0.12, 0.08, RenderableString("\\.00FCE8AD\\01TASK 3"), Description([RenderableString(X[2])]), textLocation=Location.CENTER))
-		self._widgets.append(Button(Location.LEFT_TOP, 0, 0.35, 0.12, 0.08, RenderableString("\\.00FCE8AD\\01TASK 4"), Description([RenderableString(X[3])]), textLocation=Location.CENTER))
-		self._widgets.append(Button(Location.LEFT_TOP, 0, 0.45, 0.12, 0.08, RenderableString("\\.00FCE8AD\\01TASK 5"), Description([RenderableString(X[4])]), textLocation=Location.CENTER))
+		self._widgets.append(Button(Location.CENTER, -0.25, -0.2, 0.12, 0.08, RenderableString("\\.00FCE8AD\\01TASK 1"), Description([RenderableString(X[0])]), textLocation=Location.CENTER))
+		self._widgets.append(Button(Location.CENTER, -0.25, -0.1, 0.12, 0.08, RenderableString("\\.00FCE8AD\\01TASK 2"), Description([RenderableString(X[1])]), textLocation=Location.CENTER))
+		self._widgets.append(Button(Location.CENTER, -0.25, 0, 0.12, 0.08, RenderableString("\\.00FCE8AD\\01TASK 3"), Description([RenderableString(X[2])]), textLocation=Location.CENTER))
+		self._widgets.append(Button(Location.CENTER, -0.25, 0.1, 0.12, 0.08, RenderableString("\\.00FCE8AD\\01TASK 4"), Description([RenderableString(X[3])]), textLocation=Location.CENTER))
+		self._widgets.append(Button(Location.CENTER, -0.25, 0.2, 0.12, 0.08, RenderableString("\\.00FCE8AD\\01TASK 5"), Description([RenderableString(X[4])]), textLocation=Location.CENTER))
 
-		
-		self._widgets[0].color = PresetColors.color
-		self._widgets[1].color = PresetColors.color
-		self._widgets[2].color = PresetColors.color
-		self._widgets[3].color = PresetColors.color
-		self._widgets[4].color = PresetColors.color
-		self._widgets[0].textColor = PresetColors.textColor
-		self._widgets[1].textColor = PresetColors.textColor
-		self._widgets[2].textColor = PresetColors.textColor
-		self._widgets[3].textColor = PresetColors.textColor
-		self._widgets[4].textColor = PresetColors.textColor
+		self._backgroundLocation = Location.CENTER
+		color = PresetColors.color.clone()
+		color.hovering = 0
+		textColor = PresetColors.color.clone()
+		textColor.hovering = 0xff777700
+		textColor.active = 0xff000000
+		self._widgets[0].color = color
+		self._widgets[1].color = color
+		self._widgets[2].color = color
+		self._widgets[3].color = color
+		self._widgets[4].color = color
+		self._widgets[0].textColor = textColor
+		self._widgets[1].textColor = textColor
+		self._widgets[2].textColor = textColor
+		self._widgets[3].textColor = textColor
+		self._widgets[4].textColor = textColor
 
 		def _1(x, y, b) -> bool:
 			self.looking = 1
@@ -528,33 +554,60 @@ class TaskWindow(Window):
 		if self.progress >= 1:
 			self._widgets[0].onMouseDown = _1
 	
+	def onResize(self) -> None:
+		if renderer.is4to3.get():
+			self._widgets[0].x = -0.33
+			self._widgets[1].x = -0.33
+			self._widgets[2].x = -0.33
+			self._widgets[3].x = -0.33
+			self._widgets[4].x = -0.33
+		else:
+			self._widgets[0].x = -0.25
+			self._widgets[1].x = -0.25
+			self._widgets[2].x = -0.25
+			self._widgets[3].x = -0.25
+			self._widgets[4].x = -0.25
+		super().onResize()
+
 	def render(self, delta: float, at=None) -> None:
 		super().render(delta)
 		if self.looking == 1:
 			size: BlockVector = renderer.getSize()
-			renderer.renderString(RenderableString('\\.00FCE8AD\\00任务1：'), int(size.x / 2), int(size.y / 4), 0xff000000, Location.RIGHT)
-			renderer.renderString(RenderableString('\\.00FCE8AD\\00你需要吃到100颗米粒'), int(size.x / 2), int(size.y / 4) + font.realFontHeight + 2, 0xff000000, Location.RIGHT)
+			renderer.renderString(RenderableString('\\.00FCE8AD\\00任务1：'), int((0.58 if renderer.is4to3.get() else 0.56) * size.x), (size.y >> 1) - font.realFontHeight, 0xff000000, Location.BOTTOM)
+			renderer.renderString(RenderableString('\\.00FCE8AD\\00\\#ffee0000胸有大志，吃100颗米粒！'), int((0.58 if renderer.is4to3.get() else 0.56) * size.x), size.y >> 1, 0xff000000, Location.TOP)
 			
 		if self.looking == 2:
 			size: BlockVector = renderer.getSize()
-			renderer.renderString(RenderableString('\\.00FCE8AD\\00任务2：'), int(size.x / 2), int(size.y / 4), 0xff000000, Location.RIGHT)
-			renderer.renderString(RenderableString('\\.00FCE8AD\\00你需要织鸡窝'), int(size.x / 2), int(size.y / 4) + font.realFontHeight + 2, 0xff000000, Location.RIGHT)
+			renderer.renderString(RenderableString('\\.00FCE8AD\\00任务2：'), int((0.58 if renderer.is4to3.get() else 0.56) * size.x), (size.y >> 1) - font.realFontHeight, 0xff000000, Location.BOTTOM)
+			renderer.renderString(RenderableString('\\.00FCE8AD\\00\\#ffee0000年少有为，织鸡窝！'), int((0.58 if renderer.is4to3.get() else 0.56) * size.x), size.y >> 1, 0xff000000, Location.TOP)
 	
 		if self.looking == 3:
 			size: BlockVector = renderer.getSize()
-			renderer.renderString(RenderableString('\\.00FCE8AD\\00任务3：'), int(size.x / 2), int(size.y / 4), 0xff000000, Location.RIGHT)
-			renderer.renderString(RenderableString('\\.00FCE8AD\\00你需要见到老巫婆鸡并得到她的指点，请找到触发老巫婆鸡出现的方法，并且躲避狐狸的攻击'), int(size.x / 2), int(size.y / 4) + font.realFontHeight + 2, 0xff000000, Location.RIGHT)
-		
+			renderer.renderString(RenderableString('\\.00FCE8AD\\00任务3：'), int((0.58 if renderer.is4to3.get() else 0.56) * size.x), (size.y >> 1) - font.realFontHeight, 0xff000000, Location.BOTTOM)
+			renderer.renderString(RenderableString('\\.00FCE8AD\\00老巫婆鸡，指点迷津！'), int((0.58 if renderer.is4to3.get() else 0.56) * size.x), size.y >> 1, 0xff000000, Location.BOTTOM)
+			renderer.renderString(RenderableString('\\.00FCE8AD\\00\\#ffee0000找到老巫婆鸡'), int((0.58 if renderer.is4to3.get() else 0.56) * size.x), size.y >> 1, 0xff000000, Location.TOP)
+			renderer.renderString(RenderableString('\\.00FCE8AD\\00并躲避狐狸的攻击'), int((0.58 if renderer.is4to3.get() else 0.56) * size.x), (size.y >> 1) + font.realFontHeight, 0xff000000, Location.TOP)
+
 		if self.looking == 4:
 			size: BlockVector = renderer.getSize()
-			renderer.renderString(RenderableString('\\.00FCE8AD\\00任务4：'), int(size.x / 2), int(size.y / 4), 0xff000000, Location.RIGHT)
-			renderer.renderString(RenderableString('\\.00FCE8AD\\00你需要获得公鸡的受精，所以你需要和别的母鸡斗争'), int(size.x / 2), int(size.y / 4) + font.realFontHeight + 2, 0xff000000, Location.RIGHT)
-	
+			renderer.renderString(RenderableString('\\.00FCE8AD\\00任务4：'), int((0.58 if renderer.is4to3.get() else 0.56) * size.x), (size.y >> 1) - font.realFontHeight, 0xff000000, Location.BOTTOM)
+			renderer.renderString(RenderableString('\\.00FCE8AD\\00你需要获得公鸡的受精！'), int((0.58 if renderer.is4to3.get() else 0.56) * size.x), size.y >> 1, 0xff000000, Location.BOTTOM)
+			renderer.renderString(RenderableString('\\.00FCE8AD\\00所以你需要和别的母鸡斗争'), int((0.58 if renderer.is4to3.get() else 0.56) * size.x), size.y >> 1, 0xff000000, Location.TOP)
+
 		if self.looking == 5:
 			size: BlockVector = renderer.getSize()
-			renderer.renderString(RenderableString('\\.00FCE8AD\\00任务5：'), int(size.x / 2), int(size.y / 4), 0xff000000, Location.RIGHT)
-			renderer.renderString(RenderableString('\\.00FCE8AD\\00母鸡下蛋是一个漫长且痛苦的过程，你要陪她聊天，让它开心起来'), int(size.x / 2), int(size.y / 4) + font.realFontHeight + 2, 0xff000000, Location.RIGHT)
-	
+			renderer.renderString(RenderableString('\\.00FCE8AD\\00任务5：'), int((0.58 if renderer.is4to3.get() else 0.56) * size.x), (size.y >> 1) - font.realFontHeight, 0xff000000, Location.BOTTOM)
+			renderer.renderString(RenderableString('\\.00FCE8AD\\00下蛋是一个漫长而艰辛的过程'), int((0.58 if renderer.is4to3.get() else 0.56) * size.x), size.y >> 1,  0xff000000, Location.BOTTOM)
+			renderer.renderString(RenderableString('\\.00FCE8AD\\00你要陪她聊天'), int((0.58 if renderer.is4to3.get() else 0.56) * size.x), size.y >> 1,  0xff000000, Location.TOP)
+			renderer.renderString(RenderableString('\\.00FCE8AD\\00让它开心起来'), int((0.58 if renderer.is4to3.get() else 0.56) * size.x), (size.y >> 1) + font.realFontHeight,  0xff000000, Location.TOP)
+
+	def passRender(self, delta: float, at: Vector | None = None) -> None:
+		s = Surface(renderer.getCanvas().get_size())
+		s.fill(self.backgroundColor & 0xffffff)
+		s.set_alpha(self.backgroundColor >> 24)
+		renderer.getCanvas().blit(s, (0, 0))
+		super().passRender(delta, at)
+
 	def tick(self) -> None:
 		super().tick()
 		if interact.keys[pygame.K_m].deal():

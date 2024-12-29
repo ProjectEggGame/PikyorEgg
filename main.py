@@ -117,6 +117,11 @@ def mainThread():
 	utils.info("主线程启动")
 	while game.running:
 		try:
+			import window
+			if window.input.inputting:
+				pygame.key.start_text_input()
+			else:
+				pygame.key.stop_text_input()
 			for event in pygame.event.get():
 				match event.type:
 					case pygame.QUIT:

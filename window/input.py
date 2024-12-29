@@ -4,6 +4,7 @@ from pygame import Surface
 from interact import interact
 from render.renderer import Location, renderer
 from utils import utils
+from utils.game import game
 from utils.text import RenderableString, Description
 from utils.vector import Vector
 from window.widget import Widget
@@ -135,6 +136,7 @@ class InputWidget(Widget):
 								self.caret -= 1
 					self._keyDealing = pygame.K_BACKSPACE
 					self._displayText = None
+					self.timeCount = 10
 				case pygame.K_DELETE:
 					if self._caret != -1:
 						self._caret, self.caret = min(self._caret, self.caret), max(self._caret, self.caret)
@@ -146,6 +148,7 @@ class InputWidget(Widget):
 							self._dealTimeLimit -= 1
 						if self.caret < len(self._realText):
 							self._realText = self._realText[:self.caret] + self._realText[self.caret + 1:]
+					self.timeCount = 10
 				case pygame.K_LEFT:
 					if self.caret > 0:
 						self.caret -= 1
@@ -222,8 +225,8 @@ class InputWidget(Widget):
 			continue
 		if len(texts) == 0:
 			offset = renderer.getOffset()
-			rect = (self._x + offset.x, offset.y + self._y, 200, 100)
-			pygame.key.set_text_input_rect(rect)
+			rect = (self._x + offset.x, offset.y + self._y, 0, 0)
+			#pygame.key.set_text_input_rect(rect)
 			if self.timeCount > 0:
 				renderer.getCanvas().blit(font.render('  ', True, ((self.textColor.active >> 16) & 0xff ^ 0xff, (self.textColor.active >> 8) & 0xff ^ 0xff, self.textColor.active & 0xff ^ 0xff), ((self.color.active >> 16) & 0xff ^ 0xff, (self.color.active >> 8) & 0xff ^ 0xff, self.color.active & 0xff ^ 0xff)), (self._x, self._y))
 		else:
@@ -238,8 +241,8 @@ class InputWidget(Widget):
 					c0 -= len(i)
 				else:
 					offset = renderer.getOffset()
-					rect = (self._x + font.size(i[:c0])[0] + offset.x, offset.y + y0 + self._y, 200, 100)
-					pygame.key.set_text_input_rect(rect)
+					rect = (self._x + font.size(i[:c0])[0] + offset.x, offset.y + y0 + self._y, 0, 0)
+					#pygame.key.set_text_input_rect(rect)
 				if self.timeCount > 0:
 					if cc > len(i):
 						cc -= len(i)
@@ -247,16 +250,58 @@ class InputWidget(Widget):
 						sfc.blit(font.render(i[cc] if cc < len(i) else '  ', True, ((self.textColor.active >> 16) & 0xff ^ 0xff, (self.textColor.active >> 8) & 0xff ^ 0xff, self.textColor.active & 0xff ^ 0xff), ((self.color.active >> 16) & 0xff ^ 0xff, (self.color.active >> 8) & 0xff ^ 0xff, self.color.active & 0xff ^ 0xff)), (font.size(i[:cc])[0], y0))
 				y0 += _f.realHalfHeight
 			renderer.getCanvas().blit(sfc, (self._x, self._y))
+	
+	def popText(self) -> str:
+		text = self._realText
+		self._realText = ''
+		self._displayText = ''
+		return text
+
+
+from LLA import chat_with_ai as ai
+inputting = False
 
 
 class InputWindow(Window):
 	def __init__(self):
 		super().__init__('name')
-		self._widgets.append(InputWidget(Location.BOTTOM, 0, -0.05, 0.9, 0.2, RenderableString(""), Description()))
-		pygame.key.start_text_input()
+		self._inputer: InputWidget = InputWidget(Location.BOTTOM, 0, -0.05, 0.9, 0.2, RenderableString(""), Description())
+		self._widgets.append(self._inputer)
+		self._catches: Widget | None = None
+		global inputting
+		inputting = True
 	
+	def tick(self) -> None:
+		if interact.keys[pygame.K_ESCAPE].deal():
+			game.setWindow(self.lastOpen)
+			global inputting
+			inputting = False
+		if interact.specialKeys[pygame.K_KP_ENTER & interact.KEY_COUNT].deal() or interact.keys[pygame.K_RETURN & interact.KEY_COUNT].deal():
+			txt = self._inputer.popText()
+			if len(txt) != 0:
+				ai.send(txt)
+
 	def onInput(self, event) -> None:
-		self._widgets[0].onInput(event)
+		if self._catches is self._inputer:
+			self._inputer.onInput(event)
 	
 	def onEdit(self, event) -> None:
-		self._widgets[0].onEdit(event)
+		if self._catches is self._inputer:
+			self._inputer.onEdit(event)
+	
+	def passMouseDown(self, x: int, y: int, buttons: tuple[int, int, int]) -> None:
+		catch = None
+		for widget in self._widgets:
+			if widget.isMouseIn(x, y):
+				catch = widget
+				widget.passMouseDown(x, y, buttons)
+		self._catches = catch
+		
+	def passMouseUp(self, x: int, y: int, buttons: tuple[int, int, int]) -> None:
+		catch = None
+		for widget in self._widgets:
+			if widget.isMouseIn(x, y):
+				catch = widget
+				widget.passMouseUp(x, y, buttons)
+		self._catches = catch
+	

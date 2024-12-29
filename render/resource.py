@@ -94,7 +94,7 @@ class Texture:
 		"""
 		获取适应过UI缩放的pygame的Surface。除非必要，尽可能地不要修改Surface
 		"""
-		return self._uiScaled
+		return self._uiScaled if self._uiObject else self._systemScaled
 	
 	def getSystemScaledSurface(self) -> Surface:
 		return self._systemScaled
