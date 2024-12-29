@@ -45,12 +45,12 @@ class Window(Renderable):
 		self.lastOpen = last
 		return self
 	
-	def renderBackground(self, delta: float) -> None:
+	def renderBackground(self, delta: float,at: BlockVector = BlockVector()) -> None:
 		"""
 		渲染背景。可以重写
 		"""
 		if self._texture is not None:
-			self._texture.renderAtInterface()
+			self._texture.renderAtInterface(at)
 		else:
 			head = self.backgroundColor & 0xff000000
 			if head == 0:
@@ -468,9 +468,9 @@ class TaskWindow(Window):
 		super().__init__("Task")
 		self._texture = resourceManager.getOrNew('window/task')
 		self._texture.adaptsMap(False)
-		self._texture.adaptsSystem(True)
 		self._texture.systemScaleOffset = 0.02
-		self._texture.renderAtInterface(BlockVector(10, 10))
+		self._texture.adaptsSystem(True)
+		self._texture.renderAtInterface(BlockVector(30, 30))
 		self.progress = progress_X
 		self.looking = 2
 						
@@ -518,13 +518,13 @@ class TaskWindow(Window):
 		
 		if self.progress == 5:
 			self._widgets[4].onMouseDown = _5
-		elif self.progress >= 4:
+		if self.progress >= 4:
 			self._widgets[3].onMouseDown = _4
-		elif self.progress >= 3:
+		if self.progress >= 3:
 			self._widgets[2].onMouseDown = _3
-		elif self.progress >= 2:
+		if self.progress >= 2:
 			self._widgets[1].onMouseDown = _2
-		elif self.progress >= 1:
+		if self.progress >= 1:
 			self._widgets[0].onMouseDown = _1
 	
 	def render(self, delta: float, at=None) -> None:
@@ -532,12 +532,31 @@ class TaskWindow(Window):
 		if self.looking == 1:
 			size: BlockVector = renderer.getSize()
 			renderer.renderString(RenderableString('\\.00FCE8AD\\00任务1：'), int(size.x / 2), int(size.y / 4), 0xff000000, Location.RIGHT)
-			renderer.renderString(RenderableString('\\.00FCE8AD\\02你需要吃到100颗米粒'), int(size.x / 2), int(size.y / 4) + font.realFontHeight + 2, 0xff000000, Location.RIGHT)
+			renderer.renderString(RenderableString('\\.00FCE8AD\\00你需要吃到100颗米粒'), int(size.x / 2), int(size.y / 4) + font.realFontHeight + 2, 0xff000000, Location.RIGHT)
 			
-		elif self.looking == 2:
+		if self.looking == 2:
 			size: BlockVector = renderer.getSize()
 			renderer.renderString(RenderableString('\\.00FCE8AD\\00任务2：'), int(size.x / 2), int(size.y / 4), 0xff000000, Location.RIGHT)
-			renderer.renderString(RenderableString('\\.00FCE8AD\\02你需要织鸡窝'), int(size.x / 2), int(size.y / 4) + font.realFontHeight + 2, 0xff000000, Location.RIGHT)
+			renderer.renderString(RenderableString('\\.00FCE8AD\\00你需要织鸡窝'), int(size.x / 2), int(size.y / 4) + font.realFontHeight + 2, 0xff000000, Location.RIGHT)
+	
+		if self.looking == 3:
+			size: BlockVector = renderer.getSize()
+			renderer.renderString(RenderableString('\\.00FCE8AD\\00任务3：'), int(size.x / 2), int(size.y / 4), 0xff000000, Location.RIGHT)
+			renderer.renderString(RenderableString('\\.00FCE8AD\\00你需要见到老巫婆鸡并得到她的指点，请找到触发老巫婆鸡出现的方法，并且躲避狐狸的攻击'), int(size.x / 2), int(size.y / 4) + font.realFontHeight + 2, 0xff000000, Location.RIGHT)
+		
+		if self.looking == 4:
+			size: BlockVector = renderer.getSize()
+			renderer.renderString(RenderableString('\\.00FCE8AD\\00任务4：'), int(size.x / 2), int(size.y / 4), 0xff000000, Location.RIGHT)
+			renderer.renderString(RenderableString('\\.00FCE8AD\\00你需要获得公鸡的受精，所以你需要和别的母鸡斗争'), int(size.x / 2), int(size.y / 4) + font.realFontHeight + 2, 0xff000000, Location.RIGHT)
+	
+		if self.looking == 5:
+			size: BlockVector = renderer.getSize()
+			renderer.renderString(RenderableString('\\.00FCE8AD\\00任务5：'), int(size.x / 2), int(size.y / 4), 0xff000000, Location.RIGHT)
+			renderer.renderString(RenderableString('\\.00FCE8AD\\00母鸡下蛋是一个漫长且痛苦的过程，你要陪她聊天，让它开心起来'), int(size.x / 2), int(size.y / 4) + font.realFontHeight + 2, 0xff000000, Location.RIGHT)
 	
 	def tick(self) -> None:
-		interact.keys[pygame.K_ESCAPE].deal()  # 舍弃ESC消息
+		super().tick()
+		if interact.keys[pygame.K_m].deal():
+			game.setWindow(self.lastopen)
+
+	
