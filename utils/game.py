@@ -26,6 +26,7 @@ class Game:
 		self._window: SynchronizedStorage[Union['Window', None]] = SynchronizedStorage[Union['Window', None]](None)
 		self.floatWindow: Union['FloatWindow', None] = None  # 在主程序中初始化
 		self.hud: Union['Hud', None] = None
+		self.world = []
 	
 	def tick(self) -> None:
 		notPause: bool = True

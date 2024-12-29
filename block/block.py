@@ -3,6 +3,7 @@ from typing import TYPE_CHECKING, Union
 from block.manager import blockManager
 from render.resource import resourceManager
 from utils.element import Element
+from utils.game import game
 from utils.error import InvalidOperationException, neverCall
 from utils.text import RenderableString, BlockDescription, Description
 from utils.vector import Vector, BlockVector
@@ -212,11 +213,36 @@ class SafetyLine(Wall):
 			return True
 		return False
 	
+class WitchBlock(Ground):
+	def __init__(self, position: BlockVector):
+		super().__init__('witch.blue', "巫婆世界方块", BlockDescription(self, [RenderableString("\\#FFEE0000巫婆世界方块")]), position, resourceManager.getOrNew('block/witch'))
+	
+	@classmethod
+	def load(cls, d: dict, block=None) -> 'ErrorBlock':
+		ret = ErrorBlock(BlockVector.load(d['position']))
+		super().load(d, ret)
+		return ret
+	
 	@classmethod
 	def load(cls, d: dict, block=None) -> 'Block':
 		block = SafetyLine(BlockVector.load(d['position']))
 		return super().load(d, block)
+	
+class SenddoorBlock(Ground):
+	def __init__(self, position: BlockVector):
+		super().__init__('hold.door', '传送门', BlockDescription(self, [RenderableString('传送门'), RenderableString('\\#FFEE0000停留3秒前往巫婆鸡的异世界')]), position, resourceManager.getOrNew('block/witch'))
+	
+	@classmethod
+	def load(cls, d: dict, block=None) -> 'Block':
+		block = SenddoorBlock(BlockVector.load(d['position']))
+		return super().load(d, block)
 
+	def tick(self) -> None:
+		player = game.getWorld().getPlayer()
+		if player is not None and player.getPosition().distanceManhattan(self.getPosition()) <= 0.6:
+			from world.world import WitchWorld
+			world = WitchWorld(world.setplayer(player))
+			game.setWorld(world)
 
 blockManager.register('nature.grass', GrassBlock)
 blockManager.register('nature.path', PathBlock)
@@ -224,6 +250,8 @@ blockManager.register('nature.farmland', FarmlandBlock)
 blockManager.register('system.error', ErrorBlock)
 blockManager.register('hold.fence', Fence)
 blockManager.register('hold.safety_line', SafetyLine)
+blockManager.register('witch.blue', WitchBlock)
+blockManager.register('hold.door', SenddoorBlock)
 
 for t in [
 	resourceManager.getOrNew('block/fence')

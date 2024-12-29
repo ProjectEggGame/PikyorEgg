@@ -15,7 +15,7 @@ from utils.vector import Vector, BlockVector
 from render.renderable import Renderable
 from render.resource import Texture, resourceManager
 from window.widget import Widget, Button, Location, ColorSet
-from world.world import World, DynamicWorld
+from world.world import World, DynamicWorld , WitchWorld
 
 
 class Window(Renderable):
@@ -210,12 +210,19 @@ class StartWindow(Window):
 				game.setWorld(DynamicWorld(0, 'DynamicWorld'))
 			return True
 		
+		def _1(x, y, b) -> bool:
+			if b[0] == 1:
+				game.setWindow(None)
+				game.setWorld(WitchWorld(0, 'WitchWorld'))
+			return True
+		
 		self._widgets.append(Button(Location.CENTER, 0, 0.05, 0.4, 0.08, RenderableString("\\.00FCE8AD\\01LINK START"), Description([RenderableString("开始游戏")]), textLocation=Location.CENTER))
 		self._widgets[0].onMouseDown = _0
 		self._widgets.append(Button(Location.CENTER, 0, 0.15, 0.4, 0.08, RenderableString("\\.00FCE8AD\\01LOAD"), Description([RenderableString("加载存档")]), textLocation=Location.CENTER))
 		self._widgets[1].onMouseDown = lambda x, y, b: b[0] == 1 and game.setWindow(LoadWindow().setLastOpen(self)) or True
 		self._widgets.append(Button(Location.CENTER, 0, 0.25, 0.4, 0.08, RenderableString("\\.00FCE8AD\\01OPTIONS"), Description([RenderableString("设置")]), textLocation=Location.CENTER))
-		self._widgets[2].onMouseDown = lambda x, y, b: b[0] == 1 and game.setWindow(SettingsWindow().setLastOpen(self)) or True
+		self._widgets[2].onMouseDown = _1
+		#self._widgets[2].onMouseDown = lambda x, y, b: b[0] == 1 and game.setWindow(SettingsWindow().setLastOpen(self)) or True
 		self._widgets.append(Button(Location.CENTER, 0, 0.35, 0.4, 0.08, RenderableString("\\.00FCE8AD\\01SHUT DOWN"), Description([RenderableString("结束游戏")]), textLocation=Location.CENTER))
 		self._widgets[3].onMouseDown = lambda x, y, b: b[0] == 1 and game.quit() or True
 		self._widgets[0].color = PresetColors.color
