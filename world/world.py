@@ -43,6 +43,14 @@ class World(Renderable):
 		w.addEntity(entityManager.get('enemy.dog')())
 		return w
 	
+	def setLastOpen(self, last: 'World') -> 'World':
+		"""
+		:param last: 上一次打开的窗口
+		:return: 自身
+		"""
+		self.lastOpen = last
+		return self
+	
 	def tick(self) -> None:
 		for e in self._entityList:
 			e.passTick()
@@ -226,6 +234,14 @@ class DynamicWorld(World):
 		self.addEntity(entityManager.get('entity.coop')(Vector(4, 4)))
 		for i in range(10):
 			self.addEntity(entityManager.get('enemy.dog')(Vector(self._seed.random() * 100 - 50, self._seed.random() * 100 - 50)))
+		
+		#w = int(self._seed.random() * 100 - 51)
+		#m = int(self._seed.random() * 100 - 51)
+		w = 0
+		m = 0
+		for i in range(w,w+2):
+			for j in range(m,m+2):
+				self.getBlockAt(BlockVector(i,j)).holdAppend(blockManager.get('hold.door')(BlockVector(i,j)))
 	
 	def generate_map(self) -> None:
 		for i in range(-50, 50):
@@ -266,22 +282,7 @@ class DynamicWorld(World):
 		)
 		self._lay_egg_button.onMouseDown = self.on_lay_egg_button_click
 	
-	def on_lay_egg_button_click(self) -> None:
-		if self._chicken:
-			self._chicken.moveTo(self._chicken_nest_position)  # 小鸡跑到世界最左边的鸡窝
-			self.removeEntity(self._chicken)
-			print("小鸡跑到鸡窝下蛋")
-		if self._lay_egg_button:
-			self._lay_egg_button = None  # 移除按钮
-	
-	def triggerEggLaying(self) -> None:
-		if self._chicken:
-			self._chicken.moveTo(self._chicken_nest_position)
-			self.removeEntity(self._chicken)
-			print("小鸡跑到鸡窝下蛋")
-		if self._lay_egg_button:
-			self._lay_egg_button = None  # 移除按钮
-	
+		
 	def increase_chicken_growth(self, amount: int) -> None:
 		self._chicken_growth += amount
 		if self._chicken_growth >= 100:
@@ -300,3 +301,40 @@ class DynamicWorld(World):
 	
 	def getChickenNestPosition(self) -> BlockVector:
 		return self._chicken_nest_position
+
+
+class WitchWorld(World):
+	def __init__(self, worldID: int, name: str, seed: int | None = None):
+		super().__init__(worldID, name, seed)
+		self._camera_position: Vector = Vector(0, 0)
+		self._lay_egg_button: Button | None = None
+		self._chicken_growth = 0  # 小鸡的成长值
+		self._chicken_nest_position = BlockVector(-4, 0)  # 鸡窝位置
+		self.generate_map()  # 初始化地图
+		player = entityManager.get('player')(Vector(0, 0))
+		self.setPlayer(player)
+		'''
+		for i in range(-50, -39):
+			self.getBlockAt(BlockVector(i, 3)).holdAppend(blockManager.get('hold.fence')(BlockVector(i, 3)))
+			self.getBlockAt(BlockVector(i, -3)).holdAppend(blockManager.get('hold.fence')(BlockVector(i, -3)))
+		for i in range(-2, 3):
+			self.getBlockAt(BlockVector(-50, i)).holdAppend(blockManager.get('hold.fence')(BlockVector(-50, i)))
+			self.getBlockAt(BlockVector(-40, i)).holdAppend(blockManager.get('hold.safety_line')(BlockVector(-40, i)))
+		self.addEntity(entityManager.get('entity.coop')(Vector(4, 4)))
+
+		'''
+		for i in range(10):
+			self.addEntity(entityManager.get('enemy.dog')(Vector(self._seed.random() * 10 - 5, self._seed.random() * 10 - 5)))
+		
+		self.addEntity(entityManager.get('entity.witch')(Vector(-4, 0)))
+
+	def generate_map(self) -> None:
+		for i in range(-5, 5):
+			for j in range(-5, 5):
+				v = BlockVector(i, j)
+				block = blockManager.dic.get('witch.blue')(v)
+				self._ground[hash(v)] = block
+	
+	
+	
+	

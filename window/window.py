@@ -15,7 +15,7 @@ from utils.vector import Vector, BlockVector
 from render.renderable import Renderable
 from render.resource import Texture, resourceManager
 from window.widget import Widget, Button, Location, ColorSet
-from world.world import World, DynamicWorld
+from world.world import World, DynamicWorld , WitchWorld
 
 
 class Window(Renderable):
@@ -231,12 +231,19 @@ class StartWindow(Window):
 				game.setWorld(DynamicWorld(0, 'DynamicWorld'))
 			return True
 		
+		def _1(x, y, b) -> bool:
+			if b[0] == 1:
+				game.setWindow(None)
+				game.setWorld(WitchWorld(0, 'WitchWorld'))
+			return True
+		
 		self._widgets.append(Button(Location.CENTER, 0, 0.05, 0.4, 0.08, RenderableString("\\.00FCE8AD\\01LINK START"), Description([RenderableString("开始游戏")]), textLocation=Location.CENTER))
-		self._widgets[0].onMouseDown = _0
+		self._widgets[0].onMouseDown = lambda x, y, b: b[0] == 1 and game.setWindow(PlotWindow().setLastOpen(self)) or True
 		self._widgets.append(Button(Location.CENTER, 0, 0.15, 0.4, 0.08, RenderableString("\\.00FCE8AD\\01LOAD"), Description([RenderableString("加载存档")]), textLocation=Location.CENTER))
 		self._widgets[1].onMouseDown = lambda x, y, b: b[0] == 1 and game.setWindow(LoadWindow().setLastOpen(self)) or True
 		self._widgets.append(Button(Location.CENTER, 0, 0.25, 0.4, 0.08, RenderableString("\\.00FCE8AD\\01OPTIONS"), Description([RenderableString("设置")]), textLocation=Location.CENTER))
-		self._widgets[2].onMouseDown = lambda x, y, b: b[0] == 1 and game.setWindow(SettingsWindow().setLastOpen(self)) or True
+		self._widgets[2].onMouseDown = _1
+		#self._widgets[2].onMouseDown = lambda x, y, b: b[0] == 1 and game.setWindow(SettingsWindow().setLastOpen(self)) or True
 		self._widgets.append(Button(Location.CENTER, 0, 0.35, 0.4, 0.08, RenderableString("\\.00FCE8AD\\01SHUT DOWN"), Description([RenderableString("结束游戏")]), textLocation=Location.CENTER))
 		self._widgets[3].onMouseDown = lambda x, y, b: b[0] == 1 and game.quit() or True
 		self._widgets[0].color = PresetColors.color
@@ -612,3 +619,73 @@ class TaskWindow(Window):
 		super().tick()
 		if interact.keys[pygame.K_m].deal():
 			game.setWindow(self.lastOpen)
+
+class PlotWindow(Window):
+    def __init__(self):
+        super().__init__("Plot")
+        self._texture = resourceManager.getOrNew('window/plot')
+        self._texture.systemScaleOffset = 0.0625
+        self._texture.adaptsMap(False)
+        self._texture.adaptsSystem(True)
+        self.Sentence = 0
+        
+        def _0(x, y, b) -> bool:
+            if self.Sentence < 8:
+                self.Sentence += 1
+            else:
+                game.setWindow(None)
+                game.setWorld(DynamicWorld(0, 'DynamicWorld'))
+            return True
+        
+        def _1(x, y, b) -> bool:
+            if b[0] == 1:
+                game.setWindow(None)
+                game.setWorld(DynamicWorld(0, 'DynamicWorld'))
+            return True
+        
+        self._widgets.append(Button(Location.CENTER, 0, 0.05, 0.4, 0.08, RenderableString("\\.00FFFFFF\\01NEXT"), Description([RenderableString("继续")]), textLocation=Location.CENTER))
+        self._widgets[0].onMouseDown = _0
+        self._widgets.append(Button(Location.CENTER, 0, 0.15, 0.4, 0.08, RenderableString("\\.00FFFFFF\\01SKIP"), Description([RenderableString("跳过剧情")]), textLocation=Location.CENTER))
+        self._widgets[1].onMouseDown = _1
+
+        self._widgets[0].color = PresetColors.color
+        self._widgets[1].color = PresetColors.color
+        
+        self._widgets[0].textColor = PresetColors.textColor
+        self._widgets[1].textColor = PresetColors.textColor
+    
+    def render(self, delta: float, at=None) -> None:
+        super().render(delta)
+        size: BlockVector = renderer.getSize()
+        if self.Sentence  == 0:
+            renderer.renderString(RenderableString('\\.00FCE8AD\\00嘿！小家伙，你终于醒啦！'), int(size.x * 0.6+20), int(size.y / 4+30), 0xffffffff, Location.CENTER)
+            renderer.renderString(RenderableString('\\.00FCE8AD\\00别怕，这里很安全。'), int(size.x * 0.6+50), int(size.y / 4+60), 0xffffffff, Location.CENTER)
+        if self.Sentence  == 1:
+            renderer.renderString(RenderableString('\\.00FCE8AD\\00你是一直体弱多病的小鸡，'), int(size.x * 0.6+20), int(size.y / 4+30), 0xffffffff, Location.CENTER)
+            renderer.renderString(RenderableString('\\.00FCE8AD\\00没办法生蛋赚钱，'), int(size.x * 0.6+20), int(size.y / 4+60), 0xffffffff, Location.CENTER)
+        if self.Sentence  == 2:
+            renderer.renderString(RenderableString('\\.00FCE8AD\\00正因如此，你的主人不仅虐待你'), int(size.x * 0.6+20), int(size.y / 4+30), 0xffffffff, Location.CENTER)
+            renderer.renderString(RenderableString('\\.00FCE8AD\\00还把你无情地抛弃在了荒草丛中。'), int(size.x * 0.6+20), int(size.y / 4+60), 0xffffffff, Location.CENTER)
+        if self.Sentence  == 3:
+            renderer.renderString(RenderableString('\\.00FCE8AD\\00当我发现你的时候，你浑身是伤'), int(size.x * 0.6+20), int(size.y / 4+30), 0xffffffff, Location.CENTER)
+            renderer.renderString(RenderableString('\\.00FCE8AD\\00虚弱得连站都站不稳'), int(size.x * 0.6+20), int(size.y / 4+60), 0xffffffff, Location.CENTER)
+        if self.Sentence  == 4:
+            renderer.renderString(RenderableString('\\.00FCE8AD\\00咱们现在来到了一个新的村庄'), int(size.x * 0.6+20), int(size.y / 4+30), 0xffffffff, Location.CENTER)
+            renderer.renderString(RenderableString('\\.00FCE8AD\\00这就是你以后生活的地方啦!'), int(size.x * 0.6+20), int(size.y / 4+60), 0xffffffff, Location.CENTER)
+        if self.Sentence  == 5:
+            renderer.renderString(RenderableString('\\.00FCE8AD\\00接下来的日子可能不太轻松'), int(size.x * 0.6+20), int(size.y / 4+30), 0xffffffff, Location.CENTER)
+            renderer.renderString(RenderableString('\\.00FCE8AD\\00你要搜集草地上的米粒来填饱肚子'), int(size.x * 0.6+20), int(size.y / 4+60), 0xffffffff, Location.CENTER)
+        if self.Sentence  == 6:
+            renderer.renderString(RenderableString('\\.00FCE8AD\\00并尽可能多地收集树枝，'), int(size.x * 0.6+20), int(size.y / 4+30), 0xffffffff, Location.CENTER)
+            renderer.renderString(RenderableString('\\.00FCE8AD\\00为自己建造一个鸡窝'), int(size.x * 0.6+20), int(size.y / 4+60), 0xffffffff, Location.CENTER)
+        if self.Sentence  == 7:
+            renderer.renderString(RenderableString('\\.00FCE8AD\\00在这个村庄里有很多邪恶的狐狸，'), int(size.x * 0.6+20), int(size.y / 4+30), 0xffffffff, Location.CENTER)
+            renderer.renderString(RenderableString('\\.00FCE8AD\\00你一定要注意防范他们的攻击!'), int(size.x * 0.6+20), int(size.y / 4+60), 0xffffffff, Location.CENTER)
+        if self.Sentence  == 8:
+            renderer.renderString(RenderableString('\\.00FCE8AD\\00你的最终目标是逆天改命，'), int(size.x * 0.6+20), int(size.y / 4+30), 0xffffffff, Location.CENTER)
+            renderer.renderString(RenderableString('\\.00FCE8AD\\00生一个蛋，并孵出一只小鸡!'), int(size.x * 0.6+20), int(size.y / 4+60), 0xffffffff, Location.CENTER)
+
+    def tick(self) -> None:
+        if interact.keys[pygame.K_ESCAPE].deal():
+            self.Sentence += 1
+

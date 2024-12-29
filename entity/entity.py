@@ -6,7 +6,8 @@ from typing import TYPE_CHECKING, Union, Callable
 from entity.manager import entityManager, skillManager
 from entity.skill import Skill
 from utils import utils
-from window.window import DeathWindow
+from window.window import DeathWindow 
+
 
 if TYPE_CHECKING:
 	from block.block import Block
@@ -572,7 +573,16 @@ class BlueEgg(Entity):
 	def load(cls, d: dict, entity: Union['Entity', None] = None) -> Union['Entity', None]:
 		e = BlueEgg(Vector.load(d['position']))
 		return Entity.load(d, e)
+	
+class Witch(Entity):
+	def __init__(self, position: Vector):
+		super().__init__('entity.witch', '老巫婆鸡', EntityDescription(self, [RenderableString('鸡长老')]), [resourceManager.getOrNew('entity/witch/witch')], position, 0)
 
+	def tick(self) -> None:
+		player = game.getWorld().getPlayer()
+		if player is not None and player.getPosition().distanceManhattan(self.getPosition()) <= 0.6:
+			from world.world import DynamicWorld
+			game.setWorld(DynamicWorld(0, 'DynamicWorld'))
 
 # 注册实体
 entityManager.register('entity.rice', Rice)
@@ -581,6 +591,7 @@ entityManager.register('player', Player)
 entityManager.register('entity.coop', Coop)
 entityManager.register('entity.egg.blue', BlueEgg)
 entityManager.register('deprecated', DeprecatedPlayer)
+entityManager.register('entity.witch', Witch)
 
 for t in [
 	resourceManager.getOrNew('player/no_player_1'),
@@ -598,12 +609,14 @@ for t in [
 for t in [
 	resourceManager.getOrNew('entity/rice'),
 	resourceManager.getOrNew('entity/stick'),
-	resourceManager.getOrNew('entity/coop')
+	resourceManager.getOrNew('entity/coop'),
+	resourceManager.getOrNew('entity/witch/witch')
 ]:
 	t.getSurface().set_colorkey((0, 0, 0))
 	t.getMapScaledSurface().set_colorkey((0, 0, 0))
 	t.setOffset(Vector(0, -2))
 resourceManager.getOrNew('entity/coop').setOffset(Vector(0, -5))
+resourceManager.getOrNew('entity/witch/witch').setOffset(Vector(0, -7))
 for t in [
 	resourceManager.getOrNew('player/chick_1'),
 	resourceManager.getOrNew('player/chick_b1'),
