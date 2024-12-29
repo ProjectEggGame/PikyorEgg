@@ -51,7 +51,7 @@ class Window(Renderable):
 		渲染背景。可以重写
 		"""
 		if self._texture is not None:
-			self._texture.renderAtInterface(self._backgroungPosition)
+			self._texture.renderAtInterface(self._backgroundPosition)
 		else:
 			head = self.backgroundColor & 0xff000000
 			if head == 0:
@@ -558,12 +558,4 @@ class TaskWindow(Window):
 	def tick(self) -> None:
 		super().tick()
 		if interact.keys[pygame.K_m].deal():
-			game.setWindow(self.lastopen)
-	
-	def passRender(self, delta: float, at: Vector | None= None)-> None:
-		self.renderBackground(delta)
-		self.render(delta)
-		for widget in reversed(self. widgets):
-			widget.passRender(delta)
-
-	
+			game.setWindow(self.lastOpen)

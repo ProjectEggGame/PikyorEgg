@@ -23,6 +23,20 @@ class Skill:
 		self.texture = resourceManager.getOrNew(f'skill/{self._id}')
 		self.texture.adaptsSystem()
 		self.texture.adaptsMap(False)
+		self._coolDown: int = 0
+		self._maxCoolDown: int = 0
+	
+	def getCoolDown(self) -> int:
+		"""
+		当前剩余的技能冷却时间，为0则已就绪
+		"""
+		return self._coolDown
+	
+	def getMaxCoolDown(self) -> int:
+		"""
+		技能冷却总时间，为0则不需要冷却
+		"""
+		return self._maxCoolDown
 	
 	def getLevel(self) -> int:
 		return self._level
@@ -51,7 +65,7 @@ class Skill:
 
 class SkillEasySatisfaction(Skill):
 	def __init__(self):
-		super().__init__(1, SkillDescription([RenderableString('\\#ffeeee00爱米'), RenderableString('\\#ffee55dd    可以从米粒中获得额外成长')]))
+		super().__init__(1, SkillDescription(self, [RenderableString('\\#ffeeee00爱米'), RenderableString('\\#ffee55dd    可以从米粒中获得额外成长')]))
 		self._player.preGrow.append(self.onGrow)
 	
 	def getName(self=None) -> RenderableString:
@@ -76,7 +90,7 @@ class SkillEasySatisfaction(Skill):
 
 class SkillResistance(Skill):
 	def __init__(self):
-		super().__init__(2, SkillDescription([RenderableString('\\#ffeeee00坚毅'), RenderableString(f'\\#ffee55dd    减少受到的0.00%伤害')]))
+		super().__init__(2, SkillDescription(self, [RenderableString('\\#ffeeee00坚毅'), RenderableString(f'\\#ffee55dd    减少受到的0.00%伤害')]))
 		self._player.preDamage.append(self.onDamage)
 	
 	def getName(self=None) -> RenderableString:
@@ -101,7 +115,7 @@ class SkillResistance(Skill):
 
 class SkillFastGrow(Skill):
 	def __init__(self):
-		super().__init__(3, SkillDescription([RenderableString('\\#ffee8844揠苗'), RenderableString('\\#ffee55dd  每秒获得0.00点成长'), RenderableString('\\#ffee0000    但是每秒受到0.00点伤害！'), RenderableString('\\#ff888888    当然如果已经完全成长就不会受到伤害')]))
+		super().__init__(3, SkillDescription(self, [RenderableString('\\#ffee8844揠苗'), RenderableString('\\#ffee55dd  每秒获得0.00点成长'), RenderableString('\\#ffee0000    但是每秒受到0.00点伤害！'), RenderableString('\\#ff888888    当然如果已经完全成长就不会受到伤害')]))
 		self._player.preTick.append(self.onTick)
 	
 	def getName(self=None) -> RenderableString:
@@ -125,18 +139,17 @@ class SkillFastGrow(Skill):
 
 class SkillRevive(Skill):
 	def __init__(self):
-		super().__init__(4, SkillDescription([RenderableString('\\#ffffff66屹立不倒'), RenderableString('\\#ffee55dd    死亡时可以立刻复活'), RenderableString('\\#ffee5555    体力回复 0.00%'), RenderableString('\\#ffee0000    冷却时间 ∞')]))
+		super().__init__(4, SkillDescription(self, [RenderableString('\\#ffffff66屹立不倒'), RenderableString('\\#ffee55dd    死亡时可以立刻复活'), RenderableString('\\#ffee5555    体力回复 0.00%')]))
 		self._player.preTick.append(self.onTick)
 		self._player.preDeath.append(self.onDeath)
-		self._time = 0
 	
 	def render(self, delta: float, at: BlockVector) -> int:
 		ret = super().render(delta, at)
-		if self._time > 0:
+		if self._coolDown > 0:
 			s = Surface(self.texture.getSystemScaledSurface().get_size())
 			s.set_alpha(0xaa)
 			renderer.getCanvas().blit(s, at.getTuple())
-			renderer.renderString(RenderableString(f'\\11{int(self._time / 20)}'), at.x + (s.get_width() >> 1), at.y + (s.get_height() >> 1), 0xffffffff, Location.CENTER)
+			renderer.renderString(RenderableString(f'\\11{int(self._coolDown / 20)}'), at.x + (s.get_width() >> 1), at.y + (s.get_height() >> 1), 0xffffffff, Location.CENTER)
 		return ret
 	
 	def getName(self=None) -> RenderableString:
@@ -148,28 +161,28 @@ class SkillRevive(Skill):
 	def upgrade(self) -> bool:
 		if self._level < 20:
 			self._level += 1
+			self._maxCoolDown = 2500 - self._level * 100
 			self.description.d[0] = self.getName()
 			self.description.d[2] = RenderableString(f'\\#ffee5555    体力回复 {20 + 3 * self._level:.2f}%')
-			self.description.d[3] = RenderableString(f'\\#ffee0000    冷却时间 {int(125 - self._level * 5):.2f}秒')
 			return True
 		return False
 	
 	def onDeath(self):
-		if self._time <= 0:
+		if self._coolDown <= 0:
 			self._player.setHealth((20 + 3 * self._level) / 100 * self._player.getMaxHealth())
-			self._time = (2500 - self._level * 100)
+			self._coolDown = self._maxCoolDown
 			game.hud.sendMessage(RenderableString('\\.ccff0000\\#ffeeeeee                 复生！                '))
 			return True
 		return False
 	
 	def onTick(self):
-		if self._time > 0:
-			self._time -= 1
+		if self._coolDown > 0:
+			self._coolDown -= 1
 
 
 class SkillSwift(Skill):
 	def __init__(self):
-		super().__init__(5, SkillDescription([RenderableString('\\#ff96F8F5迅捷'), RenderableString('\\#ffee55dd    快，快，快')]))
+		super().__init__(5, SkillDescription(self, [RenderableString('\\#ff96F8F5迅捷'), RenderableString('\\#ffee55dd    快，快，快')]))
 	
 	def getName(self=None) -> RenderableString:
 		if self is None or self._level == 0:

@@ -1,5 +1,6 @@
 from typing import TYPE_CHECKING, Union
 
+import pygame
 from pygame import Surface
 
 from render import font
@@ -21,8 +22,8 @@ class Description:
 	
 	def generate(self) -> list['RenderableString']:
 		return self.d
-	
-	
+
+
 class BlockDescription(Description):
 	def __init__(self, block: 'Block', d: Union[list['RenderableString'], None] = None):
 		super().__init__(d)
@@ -49,6 +50,13 @@ class SkillDescription(Description):
 	def __init__(self, skill: 'Skill', d: Union[list['RenderableString'], None] = None):
 		self._skill = skill
 		super().__init__(d)
+	
+	def generate(self) -> list['RenderableString']:
+		from entity.active_skill import Active
+		if isinstance(self._skill, Active):
+			return [RenderableString(f'\\#ffaa4499主动技能 {"就绪" if self._skill.getCoolDown() == 0 else (self._skill.getCoolDown() / 20)}/{int(self._skill.getMaxCoolDown() / 20)}秒')] + self.d
+		else:
+			return [RenderableString(f'\\#ffaa4499被动技能 {"就绪" if self._skill.getCoolDown() == 0 else int(self._skill.getCoolDown() / 20) + 1}/{int(self._skill.getMaxCoolDown() / 20)}秒' if self._skill.getMaxCoolDown() != 0 else '\\#ffaa4499被动技能')] + self.d
 
 
 class InnerStringConfig:
@@ -65,7 +73,7 @@ class InnerStringConfig:
 		self.bold: bool = False
 		self.delete: bool = False
 		self.underline: bool = False
-		
+	
 	def renderAt(self, screen: Surface, x: int, y: int, defaultColor: int, defaultBackground: int = 0) -> int:
 		dx = font.allFonts[self.font].draw(screen, self.string, x, y, defaultColor if self.color == 0x1_ffff_ffff else self.color, self.bold, self.italic, self.underline, self.delete, defaultBackground if self.background == 0x1_ffff_ffff else self.background)
 		return x + dx
@@ -204,7 +212,7 @@ class RenderableString:
 					utils.warn(f'无法识别的字符序列：{i}，来自\n{string}')
 		if config.string is not None:
 			self.set.append(config)
-		
+	
 	def length(self) -> int:
 		s = 0
 		for i in self.set:

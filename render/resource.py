@@ -133,6 +133,7 @@ class ResourceManager:
 			self._textures[key] = self._textures['no_texture']
 			utils.error(f"没有找到纹理{key}，已经用默认纹理替代")
 			self._lock.release()
+			return self._textures[key]
 	
 	def get(self, key: str) -> Texture:
 		if key not in self._textures:

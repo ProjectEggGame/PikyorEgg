@@ -13,6 +13,7 @@ from save import configs
 from utils import utils
 from utils.game import game
 from window.hud import Hud
+from window.input import InputWindow
 from window.window import FloatWindow, StartWindow
 
 # 这句是必要的，会注册到entityManager上
@@ -164,9 +165,11 @@ def mainThread():
 						if game.getWindow() is not None:
 							game.getWindow().onResize()
 					case pygame.TEXTINPUT:
-						pass
+						if isinstance(game.getWindow(), InputWindow):
+							game.getWindow().onInput(event)
 					case pygame.TEXTEDITING:
-						pass
+						if isinstance(game.getWindow(), InputWindow):
+							game.getWindow().onEdit(event)
 					case pygame.ACTIVEEVENT:
 						pass
 					case pygame.WINDOWENTER:

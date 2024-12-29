@@ -129,19 +129,19 @@ class Widget(Renderable):
 			case Location.LEFT:
 				self._x, self._y = int(self.x * windowSize.x), (windowSize.y - self._h >> 1) + int(self.y * windowSize.y)
 			case Location.LEFT_BOTTOM:
-				self._x, self._y = int(self.x * windowSize.x), int((windowSize.y - self._h) * windowSize.y + self.y * windowSize.y)
+				self._x, self._y = int(self.x * windowSize.x), int(windowSize.y - self._h + self.y * windowSize.y)
 			case Location.TOP:
 				self._x, self._y = (windowSize.x - self._w >> 1) + int(self.x * windowSize.x), int(self.y * windowSize.y)
 			case Location.CENTER:
 				self._x, self._y = (windowSize.x - self._w >> 1) + int(self.x * windowSize.x), (windowSize.y - self._h >> 1) + int(self.y * windowSize.y)
 			case Location.BOTTOM:
-				self._x, self._y = int((windowSize.x - self._w) * windowSize.x + self.x * windowSize.x), int((windowSize.y - self._h) * windowSize.y + self.y * windowSize.y)
+				self._x, self._y = (windowSize.x - self._w >> 1) + int(self.x * windowSize.x), int(windowSize.y - self._h + self.y * windowSize.y)
 			case Location.RIGHT_TOP:
 				self._x, self._y = int((windowSize.x - self._w) * windowSize.x + self.x * windowSize.x), int(self.y * windowSize.y)
 			case Location.RIGHT:
 				self._x, self._y = int((windowSize.x - self._w) * windowSize.x + self.x * windowSize.x), (windowSize.y - self._h >> 1) + int(self.y * windowSize.y)
 			case Location.RIGHT_BOTTOM:
-				self._x, self._y = int((windowSize.x - self._w) * windowSize.x + self.x * windowSize.x), int((windowSize.y - self._h) * windowSize.y + self.y * windowSize.y)
+				self._x, self._y = int((windowSize.x - self._w) * windowSize.x + self.x * windowSize.x), int(windowSize.y - self._h + self.y * windowSize.y)
 	
 	def isMouseIn(self, x: int, y: int):
 		self._isMouseIn = self._x <= x <= self._x + self._w and self._y <= y <= self._y + self._h

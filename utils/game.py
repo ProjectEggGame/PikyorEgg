@@ -35,27 +35,11 @@ class Game:
 		self._window.apply(self._window.getNew())
 		if self._mainWorld is not None and notPause:
 			self._mainWorld.tick()
-		self.processMouse()  # 此处以下是额外键盘功能
-		if interact.keys[pygame.K_ESCAPE].deal():
-			from window.window import PauseWindow
-			self.setWindow(PauseWindow())
-		if interact.keys[pygame.K_m].deal():
-			from window.window import TaskWindow
-			self.setWindow(TaskWindow(4))
-		if interact.keys[pygame.K_SPACE].deal() and self._mainWorld is not None:
-			if renderer.getCameraAt() is None:
-				renderer.cameraAt(self._mainWorld.getPlayer())
-				self.hud.sendMessage(RenderableString('\\#cc66ccee视角锁定'))
-			elif renderer.cameraOffset.lengthManhattan() == 0:
-				self.hud.sendMessage(RenderableString('\\#cc00cc00视角解锁'))
-				renderer.cameraAt(None)
-			else:
-				self.hud.sendMessage(RenderableString('\\#cc7755ee居中锁定'))
-				renderer.cameraOffset.set(0, 0)
-		if interact.keys[pygame.K_e].deal():
-			if self._mainWorld.getPlayer() is not None:
-				from window.ingame import StatusWindow
-				self.setWindow(StatusWindow())
+		self.processMouse()
+		if self.getWindow() is None:
+			if interact.keys[pygame.K_p].deal():
+				from window.input import InputWindow
+				self.setWindow(InputWindow())
 		self.tickCount += 1
 	
 	def render(self, delta: float) -> None:

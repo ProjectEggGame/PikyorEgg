@@ -1,8 +1,11 @@
 import random
 from typing import Union, TYPE_CHECKING
 
+import pygame
+
 from block.manager import blockManager
 from entity.manager import entityManager
+from interact import interact
 from render.renderer import renderer
 from render.resource import resourceManager
 from save.save import Archive
@@ -49,6 +52,27 @@ class World(Renderable):
 			b.passTick()
 		if self._player is not None:
 			self._player.passTick()
+
+		if interact.keys[pygame.K_ESCAPE].deal():
+			from window.window import PauseWindow
+			game.setWindow(PauseWindow())
+		if interact.keys[pygame.K_m].deal():
+			from window.window import TaskWindow
+			game.setWindow(TaskWindow(4))
+		if interact.keys[pygame.K_SPACE].deal():
+			if renderer.getCameraAt() is None:
+				renderer.cameraAt(self.getPlayer())
+				game.hud.sendMessage(RenderableString('\\#cc66ccee视角锁定'))
+			elif renderer.cameraOffset.lengthManhattan() == 0:
+				game.hud.sendMessage(RenderableString('\\#cc00cc00视角解锁'))
+				renderer.cameraAt(None)
+			else:
+				game.hud.sendMessage(RenderableString('\\#cc7755ee居中锁定'))
+				renderer.cameraOffset.set(0, 0)
+		if interact.keys[pygame.K_e].deal():
+			if self.getPlayer() is not None:
+				from window.ingame import StatusWindow
+				game.setWindow(StatusWindow())
 	
 	def render(self, delta: float, at: Union[Vector, None]) -> None:
 		ct = renderer.getCenter().getVector().divide(renderer.getMapScale())
