@@ -5,6 +5,7 @@ from pygame import Surface
 
 from render.renderable import Renderable
 from render.renderer import renderer, Location
+from utils import times
 from utils.game import game
 from utils.text import RenderableString
 from utils.vector import Vector, BlockVector
@@ -25,7 +26,7 @@ class Hud(Renderable):
 		while len(self.messages) > 6:
 			self.messages.popleft()
 	
-	def render(self, delta: float, at: Vector | None = None) -> None:
+	def render(self, delta: float) -> None:
 		if game.getWorld() is None:
 			return
 		player = game.getWorld().getPlayer()
@@ -138,7 +139,7 @@ class Hud(Renderable):
 		
 		pos: BlockVector = BlockVector(margin, margin << 2)
 		for s in player.skills.values():
-			pos.x += s.render(delta, pos)
+			pos.x += s.render(delta)
 		
 		while len(self.messages) != 0 and game.tickCount - self.messages[0][0] > 80:
 			self.messages.popleft()

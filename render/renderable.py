@@ -1,3 +1,4 @@
+from utils import times
 from utils.vector import Vector
 from render.resource import Texture
 
@@ -9,11 +10,10 @@ class Renderable:
 	def __init__(self, texture: Texture | None):
 		self._texture: Texture = texture
 	
-	def render(self, delta: float, at: Vector | None) -> None:
+	def render(self, delta: float) -> None:
 		"""
 		渲染时调用
 		:param delta: tick偏移。由于20tick/s但是渲染至少60f/s，每tick至少渲染3次。为了保证一些移动的流畅性，delta用于辅助计算移动部件的位置。delta的值为(timePresent - timeLastTick) / timeEveryTick
-		:param at: 确定在屏幕上渲染的位置。一般来说，实体位置可以在函数内直接计算，可以忽略这个参数；物品位置需要上级传递。
 		"""
 		pass
 	
@@ -21,7 +21,7 @@ class Renderable:
 		"""
 		用于内部调用，尽可能地避免重写。重写时必须调用父类方法
 		"""
-		self.render(delta, at)
+		self.render(delta)
 		
 	def getTexture(self) -> Texture:
 		return self._texture

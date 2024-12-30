@@ -6,8 +6,7 @@ from typing import TYPE_CHECKING, Union, Callable
 from entity.manager import entityManager, skillManager
 from entity.skill import Skill
 from utils import utils
-from window.window import DeathWindow 
-
+from window.window import DeathWindow
 
 if TYPE_CHECKING:
 	from block.block import Block
@@ -199,7 +198,7 @@ class Entity(Element):
 		"""
 		pass
 	
-	def render(self, delta: float, at: Vector | None) -> None:
+	def render(self, delta: float) -> None:
 		self._texture.renderAtMap(self._position + self.__velocity * delta)
 	
 	def setVelocity(self, v: Vector) -> None:
@@ -449,7 +448,7 @@ class Player(Entity, Damageable):
 		self.skills: dict[int, Skill] = {}
 		self.__allSkills: dict[int, Skill] = skillManager.dic.copy()
 		self.__allSkills.pop(0)
-
+	
 	def onDeath(self) -> None:
 		flag = True
 		for i in self.preDeath:
@@ -460,7 +459,7 @@ class Player(Entity, Damageable):
 			game.setWindow(DeathWindow())
 		else:
 			self._isAlive = True
-			
+	
 	def onDamage(self, amount: float, src: Entity) -> float:
 		for i in self.preDamage:
 			amount = i(amount, src)
@@ -535,10 +534,10 @@ class Player(Entity, Damageable):
 			else:
 				self._maxSpeed = self.basicMaxSpeed
 			## debug
-			if interact.keys[pygame.K_q].deal():
+			if interact.keys[pygame.K_q].deals():
 				self.grow(100, self)
 			## debug
-			if interact.keys[pygame.K_r].deal():
+			if interact.keys[pygame.K_r].deals():
 				if self.growth_value < 100:
 					game.hud.sendMessage(RenderableString('\\#ffee0000你还没长大，不能下蛋~'))
 				else:
@@ -573,16 +572,17 @@ class BlueEgg(Entity):
 	def load(cls, d: dict, entity: Union['Entity', None] = None) -> Union['Entity', None]:
 		e = BlueEgg(Vector.load(d['position']))
 		return Entity.load(d, e)
-	
+
+
 class Witch(Entity):
 	def __init__(self, position: Vector):
 		super().__init__('entity.witch', '老巫婆鸡', EntityDescription(self, [RenderableString('鸡长老')]), [resourceManager.getOrNew('entity/witch/witch')], position, 0)
-
+	
 	def tick(self) -> None:
 		player = game.getWorld().getPlayer()
 		if player is not None and player.getPosition().distanceManhattan(self.getPosition()) <= 0.6:
-			from world.world import DynamicWorld
-			game.setWorld(DynamicWorld(0, 'DynamicWorld'))
+			game.setWorld(0)
+
 
 # 注册实体
 entityManager.register('entity.rice', Rice)

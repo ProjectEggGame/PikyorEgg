@@ -1,7 +1,10 @@
+import asyncio
+
 import pygame.event
 from pygame import Surface
 
-from interact import interact
+from interact import interact, Status
+from render.font import Font
 from render.renderer import Location, renderer
 from utils import utils
 from utils.game import game
@@ -9,6 +12,90 @@ from utils.text import RenderableString, Description
 from utils.vector import Vector
 from window.widget import Widget
 from window.window import Window
+from LLA import chat_with_ai as ai
+
+
+aiHistory: list = []
+asyncAiTask = None
+asyncTasks = asyncio.get_event_loop()  # 必须必须在main中最后关闭
+
+
+def adaptText(text: str, width: int, font: Font) -> list[str]:
+
+	def isEmptyChar(c: chr) -> bool:
+		if c == ' ' or c == '\n' or c == '\t' or c == '\r' or c == '\b' or c == '\v' or c == '\f' or c == '\0':
+			return True
+		return False
+	
+	def realAdaptText(_txt, _width, _font):
+		texts = []
+		_font = _font.get(False, False, False, False)
+		length = len(_txt)
+		pr = 0
+		pe = min(30, length)
+		space = _txt[:length - len(_txt.lstrip())]
+		if len(space) != 0:
+			dw = _font.size(space)[0]
+			while dw > 0.3 * _width and len(space) != 0:
+				space = space[:-1]
+				dw = _font.size(space)
+			if len(space) == 0:
+				space = None
+			else:
+				_width -= dw
+		else:
+			space = None
+		while pr < length:
+			while _font.size(_txt[pr:pe])[0] < _width:
+				pe += 1
+				if pe >= length:
+					break
+			while _font.size(_txt[pr:pe])[0] > _width:
+				if pe - pr == 1:
+					break
+				pe -= 1
+			if pe < length:
+				ori_pe = pe
+				while not isEmptyChar(_txt[pe]):
+					if pe == pr:
+						pe = ori_pe
+						break
+					pe -= 1
+			texts.append((_txt[pr:pe]) if space is None else (space + _txt[pr:pe]))
+			pr = pe
+			pe = min(30 + pr, length)
+			continue
+		return texts
+	parses = []
+	p, i = 0, 0
+	while i < len(text):
+		# 检查换行符
+		if text[i] == '\n':
+			parses.append(text[p:i])
+			i += 1
+			p = i
+			continue
+		i += 1
+	if p != i:
+		parses.append(text[p:i])
+	ret = []
+	for i in parses:
+		ret.extend(realAdaptText(i, width, font))
+	return ret
+
+
+async def adaptAiReply(txt: str, aiHistory: list, window: 'AiWindow') -> None:
+	res = await ai.send(txt)
+	from render import font
+	lis = adaptText(res['content'], int(0.7 * renderer.getCanvas().get_width()), font.allFonts[10])
+	autoScroll = False
+	if window.rendering - len(aiHistory) < 2:
+		autoScroll = True
+	aiHistory.append(RenderableString('\\10\\#ffee44cc' + res['role']))
+	aiHistory.extend(lis)
+	await asyncio.sleep(0.1)
+	if autoScroll:
+		window.rendering = len(aiHistory)
 
 
 class InputWidget(Widget):
@@ -20,11 +107,12 @@ class InputWidget(Widget):
 		self.caret: int = 0
 		self._caretOffset: int = 0  # 用于输入法那头的选中
 		self._caret: int = -1  # 用于选中
-		self.timeCount: int = 6
+		self.timeCount: int = -10
 		self._realText: str = ''
 		self._displayText: str | None = None
 		self._dealTimeLimit: int = -1
 		self._keyDealing: int = -1
+		self._inputting: bool = False
 	
 	@staticmethod
 	def emptyChar(c: chr) -> bool:
@@ -32,85 +120,47 @@ class InputWidget(Widget):
 			return True
 		return False
 	
+	def __checkKey(self, keyCode: int, keySet: list[Status], lastDeal) -> int:
+		if self._keyDealing == -1:  # 无处理
+			ret = keySet[keyCode].deal()
+			if ret != 0:
+				self._keyDealing = keyCode
+				self._dealTimeLimit = -1
+				return ret
+		elif self._keyDealing != keyCode:  # 争夺处理
+			ret = keySet[keyCode].deal()
+			if ret != 0:
+				self._keyDealing = keyCode
+				self._dealTimeLimit = -1
+				return ret
+		else:  # 就在处理自身
+			return keySet[keyCode].deal()
+		return lastDeal
+	
 	def tick(self) -> None:
+		if not self._inputting:
+			self.timeCount = -10
+			interact.keys[pygame.K_BACKSPACE].deals()
+			interact.keys[pygame.K_DELETE].deals()
+			interact.specialKeys[pygame.K_UP & interact.KEY_COUNT].deals()
+			interact.specialKeys[pygame.K_DOWN & interact.KEY_COUNT].deals()
+			interact.specialKeys[pygame.K_LEFT & interact.KEY_COUNT].deals()
+			interact.specialKeys[pygame.K_RIGHT & interact.KEY_COUNT].deals()
+			self._displayText = None
+			self.caret = len(self._realText)
+			return
 		if self.timeCount <= -10:
 			self.timeCount = 10
 		else:
 			self.timeCount -= 1
 		if self._dealTimeLimit > 0:
 			self._dealTimeLimit -= 1
-		if interact.keys[pygame.K_BACKSPACE].peek():
-			if self._keyDealing == -1:
-				interact.keys[pygame.K_BACKSPACE].deal()
-				self._keyDealing = pygame.K_BACKSPACE
-				self._dealTimeLimit = -1
-			elif self._keyDealing != pygame.K_BACKSPACE and interact.keys[pygame.K_BACKSPACE].deal():
-				self._keyDealing = pygame.K_BACKSPACE
-				self._dealTimeLimit = -1
-		else:
-			if self._keyDealing == pygame.K_BACKSPACE:
-				self._keyDealing = -1
-				self._dealTimeLimit = -1
-		if interact.keys[pygame.K_DELETE].peek():
-			if self._keyDealing == -1:
-				interact.keys[pygame.K_DELETE].deal()
-				self._keyDealing = pygame.K_DELETE
-				self._dealTimeLimit = -1
-			elif self._keyDealing != pygame.K_DELETE and interact.keys[pygame.K_DELETE].deal():
-				self._keyDealing = pygame.K_DELETE
-				self._dealTimeLimit = -1
-		else:
-			if self._keyDealing == pygame.K_DELETE:
-				self._keyDealing = -1
-				self._dealTimeLimit = -1
-		if interact.specialKeys[pygame.K_UP & interact.KEY_COUNT].peek():
-			if self._keyDealing == -1:
-				interact.specialKeys[pygame.K_UP & interact.KEY_COUNT].deal()
-				self._keyDealing = pygame.K_UP
-				self._dealTimeLimit = -1
-			elif self._keyDealing != pygame.K_UP and interact.specialKeys[pygame.K_UP & interact.KEY_COUNT].deal():
-				self._keyDealing = pygame.K_UP
-				self._dealTimeLimit = -1
-		else:
-			if self._keyDealing == pygame.K_UP:
-				self._keyDealing = -1
-				self._dealTimeLimit = -1
-		if interact.specialKeys[pygame.K_DOWN & interact.KEY_COUNT].peek():
-			if self._keyDealing == -1:
-				interact.specialKeys[pygame.K_DOWN & interact.KEY_COUNT].deal()
-				self._keyDealing = pygame.K_DOWN
-				self._dealTimeLimit = -1
-			elif self._keyDealing != pygame.K_DOWN and interact.specialKeys[pygame.K_DOWN & interact.KEY_COUNT].deal():
-				self._keyDealing = pygame.K_DOWN
-				self._dealTimeLimit = -1
-		else:
-			if self._keyDealing == pygame.K_DOWN:
-				self._keyDealing = -1
-				self._dealTimeLimit = -1
-		if interact.specialKeys[pygame.K_LEFT & interact.KEY_COUNT].peek():
-			if self._keyDealing == -1:
-				interact.specialKeys[pygame.K_LEFT & interact.KEY_COUNT].deal()
-				self._keyDealing = pygame.K_LEFT
-				self._dealTimeLimit = -1
-			elif self._keyDealing != pygame.K_LEFT and interact.specialKeys[pygame.K_LEFT & interact.KEY_COUNT].deal():
-				self._keyDealing = pygame.K_LEFT
-				self._dealTimeLimit = -1
-		else:
-			if self._keyDealing == pygame.K_LEFT:
-				self._keyDealing = -1
-				self._dealTimeLimit = -1
-		if interact.specialKeys[pygame.K_RIGHT & interact.KEY_COUNT].peek():
-			if self._keyDealing == -1:
-				interact.specialKeys[pygame.K_RIGHT & interact.KEY_COUNT].deal()
-				self._keyDealing = pygame.K_RIGHT
-				self._dealTimeLimit = -1
-			elif self._keyDealing != pygame.K_RIGHT and interact.specialKeys[pygame.K_RIGHT & interact.KEY_COUNT].deal():
-				self._keyDealing = pygame.K_RIGHT
-				self._dealTimeLimit = -1
-		else:
-			if self._keyDealing == pygame.K_RIGHT:
-				self._keyDealing = -1
-				self._dealTimeLimit = -1
+		deals = self.__checkKey(pygame.K_BACKSPACE, interact.keys, 0)
+		deals = self.__checkKey(pygame.K_DELETE, interact.keys, deals)
+		deals = self.__checkKey(pygame.K_UP & interact.KEY_COUNT, interact.specialKeys, deals)
+		deals = self.__checkKey(pygame.K_DOWN & interact.KEY_COUNT, interact.specialKeys, deals)
+		deals = self.__checkKey(pygame.K_LEFT & interact.KEY_COUNT, interact.specialKeys, deals)
+		deals = self.__checkKey(pygame.K_RIGHT & interact.KEY_COUNT, interact.specialKeys, deals)
 		if self._dealTimeLimit > 0:
 			self._dealTimeLimit -= 1
 		else:
@@ -123,17 +173,17 @@ class InputWidget(Widget):
 						self._realText = self._realText[:self._caret] + self._realText[self.caret:]
 						self._dealTimeLimit = -1
 						self._caret = -1
-					else:  # self._caret == -1，需要单个删除
-						if self.caret >= len(self._realText):
-							self._realText = self._realText[:-1]
-							self.caret = len(self._realText)
+						deals -= 1
+					if deals > 0:  # 需要单个删除
+						self.caret = min(self.caret, len(self._realText))
+						if self.caret <= deals:
+							if self.caret >= len(self._realText):
+								self._realText = ''
+							else:
+								self._realText = self._realText[self.caret:]
 						else:
-							if self.caret == 1:
-								self._realText = self._realText[1:]
-								self.caret -= 1
-							elif self.caret != 0:
-								self._realText = self._realText[:self.caret - 1] + self._realText[self.caret:]
-								self.caret -= 1
+							self._realText = self._realText[:self.caret - deals] + self._realText[self.caret:]
+							self.caret -= deals
 					self._keyDealing = pygame.K_BACKSPACE
 					self._displayText = None
 					self.timeCount = 10
@@ -143,22 +193,34 @@ class InputWidget(Widget):
 						self._realText = self._realText[:self._caret] + self._realText[self.caret:]
 						self._dealTimeLimit = -1
 						self._caret = -1
-					else:  # self._caret == -1，需要单个删除
-						if self._dealTimeLimit > 0:
-							self._dealTimeLimit -= 1
-						if self.caret < len(self._realText):
-							self._realText = self._realText[:self.caret] + self._realText[self.caret + 1:]
+						deals -= 1
+					if deals > 0:  # 需要单个删除
+						self.caret = min(self.caret, len(self._realText))
+						if self.caret + deals >= len(self._realText):
+							self._realText = self._realText[:self.caret]
+						else:
+							self._realText = self._realText[:self.caret] + self._realText[self.caret + deals:]
 					self.timeCount = 10
 				case pygame.K_LEFT:
-					if self.caret > 0:
-						self.caret -= 1
+					crt = self.caret
+					crt -= deals
+					if crt < 0:
+						self.caret = 0
+					else:
+						self.caret = crt
 					self.timeCount = 10
 				case pygame.K_RIGHT:
-					if self.caret < len(self._realText):
-						self.caret += 1
+					crt = self.caret
+					crt += deals
+					if crt > len(self._realText):
+						self.caret = len(self._realText)
+					else:
+						self.caret = crt
 					self.timeCount = 10
-
+	
 	def onInput(self, event) -> None:
+		if not self._inputting:
+			return
 		assert isinstance(event, pygame.event.Event)
 		assert event.type == pygame.TEXTINPUT
 		self.timeCount = 10
@@ -177,6 +239,8 @@ class InputWidget(Widget):
 		self._caretOffset = 0
 	
 	def onEdit(self, event) -> None:
+		if not self._inputting:
+			return
 		assert isinstance(event, pygame.event.Event)
 		assert event.type == pygame.TEXTEDITING
 		self.timeCount = 10
@@ -190,7 +254,7 @@ class InputWidget(Widget):
 				self._displayText = self._realText[:self.caret] + event.text + self._realText[self.caret:]
 		self._caretOffset = event.start
 	
-	def render(self, delta: float, at: Vector | None = None) -> None:
+	def render(self, delta: float) -> None:
 		colorSelector = self.color.inactive if not self.active else self.color.active
 		head = colorSelector & 0xff000000
 		colorSelector -= head
@@ -226,7 +290,7 @@ class InputWidget(Widget):
 		if len(texts) == 0:
 			offset = renderer.getOffset()
 			rect = (self._x + offset.x, offset.y + self._y, 0, 0)
-			#pygame.key.set_text_input_rect(rect)
+			pygame.key.set_text_input_rect(rect)
 			if self.timeCount > 0:
 				renderer.getCanvas().blit(font.render('  ', True, ((self.textColor.active >> 16) & 0xff ^ 0xff, (self.textColor.active >> 8) & 0xff ^ 0xff, self.textColor.active & 0xff ^ 0xff), ((self.color.active >> 16) & 0xff ^ 0xff, (self.color.active >> 8) & 0xff ^ 0xff, self.color.active & 0xff ^ 0xff)), (self._x, self._y))
 		else:
@@ -242,7 +306,7 @@ class InputWidget(Widget):
 				else:
 					offset = renderer.getOffset()
 					rect = (self._x + font.size(i[:c0])[0] + offset.x, offset.y + y0 + self._y, 0, 0)
-					#pygame.key.set_text_input_rect(rect)
+					pygame.key.set_text_input_rect(rect)
 				if self.timeCount > 0:
 					if cc > len(i):
 						cc -= len(i)
@@ -251,6 +315,13 @@ class InputWidget(Widget):
 				y0 += _f.realHalfHeight
 			renderer.getCanvas().blit(sfc, (self._x, self._y))
 	
+	def catch(self, val: bool = True) -> None:
+		self._inputting = val
+		if val:
+			pygame.key.start_text_input()
+		else:
+			pygame.key.stop_text_input()
+	
 	def popText(self) -> str:
 		text = self._realText
 		self._realText = ''
@@ -258,29 +329,23 @@ class InputWidget(Widget):
 		return text
 
 
-from LLA import chat_with_ai as ai
-inputting = False
-
-
 class InputWindow(Window):
 	def __init__(self):
 		super().__init__('name')
-		self._inputer: InputWidget = InputWidget(Location.BOTTOM, 0, -0.05, 0.9, 0.2, RenderableString(""), Description())
+		self._inputer: InputWidget = InputWidget(Location.BOTTOM, 0, -0.05, 0.8, 0.2, RenderableString(""), Description())
 		self._widgets.append(self._inputer)
-		self._catches: Widget | None = None
-		global inputting
-		inputting = True
-	
+		self._catches: Widget | None = self._inputer
+		self._inputer.catch(True)
+		self._history: list = []
+
 	def tick(self) -> None:
 		if interact.keys[pygame.K_ESCAPE].deal():
 			game.setWindow(self.lastOpen)
-			global inputting
-			inputting = False
 		if interact.specialKeys[pygame.K_KP_ENTER & interact.KEY_COUNT].deal() or interact.keys[pygame.K_RETURN & interact.KEY_COUNT].deal():
 			txt = self._inputer.popText()
 			if len(txt) != 0:
-				ai.send(txt)
-
+				self._history.append(txt)
+	
 	def onInput(self, event) -> None:
 		if self._catches is self._inputer:
 			self._inputer.onInput(event)
@@ -296,7 +361,8 @@ class InputWindow(Window):
 				catch = widget
 				widget.passMouseDown(x, y, buttons)
 		self._catches = catch
-		
+		self._inputer.catch(catch is self._inputer)
+	
 	def passMouseUp(self, x: int, y: int, buttons: tuple[int, int, int]) -> None:
 		catch = None
 		for widget in self._widgets:
@@ -304,4 +370,59 @@ class InputWindow(Window):
 				catch = widget
 				widget.passMouseUp(x, y, buttons)
 		self._catches = catch
+		self._inputer.catch(catch is self._inputer)
+
+
+class AiWindow(InputWindow):
 	
+	def __init__(self):
+		super().__init__()
+		self.rendering: int = len(aiHistory)
+		self.canRender: int = 0
+	
+	def tick(self) -> None:
+		global aiHistory
+		global asyncTasks
+		global asyncAiTask
+		if interact.keys[pygame.K_ESCAPE].deals():
+			game.setWindow(self.lastOpen)
+		if interact.specialKeys[pygame.K_KP_ENTER & interact.KEY_COUNT].deals() or interact.keys[pygame.K_RETURN & interact.KEY_COUNT].deals():
+			if asyncAiTask is None or asyncAiTask.done():
+				txt = self._inputer.popText()
+				if len(txt) != 0:
+					autoScroll = False
+					if self.rendering - len(aiHistory) < 2:
+						autoScroll = True
+					from render import font
+					aiHistory = aiHistory + [RenderableString('\\10\\#ffeeee00YOU')] + adaptText(txt, int(0.7 * renderer.getCanvas().get_width()), font.allFonts[10])
+					asyncAiTask = asyncTasks.create_task(adaptAiReply(txt, aiHistory, self))
+					if autoScroll:
+						self.rendering = len(aiHistory)
+		scr = interact.scroll.dealScroll()
+		rd = self.rendering + scr
+		utils.info(rd, self.rendering, self.canRender, len(aiHistory))
+		if rd < self.canRender:
+			rd = self.canRender
+		if rd >= len(aiHistory):
+			self.rendering = len(aiHistory)
+		self.rendering = rd
+	
+	def render(self, delta: float) -> None:
+		super().render(delta)
+		from render import font
+		h = int(0.6 * renderer.getCanvas().get_height())
+		self.canRender: int = h // font.realHalfHeight
+		x0 = int(0.1 * renderer.getCanvas().get_width())
+		x1 = int(0.15 * renderer.getCanvas().get_width())
+		y0 = int(0.7 * renderer.getCanvas().get_height())
+		if self.rendering >= (lenHistory := len(aiHistory)):
+			self.rendering = lenHistory
+		for i in range(self.rendering - 1, max(self.rendering - self.canRender, 0) - 1, -1):
+			y0 -= font.realHalfHeight
+			text = aiHistory[i]
+			if isinstance(text, RenderableString):
+				text.renderAt(renderer.getCanvas(), x0, y0, 0xffffffff, 0)
+			else:
+				sfc = font.allFonts[10].get(False, False, False, False).render(text, True, 0xffffffff, 0)
+				sfc.set_colorkey((0, 0, 0))
+				renderer.getCanvas().blit(sfc, (x1, y0))

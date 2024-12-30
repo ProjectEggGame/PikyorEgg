@@ -7,7 +7,8 @@ class Status:
 		:param name: 监视状态的名称
 		"""
 		self.name = name
-		self._presentStatus = False
+		self.isPressed: bool = False
+		self.wasPressed: int = 0
 		self._shouldDeal = False
 	
 	def set(self, status: bool) -> None:
@@ -15,26 +16,44 @@ class Status:
 		设置状态。应当仅在main.py的mainThread中调用。用于激活事件
 		:param status: 设置为的值
 		"""
-		if status != self._presentStatus:
+		if status:
 			self._shouldDeal = True
-			self._presentStatus = status
+			self.wasPressed += 1
+		self.isPressed = status
 	
-	def peek(self) -> bool:
+	def shouldDeal(self) -> bool:
+		return self._shouldDeal
+	
+	def peek(self) -> int:
 		"""
 		需要处理时调用。
 		:returns 如果需要处理，则返回True，但是不重置状态
 		"""
-		return self._presentStatus
+		return self.isPressed
 	
-	def deal(self) -> bool:
+	def deals(self) -> bool:
+		"""
+		需要处理时调用。
+		:returns 如果需要处理，则返回True，并且重置状态
+		"""
 		if self._shouldDeal:
 			self._shouldDeal = False
-			return self._presentStatus
+			self.wasPressed = 0
+			return self.isPressed
 		else:
 			return False
 	
+	def deal(self) -> int:
+		if self._shouldDeal:
+			ret = self.wasPressed
+			self.wasPressed = 0
+			self._shouldDeal = False
+			return ret
+		else:
+			return 0
+	
 	def __str__(self) -> str:
-		return f'{self.name}: {self._presentStatus}'
+		return f'{self.name}: {self.wasPressed}'
 
 
 class ScrollStatus(Status):

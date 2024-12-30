@@ -9,6 +9,7 @@ from interact import interact
 from render import font
 from render.renderer import renderer
 from save.save import Archive
+from utils import times
 from utils.game import game
 from utils.text import RenderableString, Description
 from utils.vector import Vector, BlockVector
@@ -84,7 +85,7 @@ class Window(Renderable):
 				s.set_alpha(head >> 24)
 				renderer.getCanvas().blit(s, (0, 0))
 	
-	def render(self, delta: float, at=None) -> None:
+	def render(self, delta: float) -> None:
 		pass
 	
 	def passRender(self, delta: float, at: Vector | None = None) -> None:
@@ -167,7 +168,7 @@ class FloatWindow(Renderable):
 	def empty(self) -> bool:
 		return len(self._rendering) == 0
 	
-	def render(self, delta: float, at=None) -> None:
+	def render(self, delta: float) -> None:
 		if self._rendering is None:
 			return
 		info = []
@@ -223,16 +224,10 @@ class StartWindow(Window):
 		self._texture.adaptsUI(False)
 		self._texture.adaptsSystem(True)
 		
-		def _0(x, y, b) -> bool:
-			if b[0] == 1:
-				game.setWindow(None)
-				game.setWorld(DynamicWorld(0, 'DynamicWorld'))
-			return True
-		
 		def _1(x, y, b) -> bool:
 			if b[0] == 1:
 				game.setWindow(None)
-				game.setWorld(WitchWorld(0, 'WitchWorld'))
+				game.setWorld(WitchWorld())
 			return True
 		
 		self._widgets.append(Button(Location.CENTER, 0, 0.05, 0.4, 0.08, RenderableString("\\.00FCE8AD\\01LINK START"), Description([RenderableString("开始游戏")]), textLocation=Location.CENTER))
@@ -255,7 +250,7 @@ class StartWindow(Window):
 		self._widgets[3].textColor = PresetColors.textColor.clone()
 		self._widgets[3].textColor.hovering = 0xffeeeeee
 	
-	def render(self, delta: float, at=None) -> None:
+	def render(self, delta: float) -> None:
 		super().render(delta)
 		size: BlockVector = renderer.getSize()
 		renderer.renderString(RenderableString('\\.00FCE8AD\\00捡 蛋'), int(size.x / 2), int(size.y / 4), 0xff000000, Location.CENTER)
@@ -481,13 +476,10 @@ class DeathWindow(Window):
 		self._widgets[2].textColor = PresetColors.exitText
 		self._widgets[2].onMouseDown = lambda x, y, b: b[0] == 1 and (game.setWorld(None) or game.setWindow(StartWindow())) or True
 	
-	def render(self, delta: float, at=None) -> None:
+	def render(self, delta: float) -> None:
 		w, h = renderer.getSize().getTuple()
 		renderer.fill(0xffee0000, int(0.3 * w), int(0.3 * h), int(0.4 * w), int(0.2 * h))
 		renderer.renderString(RenderableString("\\01\\#ff000000You are dead"), int(0.5 * w), int(0.4 * h), 0xff000000, Location.CENTER)
-	
-	def tick(self) -> None:
-		interact.keys[pygame.K_ESCAPE].deal()
 
 
 class TaskWindow(Window):
@@ -574,7 +566,7 @@ class TaskWindow(Window):
 			self._widgets[4].x = -0.25
 		super().onResize()
 	
-	def render(self, delta: float, at=None) -> None:
+	def render(self, delta: float) -> None:
 		super().render(delta)
 		if self.looking == 1:
 			size: BlockVector = renderer.getSize()
@@ -633,13 +625,13 @@ class PlotWindow(Window):
 				self.Sentence += 1
 			else:
 				game.setWindow(None)
-				game.setWorld(DynamicWorld(0, 'DynamicWorld'))
+				game.setWorld(DynamicWorld('DynamicWorld'))
 			return True
 		
 		def _1(x, y, b) -> bool:
 			if b[0] == 1:
 				game.setWindow(None)
-				game.setWorld(DynamicWorld(0, 'DynamicWorld'))
+				game.setWorld(DynamicWorld('DynamicWorld'))
 			return True
 		
 		self._widgets.append(Button(Location.CENTER, 0, 0.05, 0.4, 0.08, RenderableString("\\.00FFFFFF\\01NEXT"), Description([RenderableString("继续")]), textLocation=Location.CENTER))
@@ -653,7 +645,7 @@ class PlotWindow(Window):
 		self._widgets[0].textColor = PresetColors.textColor
 		self._widgets[1].textColor = PresetColors.textColor
 	
-	def render(self, delta: float, at=None) -> None:
+	def render(self, delta: float) -> None:
 		super().render(delta)
 		size: BlockVector = renderer.getSize()
 		if self.Sentence == 0:
@@ -687,3 +679,5 @@ class PlotWindow(Window):
 	def tick(self) -> None:
 		if interact.keys[pygame.K_ESCAPE].deal():
 			self.Sentence += 1
+			if self.Sentence > 8:
+				game.setWindow(None)

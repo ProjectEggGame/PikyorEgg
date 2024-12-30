@@ -1,3 +1,4 @@
+import asyncio
 import time
 
 import pygame
@@ -13,7 +14,7 @@ from save import configs
 from utils import utils
 from utils.game import game
 from window.hud import Hud
-from window.input import InputWindow
+from window.input import InputWindow, asyncTasks
 from window.window import FloatWindow, StartWindow
 
 # 这句是必要的，会注册到entityManager上
@@ -25,6 +26,16 @@ nowTick = nowRender
 lastTick = nowRender
 
 
+def asyncThread():
+	while game.running:
+		try:
+			asyncTasks.run_until_complete(asyncio.sleep(0.1))
+		except Exception as e:
+			utils.printException(e)
+			game.running = False
+			break
+
+
 def renderThread():
 	utils.info("渲染线程启动")
 	global lastRender
@@ -34,7 +45,8 @@ def renderThread():
 	while game.running:
 		try:
 			nowRender = time.perf_counter_ns()
-			if nowRender - lastRender >= 5_000_000:
+			if True or nowRender - lastRender >= 1_000_000:
+				lastRender = nowRender
 				if renderer.dealScreen4to3Change():
 					game.getWindow().onResize()
 				if renderer.peekScaleChange():
@@ -43,14 +55,13 @@ def renderThread():
 						font.setScale(renderer.getSystemScale() * 0.6)
 					renderer.dealScaleChange()
 				game.render((nowRender - lastTick) / 60_000_000)
-				lastRender = nowRender
 				count += 1
+				if nowRender - lastCount >= 1_000_000_000:
+					renderer.fps = count * 1_000_000_000 / (nowRender - lastCount)
+					count = 0
+					lastCount = nowRender
 			else:
-				time.sleep(0.0001)
-			if nowRender - lastCount >= 1_000_000_000:
-				renderer.fps = count * 1_000_000_000 / (nowRender - lastCount)
-				count = 0
-				lastCount = nowRender
+				time.sleep(0)
 		except Exception as e:
 			utils.printException(e)
 			game.running = False
@@ -67,16 +78,16 @@ def gameThread():
 	while game.running:
 		try:
 			nowTick = time.perf_counter_ns()
-			if nowTick - lastTick >= 45_000_000:
-				game.tick()
+			if nowTick - lastTick >= 44_000_000:
 				lastTick = nowTick
+				game.tick()
 				count += 1
-			if nowTick - lastCount >= 1_000_000_000:
-				renderer.tps = count * 1_000_000_000 / (nowTick - lastCount)
-				count = 0
-				lastCount = nowTick
+				if nowTick - lastCount >= 1_000_000_000:
+					renderer.tps = count * 1_000_000_000 / (nowTick - lastCount)
+					lastCount = nowTick
+					count = 0
 			else:
-				time.sleep(0.0001)
+				time.sleep(0)
 		except Exception as e:
 			utils.printException(e)
 			game.running = False
@@ -103,6 +114,7 @@ def mainThread():
 		game.running = False
 	# end 读取设置
 	# 游戏初始化
+	pygame.key.stop_text_input()
 	renderer.setScreen(screen)
 	font.initializeFont()
 	game.setWindow(StartWindow())
@@ -112,16 +124,13 @@ def mainThread():
 	# 启动线程
 	gt: Thread = Thread(name="GameThread", target=gameThread)
 	rt: Thread = Thread(name="RenderThread", target=renderThread)
+	at: Thread = Thread(name="AsyncThread", target=asyncThread)
 	gt.start()
 	rt.start()
+	at.start()
 	utils.info("主线程启动")
 	while game.running:
 		try:
-			import window
-			if window.input.inputting:
-				pygame.key.start_text_input()
-			else:
-				pygame.key.stop_text_input()
 			for event in pygame.event.get():
 				match event.type:
 					case pygame.QUIT:
@@ -194,6 +203,8 @@ def mainThread():
 		gt.join()
 	if rt.is_alive():
 		rt.join()
+	if at.is_alive():
+		at.join()
 	# begin 写入设置
 	try:
 		config: dict[str, any] = {}
@@ -218,3 +229,4 @@ if __name__ == '__main__':
 	utils.info(f"pygame初始化成功{ret[0]}模块，失败{ret[1]}模块")
 	mainThread()
 	pygame.quit()
+	asyncTasks.close()

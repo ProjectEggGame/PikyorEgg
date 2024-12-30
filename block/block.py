@@ -25,13 +25,15 @@ class Block(Element):
 	
 	def passTick(self) -> None:
 		self.tick()
-		pass
-	
-	def render(self, delta: float, at: 'Vector | None') -> None:
-		self.getTexture().renderAsBlock(self._position.getVector())
 		if len(self._holding) > 0:
 			for h in self._holding:
-				h.render(delta, at)
+				h.passTick()
+	
+	def render(self, delta: float) -> None:
+		self.getTexture().renderAsBlock(self._position)
+		if len(self._holding) > 0:
+			for h in self._holding:
+				h.passRender(delta)
 	
 	def canPass(self, entity: Union['Entity', None] = None) -> bool:
 		"""
@@ -212,37 +214,44 @@ class SafetyLine(Wall):
 		if isinstance(entity, Player):
 			return True
 		return False
-	
+
+
 class WitchBlock(Ground):
 	def __init__(self, position: BlockVector):
 		super().__init__('witch.blue', "巫婆世界方块", BlockDescription(self, [RenderableString("\\#FFEE0000巫婆世界方块")]), position, resourceManager.getOrNew('block/witch'))
 	
 	@classmethod
-	def load(cls, d: dict, block=None) -> 'ErrorBlock':
-		ret = ErrorBlock(BlockVector.load(d['position']))
+	def load(cls, d: dict, block=None) -> 'WitchBlock':
+		ret = WitchBlock(BlockVector.load(d['position']))
 		super().load(d, ret)
 		return ret
-	
-	@classmethod
-	def load(cls, d: dict, block=None) -> 'Block':
-		block = SafetyLine(BlockVector.load(d['position']))
-		return super().load(d, block)
-	
-class SenddoorBlock(Ground):
-	def __init__(self, position: BlockVector):
-		super().__init__('hold.door', '传送门', BlockDescription(self, [RenderableString('传送门'), RenderableString('\\#FFEE0000停留3秒前往巫婆鸡的异世界')]), position, resourceManager.getOrNew('block/witch'))
-	
-	@classmethod
-	def load(cls, d: dict, block=None) -> 'Block':
-		block = SenddoorBlock(BlockVector.load(d['position']))
-		return super().load(d, block)
 
+
+gateBlockTimer: int = 60
+
+
+class GateBlock(Ground):
+	def __init__(self, position: BlockVector):
+		super().__init__('hold.door', '传送门', BlockDescription(self, [RenderableString('传送门'), RenderableString('\\#FFEE0000    停留3秒前往巫婆鸡的异世界')]), position, resourceManager.getOrNew('block/witch'))
+	
+	@classmethod
+	def load(cls, d: dict, block=None) -> 'Block':
+		block = GateBlock(BlockVector.load(d['position']))
+		return super().load(d, block)
+	
 	def tick(self) -> None:
 		player = game.getWorld().getPlayer()
-		if player is not None and player.getPosition().distanceManhattan(self.getPosition()) <= 0.6:
-			from world.world import WitchWorld
-			world = WitchWorld(world.setplayer(player))
-			game.setWorld(world)
+		global gateBlockTimer
+		if player.getVelocity().lengthManhattan() != 0:
+			gateBlockTimer = 60
+		elif player is not None and self._position.contains(player.getPosition()):
+			gateBlockTimer -= 1
+			if gateBlockTimer == 0:
+				from world.world import WitchWorld
+				world = WitchWorld()
+				world.setPlayer(player)
+				game.setWorld(world)
+
 
 blockManager.register('nature.grass', GrassBlock)
 blockManager.register('nature.path', PathBlock)
@@ -251,7 +260,7 @@ blockManager.register('system.error', ErrorBlock)
 blockManager.register('hold.fence', Fence)
 blockManager.register('hold.safety_line', SafetyLine)
 blockManager.register('witch.blue', WitchBlock)
-blockManager.register('hold.door', SenddoorBlock)
+blockManager.register('hold.door', GateBlock)
 
 for t in [
 	resourceManager.getOrNew('block/fence')

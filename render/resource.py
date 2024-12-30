@@ -46,7 +46,7 @@ class Texture:
 		s = self._uiScaled if self._uiScaled is not None else self._systemScaled if self._systemScaled is not None else self._surface
 		renderer.getCanvas().blit(s, at.getTuple())
 	
-	def renderAsBlock(self, at: Vector, fromPos: Vector | None = None, fromSize: Vector | None = None):
+	def renderAsBlock(self, at: BlockVector, fromPos: BlockVector | None = None, fromSize: BlockVector | None = None):
 		"""
 		相对于地图渲染
 		:param at: 地图位置
@@ -161,7 +161,6 @@ class ResourceManager:
 			texture.changeMapScale()
 		self._lock.release()
 	
-	@times
 	def changeScale(self) -> None:
 		"""
 		仅在main.py, renderThread中调用

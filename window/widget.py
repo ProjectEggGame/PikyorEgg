@@ -82,7 +82,7 @@ class Widget(Renderable):
 		self.color: ColorSet = ColorSet(False)
 		self.textColor: ColorSet = ColorSet(True)
 	
-	def render(self, delta: float, at: Vector | None = None) -> None:
+	def render(self, delta: float) -> None:
 		if self._texture is not None:
 			self._texture.renderAtInterface(BlockVector(self._x, self._y))
 		else:

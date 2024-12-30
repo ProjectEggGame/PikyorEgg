@@ -5,6 +5,7 @@ import pygame
 
 from interact import interact
 from render.renderer import renderer
+from utils import utils
 from utils.error import NullPointerException
 from typing import TYPE_CHECKING, Union
 
@@ -26,7 +27,7 @@ class Game:
 		self._window: SynchronizedStorage[Union['Window', None]] = SynchronizedStorage[Union['Window', None]](None)
 		self.floatWindow: Union['FloatWindow', None] = None  # 在主程序中初始化
 		self.hud: Union['Hud', None] = None
-		self.world = []
+		self.world: dict[int, 'World'] = {}
 	
 	def tick(self) -> None:
 		notPause: bool = True
@@ -37,18 +38,12 @@ class Game:
 		if self._mainWorld is not None and notPause:
 			self._mainWorld.tick()
 		self.processMouse()
-		if self.getWindow() is None:
-			if interact.keys[pygame.K_p].deal():
-				from window.input import InputWindow
-				self.setWindow(InputWindow())
 		self.tickCount += 1
 	
 	def render(self, delta: float) -> None:
 		"""
 		渲染所有内容。
 		"""
-		if not renderer.ready():
-			raise NullPointerException('当前screen为None。')
 		if delta > 1:
 			delta = 1
 		elif delta < 0:
@@ -65,6 +60,8 @@ class Game:
 		renderer.end()
 	
 	def setWindow(self, window: Union['Window', None]) -> None:
+		interact.scroll.dealScroll()
+		interact.keys[pygame.K_ESCAPE].deals()
 		self._window.set(window)
 		if window is not None:
 			window.onResize()
@@ -72,11 +69,17 @@ class Game:
 	def getWindow(self) -> Union['Window', None]:
 		return self._window.getNew()
 	
-	def setWorld(self, world: Union['World', None]) -> None:
-		self._mainWorld = world
-		self.hud.lastDisplayHealth = 0
-		self.hud.lastDisplayHunger = 0
-		renderer.cameraAt(None if world is None else world.getPlayer())
+	def setWorld(self, world: Union['World', int, None]) -> None:
+		if isinstance(world, int):
+			self._mainWorld = self.world[world]
+		else:
+			self._mainWorld = world
+			if world is not None:
+				self.world[self._mainWorld.getID()] = world
+		if self._mainWorld is None:
+			renderer.cameraAt(None)
+		else:
+			renderer.cameraAt(self._mainWorld.getPlayer())
 	
 	def getWorld(self) -> Union['World', None]:
 		return self._mainWorld

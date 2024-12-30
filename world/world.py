@@ -1,4 +1,5 @@
 import random
+import time
 from typing import Union, TYPE_CHECKING
 
 import pygame
@@ -43,14 +44,6 @@ class World(Renderable):
 		w.addEntity(entityManager.get('enemy.dog')())
 		return w
 	
-	def setLastOpen(self, last: 'World') -> 'World':
-		"""
-		:param last: 上一次打开的窗口
-		:return: 自身
-		"""
-		self.lastOpen = last
-		return self
-	
 	def tick(self) -> None:
 		for e in self._entityList:
 			e.passTick()
@@ -60,29 +53,32 @@ class World(Renderable):
 			b.passTick()
 		if self._player is not None:
 			self._player.passTick()
-
-		if interact.keys[pygame.K_ESCAPE].deal():
-			from window.window import PauseWindow
-			game.setWindow(PauseWindow())
-		if interact.keys[pygame.K_m].deal():
-			from window.window import TaskWindow
-			game.setWindow(TaskWindow(4))
-		if interact.keys[pygame.K_SPACE].deal():
-			if renderer.getCameraAt() is None:
-				renderer.cameraAt(self.getPlayer())
-				game.hud.sendMessage(RenderableString('\\#cc66ccee视角锁定'))
-			elif renderer.cameraOffset.lengthManhattan() == 0:
-				game.hud.sendMessage(RenderableString('\\#cc00cc00视角解锁'))
-				renderer.cameraAt(None)
-			else:
-				game.hud.sendMessage(RenderableString('\\#cc7755ee居中锁定'))
-				renderer.cameraOffset.set(0, 0)
-		if interact.keys[pygame.K_e].deal():
-			if self.getPlayer() is not None:
-				from window.ingame import StatusWindow
-				game.setWindow(StatusWindow())
+		if game.getWindow() is None:
+			if interact.keys[pygame.K_ESCAPE].deals():
+				from window.window import PauseWindow
+				game.setWindow(PauseWindow())
+			if interact.keys[pygame.K_m].deals():
+				from window.window import TaskWindow
+				game.setWindow(TaskWindow(4))
+			if interact.keys[pygame.K_SPACE].deals():
+				if renderer.getCameraAt() is None:
+					renderer.cameraAt(self.getPlayer())
+					game.hud.sendMessage(RenderableString('\\#cc66ccee视角锁定'))
+				elif renderer.cameraOffset.lengthManhattan() == 0:
+					game.hud.sendMessage(RenderableString('\\#cc00cc00视角解锁'))
+					renderer.cameraAt(None)
+				else:
+					game.hud.sendMessage(RenderableString('\\#cc7755ee居中锁定'))
+					renderer.cameraOffset.set(0, 0)
+			if interact.keys[pygame.K_e].deals():
+				if self.getPlayer() is not None:
+					from window.ingame import StatusWindow
+					game.setWindow(StatusWindow())
+			if interact.keys[pygame.K_RETURN].deals():
+				from window.input import AiWindow
+				game.setWindow(AiWindow())
 	
-	def render(self, delta: float, at: Union[Vector, None]) -> None:
+	def render(self, delta: float) -> None:
 		ct = renderer.getCenter().getVector().divide(renderer.getMapScale())
 		block2 = ct.clone().add(renderer.getCamera().get()).getBlockVector().add(1, 1)
 		block1 = ct.reverse().add(renderer.getCamera().get()).getBlockVector().subtract(1, 1)
@@ -96,17 +92,22 @@ class World(Renderable):
 				continue
 			newList.append(e)
 		newList.sort(key=lambda k: k.getPosition().y)
+		newListLength = len(newList)
 		e = 0
-		for j in range(block1.y, block2.y + 1):
-			for i in range(block1.x, block2.x + 1):
+		j = block1.y
+		while j <= block2.y:
+			i = block1.x
+			while i <= block2.x:
 				b = self._ground.get(hash(BlockVector(i, j)))
 				if b is None:
+					i += 1
 					continue
-				b.render(delta, at)
+				b.render(delta)
+				i += 1
 			j += 1
-			while e < len(newList):
+			while e < newListLength:
 				if newList[e].getPosition().y <= j:
-					newList[e].render(delta, at)
+					newList[e].render(delta)
 					e += 1
 				else:
 					break
@@ -141,6 +142,9 @@ class World(Renderable):
 	
 	def getRandom(self) -> random.Random:
 		return self._seed
+	
+	def getID(self) -> int:
+		return self._id
 	
 	def rayTraceBlock(self, start: Vector, direction: Vector, length: float, width: float = 0) -> list[tuple[Block | BlockVector, Vector]]:
 		"""
@@ -212,8 +216,8 @@ def generateRandom(seed_or_random=None) -> random.Random:
 
 
 class DynamicWorld(World):
-	def __init__(self, worldID: int, name: str, seed: int | None = None):
-		super().__init__(worldID, name, seed)
+	def __init__(self, name: str, seed: int | None = None):
+		super().__init__(0, name, seed)
 		self._camera_position: Vector = Vector(0, 0)
 		self._lay_egg_button: Button | None = None
 		self._chicken_growth = 0  # 小鸡的成长值
@@ -235,13 +239,13 @@ class DynamicWorld(World):
 		for i in range(10):
 			self.addEntity(entityManager.get('enemy.dog')(Vector(self._seed.random() * 100 - 50, self._seed.random() * 100 - 50)))
 		
-		#w = int(self._seed.random() * 100 - 51)
-		#m = int(self._seed.random() * 100 - 51)
+		# w = int(self._seed.random() * 100 - 51)
+		# m = int(self._seed.random() * 100 - 51)
 		w = 0
 		m = 0
-		for i in range(w,w+2):
-			for j in range(m,m+2):
-				self.getBlockAt(BlockVector(i,j)).holdAppend(blockManager.get('hold.door')(BlockVector(i,j)))
+		for i in range(w, w + 2):
+			for j in range(m, m + 2):
+				self.getBlockAt(BlockVector(i, j)).holdAppend(blockManager.get('hold.door')(BlockVector(i, j)))
 	
 	def generate_map(self) -> None:
 		for i in range(-50, 50):
@@ -250,62 +254,15 @@ class DynamicWorld(World):
 				block = blockManager.dic.get(self._seed.choice(['nature.grass', 'nature.path', 'nature.farmland']))(v)
 				self._ground[hash(v)] = block
 	
-	def passTick(self) -> None:
-		super().tick()
-		if self._player:
-			self.update_camera_position()
-			if self._player.growth_value >= 100 and not self._lay_egg_button:
-				self.create_lay_egg_button()
-		
-	
-	def render(self, delta: float, at: Union[Vector, None]) -> None:
-		super().render(delta, at)
+	def render(self, delta: float) -> None:
+		super().render(delta)
 		if self._lay_egg_button:
-			self._lay_egg_button.render(delta, at)
+			self._lay_egg_button.render(delta)
 	
-	def update_camera_position(self) -> None:
-		if self._player:
-			# 设置镜头位置为小鸡位置，但限制在地图范围内
-			self._camera_position = self._player.getPosition().subtract(Vector(20, 20))  # 假设镜头跟随小鸡并保持20个单位的距离
-			self._camera_position = self._camera_position.clamp(Vector(-30, -30), Vector(30, 30))  # 限制镜头位置在合理范围内
-	
-	def create_lay_egg_button(self) -> None:
-		self._lay_egg_button = Button(
-			Location.LEFT_TOP,
-			0,
-			0,
-			0.09,
-			0.12,
-			RenderableString('下蛋'),
-			Description([RenderableString("立即下蛋")]),
-			Location.CENTER
-		)
-		self._lay_egg_button.onMouseDown = self.on_lay_egg_button_click
-	
-		
-	def increase_chicken_growth(self, amount: int) -> None:
-		self._chicken_growth += amount
-		if self._chicken_growth >= 100:
-			self.create_lay_egg_button()
-		if self._chicken and self._chicken.growth_value >= 50 and self._chicken.texture.path == 'else/chicken_small':
-			self._chicken.texture = resourceManager.getOrNew('else/chicken_big')  # 更改小鸡图片为大图片
-	
-	def getCameraPosition(self) -> Vector:
-		return self._camera_position
-	
-	def getLayEggButton(self) -> Button | None:
-		return self._lay_egg_button
-	
-	def getChickenGrowth(self) -> int:
-		return self._chicken_growth
-	
-	def getChickenNestPosition(self) -> BlockVector:
-		return self._chicken_nest_position
-
 
 class WitchWorld(World):
-	def __init__(self, worldID: int, name: str, seed: int | None = None):
-		super().__init__(worldID, name, seed)
+	def __init__(self):
+		super().__init__(1, '老巫鸡的密室', None)
 		self._camera_position: Vector = Vector(0, 0)
 		self._lay_egg_button: Button | None = None
 		self._chicken_growth = 0  # 小鸡的成长值
@@ -327,14 +284,10 @@ class WitchWorld(World):
 			self.addEntity(entityManager.get('enemy.dog')(Vector(self._seed.random() * 10 - 5, self._seed.random() * 10 - 5)))
 		
 		self.addEntity(entityManager.get('entity.witch')(Vector(-4, 0)))
-
+	
 	def generate_map(self) -> None:
 		for i in range(-5, 5):
 			for j in range(-5, 5):
 				v = BlockVector(i, j)
 				block = blockManager.dic.get('witch.blue')(v)
 				self._ground[hash(v)] = block
-	
-	
-	
-	

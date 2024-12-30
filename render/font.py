@@ -90,7 +90,6 @@ realFontHeight: int = 0
 realHalfHeight: int = 0
 
 
-@times
 def setScale(scale: float) -> None:
 	global fontHeight, realFontHeight, realHalfHeight
 	fontHeight = int(scale)
@@ -101,12 +100,16 @@ def setScale(scale: float) -> None:
 
 
 def initializeFont() -> None:
+	global realFontHeight
+	global realHalfHeight
 	allFonts[0] = Font('./assets/font/stsong.ttf', 5)
 	allFonts[1] = Font('./assets/font/sword_art_online.ttf', -13)
 	allFonts[2] = Font('./assets/font/yumindb.ttf', 2)
 	allFonts[10] = Font('./assets/font/stsong.ttf', 5, True)
 	allFonts[11] = Font('./assets/font/sword_art_online.ttf', -13, True)
 	allFonts[12] = Font('./assets/font/yumindb.ttf', 2, True)
+	realFontHeight = allFonts[0].get(False, False, False, False).get_height()
+	realHalfHeight = allFonts[10].get(False, False, False, False).get_height()
 
 
 def finalize() -> None:

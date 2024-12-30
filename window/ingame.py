@@ -32,10 +32,10 @@ class StatusWindow(Window):
 			self._widgets.append(b)
 			y += 0.05
 	
-	def render(self, delta: float, at=None) -> None:
+	def render(self, delta: float) -> None:
 		if game.getWorld().getPlayer() is not None:
 			game.getWorld().getPlayer().getTexture().renderAtInterface()
 	
 	def tick(self) -> None:
-		if interact.keys[pygame.K_ESCAPE].deal() or interact.keys[pygame.K_e].deal():
+		if interact.keys[pygame.K_ESCAPE].deals() or interact.keys[pygame.K_e].deals():
 			game.setWindow(self.lastOpen)
