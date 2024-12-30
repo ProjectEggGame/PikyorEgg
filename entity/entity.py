@@ -581,6 +581,7 @@ class Witch(Entity):
 	def tick(self) -> None:
 		player = game.getWorld().getPlayer()
 		if player is not None and player.getPosition().distanceManhattan(self.getPosition()) <= 0.6:
+			game.getWorld(0).setPlayer(player)
 			game.setWorld(0)
 
 

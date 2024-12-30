@@ -120,21 +120,22 @@ class InputWidget(Widget):
 			return True
 		return False
 	
-	def __checkKey(self, keyCode: int, keySet: list[Status], lastDeal) -> int:
+	def __checkKey(self, keyCode: int, lastDeal) -> int:
+		status = interact.keys[keyCode] if keyCode < interact.KEY_COUNT else interact.specialKeys[keyCode & interact.KEY_COUNT]
 		if self._keyDealing == -1:  # 无处理
-			ret = keySet[keyCode].deal()
+			ret = status.deal()
 			if ret != 0:
 				self._keyDealing = keyCode
 				self._dealTimeLimit = -1
 				return ret
 		elif self._keyDealing != keyCode:  # 争夺处理
-			ret = keySet[keyCode].deal()
+			ret = status.deal()
 			if ret != 0:
 				self._keyDealing = keyCode
 				self._dealTimeLimit = -1
 				return ret
 		else:  # 就在处理自身
-			return keySet[keyCode].deal()
+			return status.deal()
 		return lastDeal
 	
 	def tick(self) -> None:
@@ -155,12 +156,15 @@ class InputWidget(Widget):
 			self.timeCount -= 1
 		if self._dealTimeLimit > 0:
 			self._dealTimeLimit -= 1
-		deals = self.__checkKey(pygame.K_BACKSPACE, interact.keys, 0)
-		deals = self.__checkKey(pygame.K_DELETE, interact.keys, deals)
-		deals = self.__checkKey(pygame.K_UP & interact.KEY_COUNT, interact.specialKeys, deals)
-		deals = self.__checkKey(pygame.K_DOWN & interact.KEY_COUNT, interact.specialKeys, deals)
-		deals = self.__checkKey(pygame.K_LEFT & interact.KEY_COUNT, interact.specialKeys, deals)
-		deals = self.__checkKey(pygame.K_RIGHT & interact.KEY_COUNT, interact.specialKeys, deals)
+		deals = self.__checkKey(pygame.K_BACKSPACE, 0)
+		deals = self.__checkKey(pygame.K_DELETE, deals)
+		deals = self.__checkKey(pygame.K_UP, deals)
+		deals = self.__checkKey(pygame.K_DOWN, deals)
+		deals = self.__checkKey(pygame.K_LEFT, deals)
+		deals = self.__checkKey(pygame.K_RIGHT, deals)
+		if deals == 0:
+			self._dealTimeLimit = 8
+			self._keyDealing = -1
 		if self._dealTimeLimit > 0:
 			self._dealTimeLimit -= 1
 		else:
@@ -202,6 +206,7 @@ class InputWidget(Widget):
 							self._realText = self._realText[:self.caret] + self._realText[self.caret + deals:]
 					self.timeCount = 10
 				case pygame.K_LEFT:
+					utils.info(123)
 					crt = self.caret
 					crt -= deals
 					if crt < 0:
@@ -266,7 +271,6 @@ class InputWidget(Widget):
 			s.fill(colorSelector)
 			s.set_alpha(head >> 24)
 			renderer.getCanvas().blit(s, (self._x, self._y))
-		
 		text = self._realText if self._displayText is None else self._displayText
 		texts = []
 		from utils.text import font as _f
@@ -400,7 +404,6 @@ class AiWindow(InputWindow):
 						self.rendering = len(aiHistory)
 		scr = interact.scroll.dealScroll()
 		rd = self.rendering + scr
-		utils.info(rd, self.rendering, self.canRender, len(aiHistory))
 		if rd < self.canRender:
 			rd = self.canRender
 		if rd >= len(aiHistory):

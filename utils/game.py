@@ -81,7 +81,9 @@ class Game:
 		else:
 			renderer.cameraAt(self._mainWorld.getPlayer())
 	
-	def getWorld(self) -> Union['World', None]:
+	def getWorld(self, worldID: int | None = None) -> Union['World', None]:
+		if worldID is not None:
+			return self.world[worldID]
 		return self._mainWorld
 	
 	def quit(self) -> None:
