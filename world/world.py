@@ -78,6 +78,9 @@ class World(Renderable):
 			if interact.keys[pygame.K_RETURN].deals():
 				from window.input import AiWindow
 				game.setWindow(AiWindow())
+			if interact.keys[pygame.K_h].deals():
+				from window.window import BuildingWindow
+				game.setWindow(BuildingWindow())
 	
 	def render(self, delta: float) -> None:
 		ct = renderer.getCenter().getVector().divide(renderer.getMapScale())

@@ -233,10 +233,9 @@ class StartWindow(Window):
 		self._widgets.append(Button(Location.CENTER, 0, 0.05, 0.4, 0.08, RenderableString("\\.00FCE8AD\\01LINK START"), Description([RenderableString("开始游戏")]), textLocation=Location.CENTER))
 		self._widgets[0].onMouseDown = lambda x, y, b: b[0] == 1 and game.setWindow(PlotWindow().setLastOpen(self)) or True
 		self._widgets.append(Button(Location.CENTER, 0, 0.15, 0.4, 0.08, RenderableString("\\.00FCE8AD\\01LOAD"), Description([RenderableString("加载存档")]), textLocation=Location.CENTER))
-		self._widgets[1].onMouseDown = lambda x, y, b: b[0] == 1 and game.setWindow(BuildingWindow().setLastOpen(self)) or True
+		self._widgets[1].onMouseDown = lambda x, y, b: b[0] == 1 and game.setWindow(LoadWindow().setLastOpen(self)) or True
 		self._widgets.append(Button(Location.CENTER, 0, 0.25, 0.4, 0.08, RenderableString("\\.00FCE8AD\\01OPTIONS"), Description([RenderableString("设置")]), textLocation=Location.CENTER))
-		self._widgets[2].onMouseDown = _1
-		# self._widgets[2].onMouseDown = lambda x, y, b: b[0] == 1 and game.setWindow(SettingsWindow().setLastOpen(self)) or True
+		self._widgets[2].onMouseDown = lambda x, y, b: b[0] == 1 and game.setWindow(SettingsWindow().setLastOpen(self)) or True
 		self._widgets.append(Button(Location.CENTER, 0, 0.35, 0.4, 0.08, RenderableString("\\.00FCE8AD\\01SHUT DOWN"), Description([RenderableString("结束游戏")]), textLocation=Location.CENTER))
 		self._widgets[3].onMouseDown = lambda x, y, b: b[0] == 1 and game.quit() or True
 		self._widgets[0].color = PresetColors.color
@@ -699,7 +698,7 @@ class BuildingWindow(Window):
 
 	def tick(self) -> None:
 		super().tick()
-		building_image = ['window/building/building1',
+		building_image = ['window/building2/building1',
 					'window/building/building2',
 					'window/building/building3',
 					'window/building/building4',
@@ -722,13 +721,7 @@ class BuildingWindow(Window):
 class NuturingWindow(Window):
 	def __init__(self):
 		super().__init__("Nuturing......")
-		building_image = ['window/building/building1',
-					'window/building/building2',
-					'window/building/building3',
-					'window/building/building4',
-					'window/building/building5',
-					'window/building/building6',
-					'window/building/building7']
+		building_image = []
 		global pic
 		self._texture = resourceManager.getOrNew(building_image[pic])
 		self._texture.adaptsMap(False)
@@ -740,7 +733,7 @@ class NuturingWindow(Window):
 	def render(self, delta: float) -> None:
 		w, h = renderer.getSize().getTuple()
 		renderer.fill(0xffee0000, int(0.3 * w), int(0.3 * h), int(0.4 * w), int(0.2 * h))
-		renderer.renderString(RenderableString("\\00\\#ff000000正在织鸡窝"), int(0.5 * w), int(0.4 * h), 0xff000000, Location.CENTER)
+		renderer.renderString(RenderableString("\\00\\#ff000000正在接受教育"), int(0.5 * w), int(0.4 * h), 0xff000000, Location.CENTER)
 
 	def tick(self) -> None:
 		super().tick()
