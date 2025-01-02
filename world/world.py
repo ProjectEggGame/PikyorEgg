@@ -32,6 +32,7 @@ class World(Renderable):
 		self._entityList: set['Entity'] = set['Entity']()
 		self._ground: dict[int, Block] = dict[int, Block]()
 		self._seed: random.Random = random.Random(seed or 0)
+		
 	
 	@staticmethod
 	def generateDefaultWorld(seed: int | None = None) -> 'World':
@@ -59,7 +60,7 @@ class World(Renderable):
 				game.setWindow(PauseWindow())
 			if interact.keys[pygame.K_m].deals():
 				from window.window import TaskWindow
-				game.setWindow(TaskWindow(4))
+				game.setWindow(TaskWindow())
 			if interact.keys[pygame.K_SPACE].deals():
 				if renderer.getCameraAt() is None:
 					renderer.cameraAt(self.getPlayer())

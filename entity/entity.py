@@ -458,6 +458,8 @@ class Player(Entity, Damageable):
 		self.skillSelecting: int = -1
 		self.__allSkills: dict[int, type] = skillManager.dic.copy()
 		self.__allSkills.pop(0)
+		self.progress = 1
+		self.skillget = True
 	
 	def onDeath(self) -> None:
 		flag = True
@@ -506,6 +508,13 @@ class Player(Entity, Damageable):
 			ret = amount
 		for i in self.postGrow:
 			i(ret, src)
+
+		if self.growth_value == 20 and self.skillget == True:
+			game.hud.sendMessage(RenderableString('\\#ffee0000获得了新技能'))
+			self.skillget == False
+		if self.growth_value >= 100 and self.progress == 1:
+			game.hud.sendMessage(RenderableString('\\#ffee0000恭喜你，解锁了新的任务'))
+			self.progress = 2
 		return ret
 	
 	def pick(self, amount: int, src: Entity | str) -> int:
@@ -522,8 +531,25 @@ class Player(Entity, Damageable):
 			ret = amount
 		for i in self.postPick:
 			i(ret, src)
+		if self.backpack_stick >= 10 and self.progress == 2 :  #加一个对小鸡位置的描述：小鸡在家中
+			from window.window import BuildingWindow
+			game.setWindow(BuildingWindow())
+			#播放小鸡施工建筑（音乐+动画）
+			game.hud.sendMessage(RenderableString('\\#ffee0000恭喜你，解锁了新的任务'))
+			self.progress = 3
 		return ret
 	
+	def nuture(self):
+
+		if self.progress == 3:
+			from window.window import NuturingWindow
+			game.setWindow(NuturingWindow())
+			#播放小鸡受到巫婆鸡教诲的动画+音乐
+			game.hud.sendMessage(RenderableString('\\#ffee0000恭喜你，解锁了新的任务'))
+			self.progress = 4
+		else:
+			game.hud.sendMessage(RenderableString('\\#ffee0000需要先完成前面的任务才可以接受巫婆鸡的教诲'))
+
 	def tick(self) -> None:
 		for i in self.preTick:
 			i()
@@ -596,7 +622,29 @@ class Coop(Entity):
 	def load(cls, d: dict, entity: Union['Entity', None] = None) -> Union['Entity', None]:
 		e = Coop(Vector.load(d['position']))
 		return Entity.load(d, e)
-
+	
+building_time = 0
+class Building_coop(Entity):
+	def __init__(self, position: Vector):
+		super().__init__('entity.coop', '鸡窝', EntityDescription(self, [RenderableString('鸡舍')]), [resourceManager.getOrNew('entity/coop')], position, 0)
+	
+	def passTick(self) -> None:
+		"""
+		内置函数，不应当额外调用，不应当随意重写。
+		重写时必须注意调用父类的同名函数，防止遗漏逻辑。
+		除非你一定要覆写当中的代码，否则尽量不要重写这个函数。
+		"""
+		self._position.add(self.__velocity)
+		self.processMove()
+		i = int(building_time)
+		self._texture = self._textureSet[i]
+		building_time += 0.5
+		self.tick()
+	
+	@classmethod
+	def load(cls, d: dict, entity: Union['Entity', None] = None) -> Union['Entity', None]:
+		e = Coop(Vector.load(d['position']))
+		return Entity.load(d, e)
 
 class BlueEgg(Entity):
 	def __init__(self, position: Vector):
@@ -615,6 +663,7 @@ class Witch(Entity):
 	def tick(self) -> None:
 		player = game.getWorld().getPlayer()
 		if player is not None and player.getPosition().distanceManhattan(self.getPosition()) <= 0.6:
+			player.nuture()
 			game.getWorld(0).setPlayer(player)
 			game.setWorld(0)
 

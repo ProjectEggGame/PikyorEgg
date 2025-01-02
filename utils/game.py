@@ -15,7 +15,7 @@ from utils.vector import Vector
 
 if TYPE_CHECKING:
 	from world.world import World
-	from window.window import Window, FloatWindow
+	from window.window import Window, FloatWindow 
 	from window.hud import Hud
 
 
@@ -29,7 +29,7 @@ class Game:
 		self.hud: Union['Hud', None] = None
 		self.world: dict[int, 'World'] = {}
 		self.mouseAtMap: Vector = Vector()
-	
+
 	def tick(self) -> None:
 		notPause: bool = True
 		if self._window.get() is not None:
