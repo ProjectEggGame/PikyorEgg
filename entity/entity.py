@@ -1,8 +1,9 @@
 import random
 
 import pygame
-from typing import TYPE_CHECKING, Union, Callable
+from typing import TYPE_CHECKING, Union, Callable, ClassVar, TypeVar
 
+from entity.active_skill import Active, ActiveFlash
 from entity.manager import entityManager, skillManager
 from entity.skill import Skill
 from utils import utils
@@ -32,13 +33,14 @@ class Entity(Element):
 		self.__renderInterval: int = 6
 		self.__velocity: Vector = Vector(0, 0)
 		self._position: Vector = position
+		self._renderPosition: Vector = position
 		self.basicMaxSpeed: float = speed
 		self._maxSpeed: float = speed
 		self._setVelocity: Vector = Vector(0, 0)
 		self._textureSet: list[Texture] = texture
 		self._id: str = entityID
 	
-	def __processMove(self) -> None:
+	def processMove(self) -> None:
 		if (vLength := self._setVelocity.length()) == 0:
 			self.__velocity.set(0, 0)
 			return
@@ -139,7 +141,7 @@ class Entity(Element):
 		除非你一定要覆写当中的代码，否则尽量不要重写这个函数。
 		"""
 		self._position.add(self.__velocity)
-		self.__processMove()
+		self.processMove()
 		if abs(self.__velocity.x) >= abs(self.__velocity.y):
 			if self.__velocity.x < 0:
 				self.__renderInterval -= 1
@@ -199,7 +201,7 @@ class Entity(Element):
 		pass
 	
 	def render(self, delta: float) -> None:
-		self._texture.renderAtMap(self._position + self.__velocity * delta)
+		self._texture.renderAtMap(self._renderPosition)
 	
 	def setVelocity(self, v: Vector) -> None:
 		"""
@@ -210,6 +212,12 @@ class Entity(Element):
 	
 	def getPosition(self) -> Vector:
 		return self._position.clone()
+	
+	def updatePosition(self, delta: float | None = None) -> Vector:
+		if delta is None:
+			return self._renderPosition
+		self._renderPosition = self._position + self.__velocity * delta
+		return self._renderPosition
 	
 	def getVelocity(self) -> Vector:
 		return self.__velocity.clone()
@@ -446,7 +454,9 @@ class Player(Entity, Damageable):
 		self.prePick: list[Callable[[int, Entity | str], None]] = []
 		self.postPick: list[Callable[[int, Entity | str], None]] = []
 		self.skills: dict[int, Skill] = {}
-		self.__allSkills: dict[int, Skill] = skillManager.dic.copy()
+		self.activeSkills: list[Active] = []
+		self.skillSelecting: int = -1
+		self.__allSkills: dict[int, type] = skillManager.dic.copy()
 		self.__allSkills.pop(0)
 	
 	def onDeath(self) -> None:
@@ -546,12 +556,36 @@ class Player(Entity, Damageable):
 					game.getWorld().addEntity(BlueEgg(self._position.clone()))
 					if len(self.__allSkills) > 0:
 						k = game.getWorld().getRandom().sample(sorted(self.__allSkills), 1)
-						self.skills[k[0]] = self.__allSkills.pop(k[0])()
-						self.skills[k[0]].upgrade()
+						sk: Skill = self.__allSkills.pop(k[0])()
+						sk.upgrade()
+						if isinstance(sk, Active):
+							self.activeSkills.append(sk)
+						else:
+							self.skills[k[0]] = sk
 						game.hud.sendMessage(RenderableString('你获得了新的技能：') + self.skills[k[0]].getName())
+			for i in range(9):
+				push = interact.keys[pygame.K_1 + i].deal() & 1
+				if i >= len(self.activeSkills):
+					continue
+				if push:
+					if self.skillSelecting == i:
+						self.skillSelecting = -1
+					else:
+						self.skillSelecting = i
+			if interact.right.deals():
+				self.skillSelecting = -1
+			if self.skillSelecting != -1 and interact.left.deals():
+				self.activeSkills[self.skillSelecting].onUse(game.mouseAtMap)
+				self.skillSelecting = -1
 		self.setVelocity(v.normalize().multiply(self._maxSpeed))
 		for i in self.postTick:
 			i()
+		
+	def renderSkill(self, delta: float) -> None:
+		if len(self.activeSkills) == 0:
+			self.activeSkills.append(ActiveFlash())
+		for i in range(len(self.activeSkills)):
+			self.activeSkills[i].render(delta, game.mouseAtMap, i == self.skillSelecting)
 
 
 class Coop(Entity):

@@ -12,7 +12,7 @@ if TYPE_CHECKING:
 	from entity.entity import Entity
 
 import pygame
-from pygame import Surface
+from pygame import Surface, SRCALPHA
 from utils.vector import Vector, BlockVector
 from utils.error import IllegalStatusException, InvalidOperationException
 from utils.sync import SynchronizedStorage
@@ -155,7 +155,7 @@ class Renderer:
 				self._camera.apply(self._camera.getNew().clone())
 				self.cameraOffset.set(0, 0)
 		else:
-			self._camera.get().set(self._cameraAt.getPosition() + self._cameraAt.getVelocity() * delta)
+			self._camera.get().set(self._cameraAt.updatePosition(delta))
 			self._camera.getNew().set(self._camera.get().clone())
 			self._camera.get().add(self.cameraOffset)
 		self._mapBasis = self._canvasCenter.clone().subtract(self._camera.get().clone().multiply(self._mapScale).getBlockVector())
@@ -221,6 +221,12 @@ class Renderer:
 	def getOffset(self) -> BlockVector:
 		return self._offset.clone()
 	
+	def getMapObjectBasis(self) -> BlockVector:
+		return self._mapObjectBasis
+	
+	def getMapBasis(self) -> BlockVector:
+		return self._mapBasis
+	
 	def fill(self, color: int, x: int, y: int, w: int, h: int) -> None:
 		if color & 0xff000000 == 0xff000000:
 			self._canvas.fill(((color >> 16) & 0xff, (color >> 8) & 0xff, color & 0xff), (x, y, w, h))
@@ -230,16 +236,22 @@ class Renderer:
 			s.set_alpha(color >> 24)
 			self._canvas.blit(s, (x, y))
 	
-	def renderAtMap(self, src: Surface, mapPoint: Vector, fromPos: Vector | None = None, fromSize: Vector | None = None) -> None:
+	def renderAtMap(self, src: Surface, mapPoint: Vector, fromPos: Vector | None = None, fromSize: Vector | None = None, pxOffset: BlockVector = None) -> None:
 		"""
 		按地图的方式渲染目标，会忽略margin，会考虑camera
 		"""
 		self.assertRendering()
 		dst = self._canvas
 		if fromPos is None or fromSize is None:
-			dst.blit(src, (mapPoint * self._mapScale).getBlockVector().add(self._mapObjectBasis).getTuple())
+			p = (mapPoint * self._mapScale).getBlockVector().add(self._mapObjectBasis)
+			if pxOffset is not None:
+				p.add(pxOffset)
+			dst.blit(src, p.getTuple())
 		else:
-			dst.blit(src, ((mapPoint + fromPos) * self._mapScale).getBlockVector().add(self._mapObjectBasis).getTuple(), (fromPos.x, fromPos.y, fromSize.x, fromSize.y))
+			p = ((mapPoint + fromPos) * self._mapScale).getBlockVector().add(self._mapObjectBasis)
+			if pxOffset is not None:
+				p.add(pxOffset)
+			dst.blit(src, p.getTuple(), (fromPos.x, fromPos.y, fromSize.x, fromSize.y))
 	
 	def renderAsBlock(self, src: Surface, mapPoint: BlockVector, fromPos: BlockVector | None = None, fromSize: BlockVector | None = None):
 		self.assertRendering()
@@ -358,10 +370,7 @@ class Renderer:
 		:param size_y: 原图y，置None默认16
 		:return: 缩放后的表面
 		"""
-		return pygame.transform.scale(s, (
-			self._mapScale if size_x is None else (self._mapScale * size_x) // 16,
-			self._mapScale if size_y is None else (self._mapScale * size_y) // 16
-		))
+		return pygame.transform.scale_by(s, self._mapScale / 16)
 	
 	def uiScaleSurface(self, s: Surface) -> Surface:
 		return pygame.transform.scale_by(s, self._uiScale)

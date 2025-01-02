@@ -87,7 +87,7 @@ class World(Renderable):
 			newList2.append(self._player)
 		newList = []
 		for e in newList2:
-			p = e.getPosition()
+			p = e.updatePosition(delta)
 			if p.x < block1.x or p.x > block2.x or p.y < block1.y or p.y > block2.y:
 				continue
 			newList.append(e)
@@ -106,11 +106,12 @@ class World(Renderable):
 				i += 1
 			j += 1
 			while e < newListLength:
-				if newList[e].getPosition().y <= j:
+				if newList[e].updatePosition().y <= j:
 					newList[e].render(delta)
 					e += 1
 				else:
 					break
+		self._player.renderSkill(delta)
 	
 	def setPlayer(self, player: 'Player') -> None:
 		self._player = player

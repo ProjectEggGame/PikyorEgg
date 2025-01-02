@@ -129,7 +129,7 @@ class Vector:
 	def add(self, x: Union[float, tuple[float, float], 'Vector'], y: float | None = None) -> 'Vector':
 		if isinstance(x, tuple):
 			x, y = x
-		elif isinstance(x, Vector):
+		elif isinstance(x, Vector) or isinstance(x, BlockVector):
 			x, y = x.x, x.y
 		self.x += x
 		self.y += y
@@ -138,7 +138,7 @@ class Vector:
 	def subtract(self, x: Union[float, tuple[float, float], 'Vector'], y: float | None = None) -> 'Vector':
 		if isinstance(x, tuple):
 			x, y = x
-		elif isinstance(x, Vector):
+		elif isinstance(x, Vector) or isinstance(x, BlockVector):
 			x, y = x.x, x.y
 		self.x -= x
 		self.y -= y
@@ -320,7 +320,7 @@ class BlockVector:
 		if isinstance(x_or_pos, tuple):
 			self.x = int(x_or_pos[0])
 			self.y = int(x_or_pos[1])
-		elif isinstance(x_or_pos, BlockVector):
+		elif isinstance(x_or_pos, BlockVector) or isinstance(x_or_pos, Vector):
 			self.x = int(x_or_pos.x)
 			self.y = int(x_or_pos.y)
 		else:
@@ -338,7 +338,7 @@ class BlockVector:
 	def add(self, x: Union[int, tuple[int, int], 'BlockVector'], y: int | None = None) -> 'BlockVector':
 		if isinstance(x, tuple):
 			x, y = x
-		elif isinstance(x, BlockVector):
+		elif isinstance(x, BlockVector) or isinstance(x, Vector):
 			x, y = x.x, x.y
 		self.x += x
 		self.y += y
@@ -347,7 +347,7 @@ class BlockVector:
 	def subtract(self, x: Union[int, tuple[int, int], 'BlockVector'], y: int | None = None) -> 'BlockVector':
 		if isinstance(x, tuple):
 			x, y = x
-		elif isinstance(x, BlockVector):
+		elif isinstance(x, BlockVector) or isinstance(x, Vector):
 			x, y = x.x, x.y
 		self.x -= x
 		self.y -= y

@@ -23,20 +23,20 @@ class Skill:
 		self.texture = resourceManager.getOrNew(f'skill/{self._id}')
 		self.texture.adaptsSystem()
 		self.texture.adaptsMap(False)
-		self._coolDown: int = 0
-		self._maxCoolDown: int = 0
+		self.coolDown: int = 0
+		self.maxCoolDown: int = 0
 	
 	def getCoolDown(self) -> int:
 		"""
 		当前剩余的技能冷却时间，为0则已就绪
 		"""
-		return self._coolDown
+		return self.coolDown
 	
 	def getMaxCoolDown(self) -> int:
 		"""
 		技能冷却总时间，为0则不需要冷却
 		"""
-		return self._maxCoolDown
+		return self.maxCoolDown
 	
 	def getLevel(self) -> int:
 		return self._level
@@ -47,8 +47,9 @@ class Skill:
 	def getName(self=None) -> RenderableString:
 		return RenderableString('\\00空白技能')
 	
-	def render(self, delta: float, at: BlockVector) -> int:
+	def render(self, delta: float, at: BlockVector, chosen: bool = None, isRenderIcon: bool = None) -> int:
 		"""
+		若为非主动技能，后两个参数忽略
 		:return: 宽度
 		"""
 		self.texture.renderAtInterface(at)
@@ -168,7 +169,7 @@ class SkillRevive(Skill):
 		return False
 	
 	def onDeath(self):
-		if self._coolDown <= 0:
+		if self.coolDown <= 0:
 			self._player.setHealth((20 + 3 * self._level) / 100 * self._player.getMaxHealth())
 			self._coolDown = self._maxCoolDown
 			game.hud.sendMessage(RenderableString('\\.ccff0000\\#ffeeeeee                 复生！                '))

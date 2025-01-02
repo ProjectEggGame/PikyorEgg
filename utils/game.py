@@ -28,6 +28,7 @@ class Game:
 		self.floatWindow: Union['FloatWindow', None] = None  # 在主程序中初始化
 		self.hud: Union['Hud', None] = None
 		self.world: dict[int, 'World'] = {}
+		self.mouseAtMap: Vector = Vector()
 	
 	def tick(self) -> None:
 		notPause: bool = True
@@ -92,11 +93,11 @@ class Game:
 	def processMouse(self, event: pygame.event.Event | None = None):
 		if self._mainWorld is not None and self._window.get() is None:
 			self.floatWindow.clear()
-			loc = interact.mouse.clone().subtract(renderer.getCenter()).getVector().divide(renderer.getMapScale()).add(renderer.getCamera().get())
+			self.mouseAtMap = interact.mouse.clone().subtract(renderer.getCenter()).getVector().divide(renderer.getMapScale()).add(renderer.getCamera().get())
 			target1, target2 = None, None
 			targetDist1, targetDist2 = 1, 1
 			for e in (self._mainWorld.getEntities() + [self._mainWorld.getPlayer()]):
-				if (dist := e.getPosition().add(e.getTexture().getOffset()).distanceManhattan(loc)) < 0.5 and dist < targetDist2:
+				if (dist := e.getPosition().add(e.getTexture().getOffset()).distanceManhattan(self.mouseAtMap)) < 0.5 and dist < targetDist2:
 					if dist < targetDist1:
 						target1, target2 = e, target1
 						targetDist1, targetDist2 = dist, targetDist1
@@ -108,7 +109,7 @@ class Game:
 				self.floatWindow.submit(target2.description)
 			elif target1 is not None:
 				self.floatWindow.submit(target1.description)
-			block = self._mainWorld.getBlockAt(loc.getBlockVector())
+			block = self._mainWorld.getBlockAt(self.mouseAtMap.getBlockVector())
 			if block is not None:
 				self.floatWindow.submit(block.getDescription())
 		if event is not None:

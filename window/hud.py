@@ -139,7 +139,11 @@ class Hud(Renderable):
 		
 		pos: BlockVector = BlockVector(margin, margin << 2)
 		for s in player.skills.values():
-			pos.x += s.render(delta)
+			pos.x += s.render(delta, pos)
+		pos.x = margin
+		pos.y += renderer.getSystemScale() * 0.4
+		for s in player.activeSkills:
+			pos.x += s.render(delta, pos, player.skillSelecting, True)
 		
 		while len(self.messages) != 0 and game.tickCount - self.messages[0][0] > 80:
 			self.messages.popleft()

@@ -4,6 +4,8 @@ import time
 import pygame
 from threading import Thread, Lock
 
+from pygame import SRCALPHA
+
 from entity.entity import Player
 from interact import interact
 from render import font

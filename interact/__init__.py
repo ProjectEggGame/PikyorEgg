@@ -57,11 +57,11 @@ class Interact:
 				utils.warn(f'onMouse: unknown button {event.button}')
 		elif event.type == pygame.MOUSEBUTTONUP:
 			if event.button == 1:
-				self.left.set(True)
+				self.left.set(False)
 			elif event.button == 2:
-				self.right.set(True)
+				self.right.set(False)
 			elif event.button == 3:
-				self.middle.set(True)
+				self.middle.set(False)
 			elif event.button == 4:
 				self.scroll.scroll(-1)
 			elif event.button == 5:
