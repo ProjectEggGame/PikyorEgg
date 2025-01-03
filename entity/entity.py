@@ -499,6 +499,8 @@ class Player(Entity, Damageable):
 			chicken.__allSkills.pop(sk['id'])
 			chicken.skills[sk['id']] = s
 			s.init(chicken)
+			if s.getLevel() != -1:
+				s.upgrade()
 		Entity.load(d, chicken)
 		Damageable.load(d, chicken)
 		return chicken
@@ -622,8 +624,6 @@ class Player(Entity, Damageable):
 			i()
 	
 	def renderSkill(self, delta: float) -> None:
-		if len(self.activeSkills) == 0:
-			self.activeSkills.append(ActiveFlash())
 		for i in range(len(self.activeSkills)):
 			self.activeSkills[i].render(delta, game.mouseAtMap, i == self.skillSelecting)
 

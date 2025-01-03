@@ -92,7 +92,6 @@ class Game:
 	
 	def processMouse(self, event: pygame.event.Event | None = None):
 		if self._mainWorld is not None and self._window.get() is None:
-			self.floatWindow.clear()
 			self.mouseAtMap = interact.mouse.clone().subtract(renderer.getCenter()).getVector().divide(renderer.getMapScale()).add(renderer.getCamera().get())
 			target1, target2 = None, None
 			targetDist1, targetDist2 = 1, 1
@@ -104,6 +103,7 @@ class Game:
 					else:
 						target2 = e
 						targetDist2 = dist
+			self.floatWindow.clear()
 			if target2 is not None:
 				self.floatWindow.submit(target1.description)
 				self.floatWindow.submit(target2.description)

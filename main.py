@@ -143,7 +143,7 @@ def mainThread():
 					case pygame.KEYUP:
 						interact.onKey(event)
 					case pygame.MOUSEMOTION:
-						game.floatWindow.clear()  # 移动更新floatWindow
+						# game.floatWindow.clear()  # 移动更新floatWindow
 						interact.onMouse(event)
 						interact.mouse.subtract(renderer.getOffset())  # interact不能导入renderer，委托此处修正鼠标位置
 						if game.getWindow() is not None:

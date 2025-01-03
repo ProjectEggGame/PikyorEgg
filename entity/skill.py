@@ -18,14 +18,14 @@ class Skill:
 		self._level: int = 0
 		self._id: int = skillID
 		self.player = None
-		if game.getWorld() is not None:
-			self.init(game.getWorld().getPlayer())
 		self.description: SkillDescription = description
 		self.texture = resourceManager.getOrNew(f'skill/{self._id}')
 		self.texture.adaptsSystem()
 		self.texture.adaptsMap(False)
 		self.coolDown: int = 0
 		self.maxCoolDown: int = 0
+		if game.getWorld() is not None:
+			self.init(game.getWorld().getPlayer())
 	
 	def init(self, player) -> None:
 		"""加载时，技能和玩家同时加载，所以技能拿不到game.getWorld().getPlayer()。独立出来以方便处理。"""
@@ -44,6 +44,9 @@ class Skill:
 		return self.maxCoolDown
 	
 	def getLevel(self) -> int:
+		if self._level == -1:
+			self._level = 0
+			return -1
 		return self._level
 	
 	def upgradeCost(self) -> int:
@@ -79,10 +82,6 @@ class Skill:
 	def load(cls, d: dict) -> 'Skill':
 		skill = skillManager.get(d['id'])()
 		skill._level = d['level'] - 1
-		if skill._level == -1:
-			skill._level = 0
-		else:
-			skill.upgrade()
 		skill.coolDown = d['coolDown']
 		return skill
 
