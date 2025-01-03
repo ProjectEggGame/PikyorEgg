@@ -7,6 +7,7 @@ from utils.game import game
 from utils.error import InvalidOperationException, neverCall
 from utils.text import RenderableString, BlockDescription, Description
 from utils.vector import Vector, BlockVector
+from music.music import Music_player
 
 if TYPE_CHECKING:
 	from entity.entity import Entity
@@ -252,6 +253,7 @@ class GateBlock(Ground):
 		elif player is not None and self._position.contains(player.getPosition()):
 			gateBlockTimer -= 1
 			if gateBlockTimer == 0:
+				Music_player.sound_play(2)
 				from world.world import WitchWorld
 				world = WitchWorld()
 				world.setPlayer(player)

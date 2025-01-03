@@ -19,6 +19,7 @@ from render.renderable import Renderable
 from utils.vector import Vector, BlockVector
 from block.block import Block
 from window.widget import Button
+from music.music import Music_player
 
 
 class World(Renderable):
@@ -227,6 +228,8 @@ class DynamicWorld(World):
 		self.generate_map()  # 初始化地图
 		player = entityManager.get('player')(Vector(0, 0))
 		self.setPlayer(player)
+		Music_player.background_play(1)
+		Music_player.background_volume(0.1)
 		for i in range(200):
 			self.addEntity(entityManager.get('entity.rice')(Vector(self._seed.random() * 100 - 50, self._seed.random() * 100 - 50)))
 		for i in range(40):
@@ -270,6 +273,8 @@ class WitchWorld(World):
 		self._chicken_growth = 0  # 小鸡的成长值
 		self._chicken_nest_position = BlockVector(-4, 0)  # 鸡窝位置
 		self.generate_map()  # 初始化地图
+		Music_player.background_play(2)
+		Music_player.background_volume(0.1)
 		player = entityManager.get('player')(Vector(0, 0))
 		self.setPlayer(player)
 		'''

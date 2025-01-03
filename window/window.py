@@ -16,6 +16,7 @@ from render.renderable import Renderable
 from render.resource import Texture, resourceManager
 from window.widget import Widget, Button, Location, ColorSet
 from world.world import World, DynamicWorld, WitchWorld
+from music.music import Music_player
 
 
 class Window(Renderable):
@@ -247,6 +248,7 @@ class StartWindow(Window):
 		self._widgets[2].textColor = PresetColors.textColor
 		self._widgets[3].textColor = PresetColors.textColor.clone()
 		self._widgets[3].textColor.hovering = 0xffeeeeee
+		Music_player.background_play(0)
 	
 	def render(self, delta: float) -> None:
 		super().render(delta)

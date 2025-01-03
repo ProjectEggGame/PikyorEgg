@@ -20,6 +20,7 @@ from utils.game import game
 from utils.text import RenderableString, EntityDescription
 from render.resource import Texture
 from utils.element import Element
+from music.music import Music_player
 
 
 class Entity(Element):
@@ -402,6 +403,7 @@ class Rice(Entity):
 	def tick(self) -> None:
 		player = game.getWorld().getPlayer()
 		if player is not None and player.getPosition().distanceManhattan(self.getPosition()) <= 0.6:
+			Music_player.sound_play(0)
 			player.grow(2, self)
 			game.getWorld().removeEntity(self)
 			game.getWorld().addEntity(Rice(Vector(game.getWorld().getRandom().uniform(-50, 50), game.getWorld().getRandom().uniform(-50, 50))))
@@ -419,6 +421,7 @@ class Stick(Entity):
 	def tick(self) -> None:
 		player = game.getWorld().getPlayer()
 		if player is not None and player.getPosition().distanceManhattan(self.getPosition()) <= 0.6:
+			Music_player.sound_play(1)
 			player.grow(2, self)
 			game.getWorld().removeEntity(self)
 			game.getWorld().addEntity(Stick(Vector(game.getWorld().getRandom().uniform(-50, 50), game.getWorld().getRandom().uniform(-50, 50))))
