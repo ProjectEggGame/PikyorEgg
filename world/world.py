@@ -298,3 +298,6 @@ class WitchWorld(World):
 				v = BlockVector(i, j)
 				block = blockManager.dic.get('witch.blue')(v)
 				self._ground[hash(v)] = block
+
+
+#class BabybuiltWorld(World):
