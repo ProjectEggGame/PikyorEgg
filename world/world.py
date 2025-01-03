@@ -56,7 +56,7 @@ class World(Renderable):
 			if interact.keys[pygame.K_ESCAPE].deals():
 				from window.window import PauseWindow
 				game.setWindow(PauseWindow())
-			if interact.keys[pygame.K_m].deals():
+			if interact.keys[pygame.K_TAB].deals():
 				from window.window import TaskWindow
 				game.setWindow(TaskWindow())
 			if interact.keys[pygame.K_SPACE].deals():
@@ -229,7 +229,7 @@ class DynamicWorld(World):
 		player = entityManager.get('player')(Vector(0, 0))
 		self.setPlayer(player)
 		Music_player.background_play(1)
-		Music_player.background_volume(0.1)
+		Music_player.background_set_volume(0.1)
 		for i in range(200):
 			self.addEntity(entityManager.get('entity.rice')(Vector(self._seed.random() * 100 - 50, self._seed.random() * 100 - 50)))
 		for i in range(40):
@@ -274,7 +274,7 @@ class WitchWorld(World):
 		self._chicken_nest_position = BlockVector(-4, 0)  # 鸡窝位置
 		self.generate_map()  # 初始化地图
 		Music_player.background_play(2)
-		Music_player.background_volume(0.1)
+		Music_player.background_set_volume(0.1)
 		player = entityManager.get('player')(Vector(0, 0))
 		self.setPlayer(player)
 		'''

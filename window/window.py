@@ -447,16 +447,31 @@ class SettingsWindow(Window):
 			return True
 		
 		self._widgets[4].onMouseDown = _4
-		self._widgets.append(Button(Location.CENTER, -0.1, 0, 0.2, 0.08, RenderableString('\\01ScrollLock' if renderer.lockScroll else '\\01ScrollRelease'), Description([RenderableString("地图缩放锁定" if renderer.lockScroll else '滚动滚轮以改变地图缩放')]), Location.CENTER))
+		self._widgets.append(Button(Location.CENTER, -0.1, 0, 0.2, 0.08, RenderableString('\\01 Music OFF' if Music_player.turnon else '\\01Music On'), Description([RenderableString('\\01 关掉可爱的音乐' if Music_player.turnon else '\\01打开可爱的音乐')]), Location.CENTER))
 		
 		def _5(x, y, b):
 			if b[0] == 1:
-				renderer.lockScroll = not renderer.lockScroll
-				self._widgets[5].description = Description([RenderableString('地图缩放锁定' if renderer.lockScroll else '滚动滚轮以改变地图缩放')])
-				self._widgets[5].name = RenderableString('\\01ScrollLock' if renderer.lockScroll else '\\01ScrollRelease')
+				if Music_player.turnon:
+					Music_player.background_set_volume(0.0)
+				else:
+					Music_player.background_set_volume(0.2,setting=True)
+				Music_player.turnon = not Music_player.turnon
+
+				self._widgets[5].description = Description([RenderableString('\\01 关掉可爱的音乐' if Music_player.turnon else '\\01打开超级可爱的音乐')])
+				self._widgets[5].name = RenderableString('\\01Music OFF' if Music_player.turnon else '\\01Music ON')
 			return True
 		
 		self._widgets[5].onMouseDown = _5
+		self._widgets.append(Button(Location.CENTER, 0.1, 0, 0.2, 0.08, RenderableString('\\01ScrollLock' if renderer.lockScroll else '\\01ScrollRelease'), Description([RenderableString("地图缩放锁定" if renderer.lockScroll else '滚动滚轮以改变地图缩放')]), Location.CENTER))
+		
+		def _6(x, y, b):
+			if b[0] == 1:
+				renderer.lockScroll = not renderer.lockScroll
+				self._widgets[6].description = Description([RenderableString('地图缩放锁定' if renderer.lockScroll else '滚动滚轮以改变地图缩放')])
+				self._widgets[6].name = RenderableString('\\01ScrollLock' if renderer.lockScroll else '\\01ScrollRelease')
+			return True
+		
+		self._widgets[6].onMouseDown = _6
 	
 	def setLastOpen(self, last: 'Window') -> 'Window':
 		self.lastOpen = last
@@ -598,9 +613,9 @@ class TaskWindow(Window):
 		if self.looking == 5:
 			size: BlockVector = renderer.getSize()
 			renderer.renderString(RenderableString('\\.00FCE8AD\\00任务5：'), int((0.58 if renderer.is4to3.get() else 0.56) * size.x), (size.y >> 1) - font.realFontHeight, 0xff000000, Location.BOTTOM)
-			renderer.renderString(RenderableString('\\.00FCE8AD\\00下蛋是一个漫长而艰辛的过程'), int((0.58 if renderer.is4to3.get() else 0.56) * size.x), size.y >> 1, 0xff000000, Location.BOTTOM)
-			renderer.renderString(RenderableString('\\.00FCE8AD\\00你要陪她聊天'), int((0.58 if renderer.is4to3.get() else 0.56) * size.x), size.y >> 1, 0xff000000, Location.TOP)
-			renderer.renderString(RenderableString('\\.00FCE8AD\\00让它开心起来'), int((0.58 if renderer.is4to3.get() else 0.56) * size.x), (size.y >> 1) + font.realFontHeight, 0xff000000, Location.TOP)
+			renderer.renderString(RenderableString('\\.00FCE8AD\\00你希望下出怎样的蛋'), int((0.58 if renderer.is4to3.get() else 0.56) * size.x), size.y >> 1, 0xff000000, Location.BOTTOM)
+			renderer.renderString(RenderableString('\\.00FCE8AD\\00来给鸡宝宝选择不同的属性吧'), int((0.58 if renderer.is4to3.get() else 0.56) * size.x), size.y >> 1, 0xff000000, Location.TOP)
+			renderer.renderString(RenderableString('\\.00FCE8AD\\00这会使得你获得不一样的蛋'), int((0.58 if renderer.is4to3.get() else 0.56) * size.x), (size.y >> 1) + font.realFontHeight, 0xff000000, Location.TOP)
 	
 	def passRender(self, delta: float, at: Vector | None = None) -> None:
 		s = Surface(renderer.getCanvas().get_size())
@@ -611,7 +626,7 @@ class TaskWindow(Window):
 	
 	def tick(self) -> None:
 		super().tick()
-		if interact.keys[pygame.K_m].deal():
+		if interact.keys[pygame.K_TAB].deal():
 			game.setWindow(self.lastOpen)
 
 
@@ -739,8 +754,8 @@ class NurturingWindow(Window):
 		self.timer -= 0.5
 		if self.timer == 0:
 			Music_player.sound_stop(6)
-			Music_player.background_volume(0.4)
-			game.setWindow(self.lastOpen)
+			Music_player.background_volume(0.2)
+			game.setWindow(self.lastOpen)  # 这里回去还有问题
 
 
 class BuildingWindow(Window):
@@ -786,7 +801,7 @@ class BuildingWindow(Window):
 		if self.timer == 0:
 			Music_player.sound_stop(5)
 			Music_player.background_volume(0.4)
-			game.setWindow(self.lastOpen)
+			game.setWindow(DynamicWorld())
 
 
 anim1 = []
