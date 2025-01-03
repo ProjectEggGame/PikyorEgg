@@ -4,7 +4,7 @@ from typing import Union
 import pygame
 from pygame import Surface
 
-from entity.entity import entityManager
+from entity.manager import entityManager
 from interact import interact
 from render import font
 from render.renderer import renderer
@@ -697,7 +697,6 @@ class BuildingWindow(Window):
 	
 	def render(self, delta: float) -> None:
 		w, h = renderer.getSize().getTuple()
-		
 		renderer.fill(0xffee0000, int(0.3 * w), int(0.3 * h), int(0.4 * w), int(0.2 * h))
 		renderer.renderString(RenderableString("\\00\\#ff000000正在织鸡窝"), int(0.5 * w), int(0.4 * h), 0xff000000, Location.CENTER)
 	
