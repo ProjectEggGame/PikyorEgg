@@ -4,12 +4,11 @@ from typing import Union
 import pygame
 from pygame import Surface
 
-from entity.manager import entityManager
+from entity.entity import entityManager
 from interact import interact
 from render import font
 from render.renderer import renderer
 from save.save import Archive
-from utils import times
 from utils.game import game
 from utils.text import RenderableString, Description
 from utils.vector import Vector, BlockVector
@@ -309,14 +308,8 @@ class PauseWindow(Window):
 		self._widgets[1].onMouseDown = lambda x, y, b: b[0] == 1 and game.setWindow(SettingsWindow().setLastOpen(self)) or True
 		self._widgets.append(Button(Location.CENTER, 0, -0.1, 0.4, 0.08, RenderableString('\\01Load'), Description([RenderableString("\\#ffee0000放弃保存\\r并读取存档")]), Location.CENTER))
 		self._widgets[2].onMouseDown = lambda x, y, b: b[0] == 1 and game.setWindow(LoadWindow().setLastOpen(self)) or True
-		self._widgets.append(Button(Location.CENTER, 0, 0, 0.4, 0.08, RenderableString('测试按钮'), Description([
-			RenderableString("\\#ffee0000蠢蠢的狗"),
-			RenderableString("\\#ffee55dd\\/ 只会直线行走"),
-			RenderableString("\\#ffee7766 敌对单位"),
-			RenderableString(f"\\#ffee6677 基础伤害 {8}"),
-			RenderableString(f"\\#ffeedd66 搜索范围 {4}"),
-		]), Location.CENTER))
-		self._widgets[3].onMouseDown = lambda x, y, b: b[0] == 1 and game.setWindow(TaskWindow(3).setLastOpen(self)) or True
+		self._widgets.append(Button(Location.CENTER, 0, 0, 0.4, 0.08, RenderableString('测试按钮'), Description([]), Location.CENTER))
+		self._widgets[3].onMouseDown = lambda x, y, b: b[0] == 1 and game.setWindow(TaskWindow().setLastOpen(self)) or True
 		self._widgets.append(Button(Location.CENTER, 0, 0.1, 0.4, 0.08, RenderableString('\\01Save'), Description([RenderableString("保存游戏")]), Location.CENTER))
 		
 		def _4(x, y, b) -> bool:
@@ -681,65 +674,81 @@ class PlotWindow(Window):
 			if self.Sentence > 8:
 				game.setWindow(None)
 
+
 BuildingWindowTimer: int = 90
 pic = 0
+
+
 class BuildingWindow(Window):
 	def __init__(self):
 		super().__init__("Building6......")
-		
-		self._widgets.append(Button(Location.CENTER, 0, 0.1, 0.4, 0.08, RenderableString('\\00跳过'), Description([RenderableString("复活")]), Location.CENTER))
+		self.building_image = [
+			resourceManager.getOrNew('window/building/building1'),
+			resourceManager.getOrNew('window/building/building2'),
+			resourceManager.getOrNew('window/building/building3'),
+			resourceManager.getOrNew('window/building/building4'),
+			resourceManager.getOrNew('window/building/building5'),
+			resourceManager.getOrNew('window/building/building6'),
+			resourceManager.getOrNew('window/building/building7')
+		]
+		self.timer: int = 90
+		self._widgets.append(Button(Location.CENTER, 0, 0.1, 0.4, 0.08, RenderableString('\\00跳过'), Description([RenderableString("跳过动画")]), Location.CENTER))
 		self._widgets[0].onMouseDown = lambda x, y, b: b[0] == 1 and (game.setWindow(None) or game.getWorld().setPlayer(entityManager.get('player')(Vector()))) or True
-		
-
+	
 	def render(self, delta: float) -> None:
 		w, h = renderer.getSize().getTuple()
+		
 		renderer.fill(0xffee0000, int(0.3 * w), int(0.3 * h), int(0.4 * w), int(0.2 * h))
 		renderer.renderString(RenderableString("\\00\\#ff000000正在织鸡窝"), int(0.5 * w), int(0.4 * h), 0xff000000, Location.CENTER)
-
+	
 	def tick(self) -> None:
 		super().tick()
-		building_image = ['window/building2/building1',
-					'window/building/building2',
-					'window/building/building3',
-					'window/building/building4',
-					'window/building/building5',
-					'window/building/building6',
-					'window/building/building7']
 		global pic
-		self._texture = resourceManager.getOrNew(building_image[pic])
-		self._texture.adaptsMap(False)
-		self._texture.adaptsSystem(True)
-		pic += 1
-		if pic == 7:
-			pic = 0
-		global BuildingWindowTimer
-		BuildingWindowTimer -= 1
-		if BuildingWindowTimer == 0:
+		self._texture = self.building_image[self.timer % 7]
+		self.timer -= 1
+		if self.timer == 0:
 			game.setWindow(self.lastOpen)
 
 
-class NuturingWindow(Window):
+class NurturingWindow(Window):
 	def __init__(self):
-		super().__init__("Nuturing......")
-		building_image = []
-		global pic
-		self._texture = resourceManager.getOrNew(building_image[pic])
-		self._texture.adaptsMap(False)
-		self._texture.adaptsSystem(True)
-		self._widgets.append(Button(Location.CENTER, 0, 0.1, 0.4, 0.08, RenderableString('\\00跳过'), Description([RenderableString("复活")]), Location.CENTER))
+		super().__init__("Nurturing......")
+		self.building_image = [
+			resourceManager.getOrNew('window/building2/building1'),
+			resourceManager.getOrNew('window/building2/building2'),
+			resourceManager.getOrNew('window/building2/building3'),
+			resourceManager.getOrNew('window/building2/building4'),
+		]
+		self.timer: int = 90
+		self._widgets.append(Button(Location.CENTER, 0, 0.1, 0.4, 0.08, RenderableString('\\00跳过'), Description([RenderableString("跳过动画")]), Location.CENTER))
 		self._widgets[0].onMouseDown = lambda x, y, b: b[0] == 1 and (game.setWindow(None) or game.getWorld().setPlayer(entityManager.get('player')(Vector()))) or True
-		
-
+	
 	def render(self, delta: float) -> None:
 		w, h = renderer.getSize().getTuple()
 		renderer.fill(0xffee0000, int(0.3 * w), int(0.3 * h), int(0.4 * w), int(0.2 * h))
 		renderer.renderString(RenderableString("\\00\\#ff000000正在接受教育"), int(0.5 * w), int(0.4 * h), 0xff000000, Location.CENTER)
-
+	
 	def tick(self) -> None:
 		super().tick()
-		global pic
-		pic += 1
-		global BuildingWindowTimer
-		BuildingWindowTimer -= 1
-		if BuildingWindowTimer == 0:
+		self._texture = self.building_image[self.timer % 4]
+		self.timer -= 1
+		if self.timer == 0:
 			game.setWindow(self.lastOpen)
+
+
+for t in [
+	resourceManager.getOrNew('window/building2/building1'),
+	resourceManager.getOrNew('window/building2/building2'),
+	resourceManager.getOrNew('window/building2/building3'),
+	resourceManager.getOrNew('window/building2/building4'),
+	resourceManager.getOrNew('window/building/building1'),
+	resourceManager.getOrNew('window/building/building2'),
+	resourceManager.getOrNew('window/building/building3'),
+	resourceManager.getOrNew('window/building/building4'),
+	resourceManager.getOrNew('window/building/building5'),
+	resourceManager.getOrNew('window/building/building6'),
+	resourceManager.getOrNew('window/building/building7')
+]:
+	t.adaptsMap(False)
+	t.adaptsSystem(True)
+del t

@@ -17,14 +17,19 @@ class Skill:
 	def __init__(self, skillID: int, description: SkillDescription):
 		self._level: int = 0
 		self._id: int = skillID
-		from entity.entity import Player
-		self._player: Player = game.getWorld().getPlayer()
+		self.player = None
+		if game.getWorld() is not None:
+			self.init(game.getWorld().getPlayer())
 		self.description: SkillDescription = description
 		self.texture = resourceManager.getOrNew(f'skill/{self._id}')
 		self.texture.adaptsSystem()
 		self.texture.adaptsMap(False)
 		self.coolDown: int = 0
 		self.maxCoolDown: int = 0
+	
+	def init(self, player) -> None:
+		"""加载时，技能和玩家同时加载，所以技能拿不到game.getWorld().getPlayer()。独立出来以方便处理。"""
+		self.player = player
 	
 	def getCoolDown(self) -> int:
 		"""
@@ -62,12 +67,33 @@ class Skill:
 		"""
 		self._level += 1
 		return True
+	
+	def save(self) -> dict:
+		return {
+			'id': self._id,
+			'level': self._level,
+			'coolDown': self.coolDown
+		}
+	
+	@classmethod
+	def load(cls, d: dict) -> 'Skill':
+		skill = skillManager.get(d['id'])()
+		skill._level = d['level'] - 1
+		if skill._level == -1:
+			skill._level = 0
+		else:
+			skill.upgrade()
+		skill.coolDown = d['coolDown']
+		return skill
 
 
 class SkillEasySatisfaction(Skill):
 	def __init__(self):
 		super().__init__(1, SkillDescription(self, [RenderableString('\\#ffeeee00爱米'), RenderableString('\\#ffee55dd    可以从米粒中获得额外成长')]))
-		self._player.preGrow.append(self.onGrow)
+	
+	def init(self, player) -> None:
+		super().init(player)
+		self.player.preGrow.append(self.onGrow)
 	
 	def getName(self=None) -> RenderableString:
 		if self is None or self._level == 0:
@@ -92,7 +118,7 @@ class SkillEasySatisfaction(Skill):
 class SkillResistance(Skill):
 	def __init__(self):
 		super().__init__(2, SkillDescription(self, [RenderableString('\\#ffeeee00坚毅'), RenderableString(f'\\#ffee55dd    减少受到的0.00%伤害')]))
-		self._player.preDamage.append(self.onDamage)
+		self.player.preDamage.append(self.onDamage)
 	
 	def getName(self=None) -> RenderableString:
 		if self is None or self._level == 0:
@@ -117,7 +143,10 @@ class SkillResistance(Skill):
 class SkillFastGrow(Skill):
 	def __init__(self):
 		super().__init__(3, SkillDescription(self, [RenderableString('\\#ffee8844揠苗'), RenderableString('\\#ffee55dd  每秒获得0.00点成长'), RenderableString('\\#ffee0000    但是每秒受到0.00点伤害！'), RenderableString('\\#ff888888    当然如果已经完全成长就不会受到伤害')]))
-		self._player.preTick.append(self.onTick)
+	
+	def init(self, player) -> None:
+		super().init(player)
+		self.player.preTick.append(self.onTick)
 	
 	def getName(self=None) -> RenderableString:
 		if self is None or self._level == 0:
@@ -134,23 +163,26 @@ class SkillFastGrow(Skill):
 		return False
 	
 	def onTick(self):
-		if self._player.grow(self._level / 100, 'SkillFastGrow') != 0:
-			self._player.damage(self._level / (200 + self._level << 1), self._player)
+		if self.player.grow(self._level / 100, 'SkillFastGrow') != 0:
+			self.player.damage(self._level / (200 + self._level << 1), self.player)
 
 
 class SkillRevive(Skill):
 	def __init__(self):
 		super().__init__(4, SkillDescription(self, [RenderableString('\\#ffffff66屹立不倒'), RenderableString('\\#ffee55dd    死亡时可以立刻复活'), RenderableString('\\#ffee5555    体力回复 0.00%')]))
-		self._player.preTick.append(self.onTick)
-		self._player.preDeath.append(self.onDeath)
 	
-	def render(self, delta: float, at: BlockVector) -> int:
+	def init(self, player) -> None:
+		super().init(player)
+		self.player.preTick.append(self.onTick)
+		self.player.preDeath.append(self.onDeath)
+	
+	def render(self, delta: float, at: BlockVector, chosen: bool = None, isRenderIcon: bool = None) -> int:
 		ret = super().render(delta, at)
-		if self._coolDown > 0:
+		if self.coolDown > 0:
 			s = Surface(self.texture.getSystemScaledSurface().get_size())
 			s.set_alpha(0xaa)
 			renderer.getCanvas().blit(s, at.getTuple())
-			renderer.renderString(RenderableString(f'\\11{int(self._coolDown / 20)}'), at.x + (s.get_width() >> 1), at.y + (s.get_height() >> 1), 0xffffffff, Location.CENTER)
+			renderer.renderString(RenderableString(f'\\11{int(self.coolDown / 20)}'), at.x + (s.get_width() >> 1), at.y + (s.get_height() >> 1), 0xffffffff, Location.CENTER)
 		return ret
 	
 	def getName(self=None) -> RenderableString:
@@ -162,7 +194,7 @@ class SkillRevive(Skill):
 	def upgrade(self) -> bool:
 		if self._level < 20:
 			self._level += 1
-			self._maxCoolDown = 2500 - self._level * 100
+			self.maxCoolDown = 2500 - self._level * 100
 			self.description.d[0] = self.getName()
 			self.description.d[2] = RenderableString(f'\\#ffee5555    体力回复 {20 + 3 * self._level:.2f}%')
 			return True
@@ -170,15 +202,15 @@ class SkillRevive(Skill):
 	
 	def onDeath(self):
 		if self.coolDown <= 0:
-			self._player.setHealth((20 + 3 * self._level) / 100 * self._player.getMaxHealth())
-			self._coolDown = self._maxCoolDown
+			self.player.setHealth((20 + 3 * self._level) / 100 * self.player.getMaxHealth())
+			self.coolDown = self.maxCoolDown
 			game.hud.sendMessage(RenderableString('\\.ccff0000\\#ffeeeeee                 复生！                '))
 			return True
 		return False
 	
 	def onTick(self):
-		if self._coolDown > 0:
-			self._coolDown -= 1
+		if self.coolDown > 0:
+			self.coolDown -= 1
 
 
 class SkillSwift(Skill):
@@ -194,7 +226,7 @@ class SkillSwift(Skill):
 	def upgrade(self) -> bool:
 		if self._level < 20:
 			self._level += 1
-			self._player.basicMaxSpeed += 0.01
+			self.player.basicMaxSpeed += 0.01
 			self.description.d[0] = self.getName()
 			return True
 		return False

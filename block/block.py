@@ -105,7 +105,7 @@ class Block(Element):
 		:param block: 默认None，用于识别手动或自动调用。手动调用必须传入方块
 		"""
 		if block is None:
-			raise InvalidOperationException("Block类不应被直接加载。")
+			raise InvalidOperationException(f"Block类不应被直接加载：ID {d['id']}")
 		block._holding = [blockManager.get(b['id']).load(b) for b in d['holding']]
 		return block
 	
@@ -214,6 +214,11 @@ class SafetyLine(Wall):
 		if isinstance(entity, Player):
 			return True
 		return False
+	
+	@classmethod
+	def load(cls, d: dict, block=None) -> 'Block':
+		block = SafetyLine(BlockVector.load(d['position']))
+		return super().load(d, block)
 
 
 class WitchBlock(Ground):

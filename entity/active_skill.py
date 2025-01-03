@@ -76,8 +76,10 @@ class ActiveFlash(Active):
 		super().__init__(101, SkillDescription(self, [self.name, RenderableString('    \\#ffaa4499向前方闪现一段距离')]))
 		self.coolDown = 0
 		self.maxCoolDown = 1200
-		self.level = 0
-		game.getWorld().getPlayer().preTick.append(self.onTick)
+	
+	def init(self, player) -> None:
+		super().init(player)
+		self.player.preTick.append(self.onTick)
 	
 	def onTick(self) -> None:
 		self.coolDown -= 1

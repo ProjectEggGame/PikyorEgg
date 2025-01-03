@@ -108,7 +108,7 @@ class EnemyDog(Enemy):
 			self._lockOn = None
 			self._aiVelocity.set(0, 0)
 			return
-		if self._lockOn is None:
+		if self._lockOn is None or player is not self._lockOn:
 			if player.getPosition().distanceManhattan(self.getPosition()) <= 4:
 				self._lockOn = game.getWorld().getPlayer()
 		else:

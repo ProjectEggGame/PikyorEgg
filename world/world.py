@@ -1,5 +1,4 @@
 import random
-import time
 from typing import Union, TYPE_CHECKING
 
 import pygame
@@ -8,19 +7,18 @@ from block.manager import blockManager
 from entity.manager import entityManager
 from interact import interact
 from render.renderer import renderer
-from render.resource import resourceManager
 from save.save import Archive
 from utils import utils
 from utils.game import game
-from utils.text import RenderableString, Description
+from utils.text import RenderableString
 
 if TYPE_CHECKING:
-	from entity.entity import Entity, Player, Rice, Coop
+	from entity.entity import Entity, Player
 
 from render.renderable import Renderable
 from utils.vector import Vector, BlockVector
-from block.block import Block, FarmlandBlock, GrassBlock
-from window.widget import Widget, Button, Location, ColorSet
+from block.block import Block
+from window.widget import Button
 
 
 class World(Renderable):
@@ -32,7 +30,6 @@ class World(Renderable):
 		self._entityList: set['Entity'] = set['Entity']()
 		self._ground: dict[int, Block] = dict[int, Block]()
 		self._seed: random.Random = random.Random(seed or 0)
-		
 	
 	@staticmethod
 	def generateDefaultWorld(seed: int | None = None) -> 'World':
@@ -84,8 +81,8 @@ class World(Renderable):
 	
 	def render(self, delta: float) -> None:
 		ct = renderer.getCenter().getVector().divide(renderer.getMapScale())
-		block2 = ct.clone().add(renderer.getCamera().get()).getBlockVector().add(1, 1)
-		block1 = ct.reverse().add(renderer.getCamera().get()).getBlockVector().subtract(1, 1)
+		block2 = ct.clone().add(renderer.getCamera().get()).getBlockVector().add(0, 1)
+		block1 = ct.reverse().add(renderer.getCamera().get()).getBlockVector()
 		newList2 = list(self._entityList)
 		if self._player is not None:
 			newList2.append(self._player)
@@ -241,7 +238,7 @@ class DynamicWorld(World):
 			self.getBlockAt(BlockVector(-50, i)).holdAppend(blockManager.get('hold.fence')(BlockVector(-50, i)))
 			self.getBlockAt(BlockVector(-40, i)).holdAppend(blockManager.get('hold.safety_line')(BlockVector(-40, i)))
 		self.addEntity(entityManager.get('entity.coop')(Vector(4, 4)))
-		for i in range(10):
+		for i in range(100):
 			self.addEntity(entityManager.get('enemy.dog')(Vector(self._seed.random() * 100 - 50, self._seed.random() * 100 - 50)))
 		
 		# w = int(self._seed.random() * 100 - 51)
@@ -263,7 +260,7 @@ class DynamicWorld(World):
 		super().render(delta)
 		if self._lay_egg_button:
 			self._lay_egg_button.render(delta)
-	
+
 
 class WitchWorld(World):
 	def __init__(self):

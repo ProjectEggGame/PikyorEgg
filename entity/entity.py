@@ -484,12 +484,21 @@ class Player(Entity, Damageable):
 		data = Entity.save(self)
 		data.update(Damageable.save(self))
 		data['growth_value'] = self.growth_value
+		sks = []
+		for sk in self.skills.values():
+			sks.append(sk.save())
+		data['skills'] = sks
 		return data
 	
 	@classmethod
 	def load(cls, d: dict, entity: Union['Player', None] = None) -> 'Player':
 		chicken = Player(Vector.load(d['position']))
 		chicken.growth_value = d['growth_value']
+		for sk in d['skills']:
+			s: Skill = skillManager.get(sk['id']).load(sk)
+			chicken.__allSkills.pop(sk['id'])
+			chicken.skills[sk['id']] = s
+			s.init(chicken)
 		Entity.load(d, chicken)
 		Damageable.load(d, chicken)
 		return chicken
@@ -508,10 +517,10 @@ class Player(Entity, Damageable):
 			ret = amount
 		for i in self.postGrow:
 			i(ret, src)
-
+		
 		if self.growth_value == 20 and self.skillget == True:
 			game.hud.sendMessage(RenderableString('\\#ffee0000获得了新技能'))
-			self.skillget == False
+			self.skillget = False
 		if self.growth_value >= 100 and self.progress == 1:
 			game.hud.sendMessage(RenderableString('\\#ffee0000恭喜你，解锁了新的任务'))
 			self.progress = 2
@@ -531,25 +540,25 @@ class Player(Entity, Damageable):
 			ret = amount
 		for i in self.postPick:
 			i(ret, src)
-		if self.backpack_stick >= 10 and self.progress == 2 :  #加一个对小鸡位置的描述：小鸡在家中
+		if self.backpack_stick >= 10 and self.progress == 2:  # 加一个对小鸡位置的描述：小鸡在家中
 			from window.window import BuildingWindow
 			game.setWindow(BuildingWindow())
-			#播放小鸡施工建筑（音乐+动画）
+			# 播放小鸡施工建筑（音乐+动画）
 			game.hud.sendMessage(RenderableString('\\#ffee0000恭喜你，解锁了新的任务'))
 			self.progress = 3
 		return ret
 	
-	def nuture(self):
-
+	def nurture(self):
+		
 		if self.progress == 3:
-			from window.window import NuturingWindow
-			game.setWindow(NuturingWindow())
-			#播放小鸡受到巫婆鸡教诲的动画+音乐
+			from window.window import NurturingWindow
+			game.setWindow(NurturingWindow())
+			# 播放小鸡受到巫婆鸡教诲的动画+音乐
 			game.hud.sendMessage(RenderableString('\\#ffee0000恭喜你，解锁了新的任务'))
 			self.progress = 4
 		else:
 			game.hud.sendMessage(RenderableString('\\#ffee0000需要先完成前面的任务才可以接受巫婆鸡的教诲'))
-
+	
 	def tick(self) -> None:
 		for i in self.preTick:
 			i()
@@ -572,6 +581,10 @@ class Player(Entity, Damageable):
 			## debug
 			if interact.keys[pygame.K_q].deals():
 				self.grow(100, self)
+				for i in self.skills.values():
+					i.coolDown = 0
+				for i in self.activeSkills:
+					i.coolDown = 0
 			## debug
 			if interact.keys[pygame.K_r].deals():
 				if self.growth_value < 100:
@@ -599,6 +612,7 @@ class Player(Entity, Damageable):
 					else:
 						self.skillSelecting = i
 			if interact.right.deals():
+				utils.info('cancel')
 				self.skillSelecting = -1
 			if self.skillSelecting != -1 and interact.left.deals():
 				self.activeSkills[self.skillSelecting].onUse(game.mouseAtMap)
@@ -606,7 +620,7 @@ class Player(Entity, Damageable):
 		self.setVelocity(v.normalize().multiply(self._maxSpeed))
 		for i in self.postTick:
 			i()
-		
+	
 	def renderSkill(self, delta: float) -> None:
 		if len(self.activeSkills) == 0:
 			self.activeSkills.append(ActiveFlash())
@@ -622,8 +636,11 @@ class Coop(Entity):
 	def load(cls, d: dict, entity: Union['Entity', None] = None) -> Union['Entity', None]:
 		e = Coop(Vector.load(d['position']))
 		return Entity.load(d, e)
-	
+
+
 building_time = 0
+
+
 class Building_coop(Entity):
 	def __init__(self, position: Vector):
 		super().__init__('entity.coop', '鸡窝', EntityDescription(self, [RenderableString('鸡舍')]), [resourceManager.getOrNew('entity/coop')], position, 0)
@@ -646,6 +663,7 @@ class Building_coop(Entity):
 		e = Coop(Vector.load(d['position']))
 		return Entity.load(d, e)
 
+
 class BlueEgg(Entity):
 	def __init__(self, position: Vector):
 		super().__init__('entity.egg.blue', '蓝色的蛋', EntityDescription(self, [RenderableString('\\#FF00D7FF蓝色的蛋'), RenderableString('\\#ff999999\\/  你别管为什么这么大')]), [a := resourceManager.getOrNew('egg/blue_egg'), a, a, a, a, a, a, a], position, 0)
@@ -663,7 +681,7 @@ class Witch(Entity):
 	def tick(self) -> None:
 		player = game.getWorld().getPlayer()
 		if player is not None and player.getPosition().distanceManhattan(self.getPosition()) <= 0.6:
-			player.nuture()
+			player.nurture()
 			game.getWorld(0).setPlayer(player)
 			game.setWorld(0)
 

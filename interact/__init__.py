@@ -46,9 +46,9 @@ class Interact:
 			if event.button == 1:
 				self.left.set(True)
 			elif event.button == 2:
-				self.right.set(True)
-			elif event.button == 3:
 				self.middle.set(True)
+			elif event.button == 3:
+				self.right.set(True)
 			elif event.button == 4:
 				self.scroll.scroll(-1)
 			elif event.button == 5:
@@ -59,9 +59,9 @@ class Interact:
 			if event.button == 1:
 				self.left.set(False)
 			elif event.button == 2:
-				self.right.set(False)
-			elif event.button == 3:
 				self.middle.set(False)
+			elif event.button == 3:
+				self.right.set(False)
 			elif event.button == 4:
 				self.scroll.scroll(-1)
 			elif event.button == 5:

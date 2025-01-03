@@ -56,7 +56,7 @@ def renderThread():
 					if renderer.systemScaleChanged():
 						font.setScale(renderer.getSystemScale() * 0.6)
 					renderer.dealScaleChange()
-				game.render((nowRender - lastTick) / 60_000_000)
+				game.render((nowRender - lastTick) / 50_000_000)
 				count += 1
 				if nowRender - lastCount >= 1_000_000_000:
 					renderer.fps = count * 1_000_000_000 / (nowRender - lastCount)
