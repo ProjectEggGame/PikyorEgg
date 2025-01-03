@@ -698,13 +698,10 @@ class BuildingWindow(Window):
 
 	def tick(self) -> None:
 		super().tick()
-		building_image = ['window/building2/building1',
-					'window/building/building2',
-					'window/building/building3',
-					'window/building/building4',
-					'window/building/building5',
-					'window/building/building6',
-					'window/building/building7']
+		building_image = ['window/building2/1',
+					'window/building2/2',
+					'window/building2/3',
+					'window/building2/4']
 		global pic
 		self._texture = resourceManager.getOrNew(building_image[pic])
 		self._texture.adaptsMap(False)
