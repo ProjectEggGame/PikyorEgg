@@ -164,7 +164,7 @@ class FloatWindow(Renderable):
 		else:
 			self._rendering = [contents]
 		self.changed = True
-
+	
 	def clear(self) -> None:
 		self._rendering = []
 	
@@ -450,18 +450,18 @@ class SettingsWindow(Window):
 			return True
 		
 		self._widgets[4].onMouseDown = _4
-		self._widgets.append(Button(Location.CENTER, -0.1, 0, 0.2, 0.08, RenderableString('\\01 Music OFF' if Music_player.turnon else '\\01Music On'), Description([RenderableString('\\01 关掉可爱的音乐' if Music_player.turnon else '\\01打开可爱的音乐')]), Location.CENTER))
+		self._widgets.append(Button(Location.CENTER, -0.1, 0, 0.2, 0.08, RenderableString('\\01 Music ON' if Music_player.turnon else '\\01Music OFF'), Description([RenderableString('关掉可爱的音乐' if Music_player.turnon else '打开可爱的音乐')]), Location.CENTER))
 		
 		def _5(x, y, b):
 			if b[0] == 1:
 				if Music_player.turnon:
 					Music_player.background_set_volume(0.0)
 				else:
-					Music_player.background_set_volume(0.2,setting=True)
+					Music_player.background_set_volume(0.2, setting=True)
 				Music_player.turnon = not Music_player.turnon
-
-				self._widgets[5].description = Description([RenderableString('\\01 关掉可爱的音乐' if Music_player.turnon else '\\01打开超级可爱的音乐')])
-				self._widgets[5].name = RenderableString('\\01Music OFF' if Music_player.turnon else '\\01Music ON')
+				
+				self._widgets[5].description = Description([RenderableString('关掉可爱的音乐' if Music_player.turnon else '打开超级可爱的音乐')])
+				self._widgets[5].name = RenderableString('\\01Music ON' if Music_player.turnon else '\\01Music OFF')
 			return True
 		
 		self._widgets[5].onMouseDown = _5
@@ -663,7 +663,6 @@ class PlotWindow(Window):
 				game.setWindow(self.lastOpen)
 			return True
 		
-		
 		self._widgets.append(Button(Location.BOTTOM, 0.22, 0, 0.12, 0.08, RenderableString("\\.00FFFFFF\\01NEXT"), Description([RenderableString("继续")]), textLocation=Location.CENTER))
 		self._widgets[0].onMouseDown = _0
 		self._widgets.append(Button(Location.BOTTOM, 0.38, 0, 0.12, 0.08, RenderableString("\\.00FFFFFF\\01SKIP"), Description([RenderableString("跳过剧情")]), textLocation=Location.CENTER))
@@ -683,7 +682,7 @@ class PlotWindow(Window):
 		super().render(delta)
 		size: BlockVector = renderer.getSize()
 		if self.Sentence == 0:
-			#之前是0.62和0.28
+			# 之前是0.62和0.28
 			renderer.renderString(RenderableString('\\.0040304D\\00嘿！小家伙，你终于醒啦！'), int(size.x * 0.5), int(size.y * 0.4), 0xffffffff, Location.CENTER)
 			renderer.renderString(RenderableString('\\.0040304D\\00别怕，这里很安全。'), int(size.x * 0.5), int(size.y * 0.4 + font.realFontHeight), 0xffffffff, Location.CENTER)
 		if self.Sentence == 1:
@@ -728,11 +727,11 @@ class NurturingWindow(Window):
 		Music_player.background_volume(0.1)
 		Music_player.sound_play(6)
 		self.nurturing_image = []
-		for i in range(1,7):
+		for i in range(1, 7):
 			x = resourceManager.getOrNew(f'window/nurturing/nurturing{i}')
 			self.nurturing_image.append(x)
 		self.timer: int = 90
-
+		
 		def _1(x, y, b) -> bool:
 			if b[0] == 1:
 				Music_player.sound_stop(6)
@@ -741,19 +740,19 @@ class NurturingWindow(Window):
 			return True
 		
 		self._widgets.append(Button(Location.BOTTOM, 0.2, 0, 0.12, 0.08, RenderableString('\\01SKIP'), Description([RenderableString("跳过动画")]), Location.CENTER))
-		self._widgets[0].onMouseDown =  _1
+		self._widgets[0].onMouseDown = _1
 		self._widgets[0].color = PresetColors.plotColor
 		self._widgets[0].textColor = PresetColors.plotText
-
+	
 	def render(self, delta: float) -> None:
 		size = renderer.getSize()
 		renderer.renderString(RenderableString("\\.ff4499ee\\00\\#ffffffff小鸡正在接受教育…………"), int(0.5 * size.x), int(0.6 * size.y), 0xffffffffff, Location.CENTER)
-		
+	
 	def tick(self) -> None:
 		super().tick()
 		global pic
-		self._texture = self.nurturing_image[5-(int(self.timer) % 6)]
-		#self._backgroundLocation = Location.CENTER
+		self._texture = self.nurturing_image[5 - (int(self.timer) % 6)]
+		# self._backgroundLocation = Location.CENTER
 		self.timer -= 0.5
 		if self.timer == 0:
 			Music_player.sound_stop(6)
@@ -767,11 +766,11 @@ class BuildingWindow(Window):
 		Music_player.background_volume(0.1)
 		Music_player.sound_play(5)
 		self.building_image = []
-		for i in range(0,16):
+		for i in range(0, 16):
 			x = resourceManager.getOrNew(f'window/building2/building{i}')
 			self.building_image.append(x)
 		self.timer: int = 90
-
+		
 		def _1(x, y, b) -> bool:
 			if b[0] == 1:
 				Music_player.sound_stop(5)
@@ -794,7 +793,7 @@ class BuildingWindow(Window):
 		s.set_alpha(self.backgroundColor >> 24)
 		renderer.getCanvas().blit(s, (0, 0))
 		super().passRender(delta, at)
-		
+	
 	def tick(self) -> None:
 		super().tick()
 		self._texture = self.building_image[15 - (int(self.timer) % 16)]
@@ -808,11 +807,11 @@ class BuildingWindow(Window):
 
 anim1 = []
 anim2 = []
-for i in range(1,6):
+for i in range(1, 6):
 	x = resourceManager.getOrNew(f'window/nurturing/nurturing{i}')
 	anim1.append(x)
 
-for i in range(0,16):
+for i in range(0, 16):
 	x = resourceManager.getOrNew(f'window/building2/building{i}')
 	anim2.append(x)
 
@@ -830,5 +829,5 @@ for t in anim2:
 	t.adaptsSystem()
 	t.getSurface().set_colorkey((0, 0, 0))
 	t.setOffset(Vector(-5, 0))
-	
+
 del t
