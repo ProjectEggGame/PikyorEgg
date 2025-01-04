@@ -54,7 +54,7 @@ class Texture:
 		:param fromSize: 源图截取大小
 		:return:
 		"""
-		renderer.renderAsBlock(self._mapScaled if self._mapScaled is not None else self._surface, at if self._offset is None else at + self._offset.getBlockVector(), fromPos, fromSize)
+		renderer.renderAsBlock(self._mapScaled if self._mapScaled is not None else self._surface, at if self._offset is None else at + self._offset, fromPos, fromSize)
 	
 	def renderAtMap(self, at: Vector, fromPos: Vector | None = None, fromSize: Vector | None = None):
 		"""

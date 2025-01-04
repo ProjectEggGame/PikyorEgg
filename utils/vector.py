@@ -473,26 +473,30 @@ class BlockVector:
 				if relative.y > 0.51:
 					return None
 				result.extendY(relative.y + 0.5)
-				if -0.5 <= relative.x - result.x <= 0.5:
+				rdc = result.directionalCloneBlock()
+				if -0.5 <= relative.x - result.x <= 0.5 and (rdc.x == rdc.y == 0 or rdc == dc):
 					return result
 			elif dc.y == 1:
 				if relative.y < -0.51:
 					return None
 				result.extendY(relative.y - 0.5)
-				if -0.5 <= relative.x - result.x <= 0.5:
+				rdc = result.directionalCloneBlock()
+				if -0.5 <= relative.x - result.x <= 0.5 and (rdc.x == rdc.y == 0 or rdc == dc):
 					return result
 			result = direction.clone()
 			if dc.x == -1:
 				if relative.x > 0.51:
 					return None
 				result.extendX(relative.x + 0.5)
-				if -0.5 <= relative.y - result.y <= 0.5:
+				rdc = result.directionalCloneBlock()
+				if -0.5 <= relative.y - result.y <= 0.5 and (rdc.x == rdc.y == 0 or rdc == dc):
 					return result
 			elif dc.x == 1:
 				if relative.x < -0.51:
 					return None
 				result.extendX(relative.x - 0.5)
-				if -0.5 <= relative.y - result.y <= 0.5:
+				rdc = result.directionalCloneBlock()
+				if -0.5 <= relative.y - result.y <= 0.5 and (rdc.x == rdc.y == 0 or rdc == dc):
 					return result
 			return None
 	

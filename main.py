@@ -56,7 +56,7 @@ def renderThread():
 					if renderer.systemScaleChanged():
 						font.setScale(renderer.getSystemScale() * 0.6)
 					renderer.dealScaleChange()
-				game.render((nowRender - lastTick) / 50_000_000)
+				game.render((nowRender - lastTick) / 60_000_000)
 				count += 1
 				if nowRender - lastCount >= 1_000_000_000:
 					renderer.fps = count * 1_000_000_000 / (nowRender - lastCount)
@@ -143,12 +143,14 @@ def mainThread():
 					case pygame.KEYUP:
 						interact.onKey(event)
 					case pygame.MOUSEMOTION:
-						# game.floatWindow.clear()  # 移动更新floatWindow
 						interact.onMouse(event)
-						interact.mouse.subtract(renderer.getOffset())  # interact不能导入renderer，委托此处修正鼠标位置
+						interact.mouse.subtract(renderer.getOffset())  # 委托此处修正鼠标位置
 						if game.getWindow() is not None:
 							game.getWindow().passMouseMove(interact.mouse.x, interact.mouse.y, event.buttons)
 						game.processMouse(event)
+						if not game.floatWindow.changed:
+							game.floatWindow.clear()
+						game.floatWindow.changed = False
 					case pygame.MOUSEBUTTONDOWN:
 						interact.onMouse(event)
 						if game.getWindow() is not None:

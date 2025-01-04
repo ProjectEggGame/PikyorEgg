@@ -43,14 +43,10 @@ class Status:
 		else:
 			return False
 	
-	def deal(self) -> int:
-		if self._shouldDeal:
-			ret = self.wasPressed
-			self.wasPressed = 0
-			self._shouldDeal = False
-			return ret
-		else:
-			return 0
+	def dealPressTimes(self) -> int:
+		ret = self.wasPressed
+		self.wasPressed = 0
+		return ret
 	
 	def __str__(self) -> str:
 		return f'{self.name}: {self.wasPressed}'
@@ -88,7 +84,7 @@ class ScrollStatus(Status):
 		else:
 			return 0
 	
-	def deal(self) -> bool:
+	def dealPressTimes(self) -> bool:
 		raise InvalidOperationException('ScrollStatus.deal() should not be called')
 	
 	def peek(self) -> bool:

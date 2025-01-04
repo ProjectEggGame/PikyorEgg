@@ -24,10 +24,18 @@ class StatusWindow(Window):
 					bt.description = s.description
 					bt.name = s.getName()
 				return True
+			
 			return wrapper
 		
 		for sk in game.getWorld().getPlayer().skills.values():
 			b = Button(Location.CENTER, -0.1, y, 0.2, 0.05, sk.getName(), sk.description, Location.CENTER)
+			b.onMouseDown = _1(sk, b)
+			self._widgets.append(b)
+			y += 0.05
+		
+		y = -0.4
+		for sk in game.getWorld().getPlayer().activeSkills:
+			b = Button(Location.CENTER, 0.1, y, 0.2, 0.05, sk.getName(), sk.description, Location.CENTER)
 			b.onMouseDown = _1(sk, b)
 			self._widgets.append(b)
 			y += 0.05

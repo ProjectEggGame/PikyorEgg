@@ -13,7 +13,7 @@ class BlockManager:
 			raise ValueError(f"注册一个已存在的方块ID: {blockID}")
 		self.dic[blockID] = block
 	
-	def get(self, blockID: str) -> Type['Block']:
+	def get(self, blockID: str):
 		return self.dic[blockID]
 
 

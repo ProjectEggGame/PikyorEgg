@@ -253,20 +253,21 @@ class Renderer:
 				p.add(pxOffset)
 			dst.blit(src, p.getTuple(), (fromPos.x, fromPos.y, fromSize.x, fromSize.y))
 	
-	def renderAsBlock(self, src: Surface, mapPoint: BlockVector, fromPos: BlockVector | None = None, fromSize: BlockVector | None = None):
+	def renderAsBlock(self, src: Surface, mapPoint: BlockVector | Vector, fromPos: BlockVector | None = None, fromSize: BlockVector | None = None):
 		self.assertRendering()
 		if fromPos is None or fromSize is None:
 			self._canvas.blit(src, self._mapBasis.clone().add(mapPoint.clone().multiply(self._mapScale)).getTuple())
 		else:
 			self._canvas.blit(src, self._mapBasis.clone().add((mapPoint + fromPos).multiply(self._mapScale)).getTuple(), (fromPos.x, fromPos.y, fromSize.x, fromSize.y))
 	
-	def renderString(self, text: RenderableString, x: int, y: int, defaultColor: int, location: Location = Location.LEFT_TOP) -> None:
+	def renderString(self, text: RenderableString, x: int, y: int, defaultColor: int, location: Location = Location.LEFT_TOP, defaultBackground: int = 0) -> None:
 		"""
 		:param text: 要显示的文本
 		:param x: 参考坐标
 		:param y: 参考坐标
 		:param defaultColor: 默认颜色
 		:param location: 渲染位置，默认左上角
+		:param defaultBackground: 默认背景色，传入0xff有助于提升性能
 		"""
 		self.assertRendering()
 		if len(text.set) == 0:
@@ -274,29 +275,29 @@ class Renderer:
 		height = font.realFontHeight if text.set[0].font < 10 else font.realHalfHeight
 		match location:
 			case Location.LEFT_TOP:
-				text.renderAt(self._canvas, x, y, defaultColor)
+				text.renderAt(self._canvas, x, y, defaultColor, defaultBackground)
 			case Location.LEFT:
-				text.renderAt(self._canvas, x, y - (height >> 1), defaultColor)
+				text.renderAt(self._canvas, x, y - (height >> 1), defaultColor, defaultBackground)
 			case Location.LEFT_BOTTOM:
-				text.renderAt(self._canvas, x, y - height, defaultColor)
+				text.renderAt(self._canvas, x, y - height, defaultColor, defaultBackground)
 			case Location.TOP:
 				l: int = text.length()
-				text.renderAt(self._canvas, x - (l >> 1), y, defaultColor)
+				text.renderAt(self._canvas, x - (l >> 1), y, defaultColor, defaultBackground)
 			case Location.CENTER:
 				l: int = text.length()
-				text.renderAt(self._canvas, x - (l >> 1), y - (height >> 1), defaultColor)
+				text.renderAt(self._canvas, x - (l >> 1), y - (height >> 1), defaultColor, defaultBackground)
 			case Location.BOTTOM:
 				l: int = text.length()
-				text.renderAt(self._canvas, x - (l >> 1), y - height, defaultColor)
+				text.renderAt(self._canvas, x - (l >> 1), y - height, defaultColor, defaultBackground)
 			case Location.RIGHT_TOP:
 				l: int = text.length()
-				text.renderAt(self._canvas, x - l, y, defaultColor)
+				text.renderAt(self._canvas, x - l, y, defaultColor, defaultBackground)
 			case Location.RIGHT:
 				l: int = text.length()
-				text.renderAt(self._canvas, x - l, y - (height >> 1), defaultColor)
+				text.renderAt(self._canvas, x - l, y - (height >> 1), defaultColor, defaultBackground)
 			case Location.RIGHT_BOTTOM:
 				l: int = text.length()
-				text.renderAt(self._canvas, x - l, y - height, defaultColor)
+				text.renderAt(self._canvas, x - l, y - height, defaultColor, defaultBackground)
 	
 	def setUiScale(self, scl: float) -> None:
 		self._customUiScale = scl

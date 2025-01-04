@@ -117,6 +117,9 @@ class SkillEasySatisfaction(Skill):
 class SkillResistance(Skill):
 	def __init__(self):
 		super().__init__(2, SkillDescription(self, [RenderableString('\\#ffeeee00坚毅'), RenderableString(f'\\#ffee55dd    减少受到的0.00%伤害')]))
+	
+	def init(self, player) -> None:
+		super().init(player)
 		self.player.preDamage.append(self.onDamage)
 	
 	def getName(self=None) -> RenderableString:
@@ -214,6 +217,7 @@ class SkillRevive(Skill):
 
 class SkillSwift(Skill):
 	def __init__(self):
+		self.modifier = 0
 		super().__init__(5, SkillDescription(self, [RenderableString('\\#ff96F8F5迅捷'), RenderableString('\\#ffee55dd    快，快，快')]))
 	
 	def getName(self=None) -> RenderableString:
@@ -225,7 +229,9 @@ class SkillSwift(Skill):
 	def upgrade(self) -> bool:
 		if self._level < 20:
 			self._level += 1
-			self.player.basicMaxSpeed += 0.01
+			self.player.basicMaxSpeed -= self.modifier
+			self.modifier = 0.01 * self._level
+			self.player.basicMaxSpeed += self.modifier
 			self.description.d[0] = self.getName()
 			return True
 		return False

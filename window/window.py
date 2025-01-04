@@ -118,7 +118,7 @@ class Window(Renderable):
 		"""
 		窗口的tick函数。可以重写。默认情况下，ESC会关闭当前窗口
 		"""
-		if interact.keys[pygame.K_ESCAPE].deal():
+		if interact.keys[pygame.K_ESCAPE].deals():
 			game.setWindow(self.lastOpen)
 	
 	def onResize(self) -> None:
@@ -143,6 +143,7 @@ class FloatWindow(Renderable):
 	def __init__(self):
 		super().__init__(None)
 		self._rendering: list[Description | None] = []
+		self.changed = False
 	
 	def submit(self, contents: list[Description] | Description | None) -> None:
 		"""
@@ -153,6 +154,7 @@ class FloatWindow(Renderable):
 			self._rendering = self._rendering + contents
 		else:
 			self._rendering.append(contents)
+		self.changed = True
 	
 	def change(self, contents: list[Description] | Description | None) -> None:
 		if contents is None:
@@ -161,7 +163,8 @@ class FloatWindow(Renderable):
 			self._rendering = contents
 		else:
 			self._rendering = [contents]
-	
+		self.changed = True
+
 	def clear(self) -> None:
 		self._rendering = []
 	
@@ -182,7 +185,7 @@ class FloatWindow(Renderable):
 		s = Surface((maximum, len(info) * font.realHalfHeight))
 		s.fill((0x33, 0x33, 0x33))
 		for i in range(len(info)):
-			info[i][0].renderSmall(s, 0, i * font.realHalfHeight, 0xffffffff, 0x333333)
+			info[i][0].renderSmall(s, 0, i * font.realHalfHeight, 0xffffffff, 0xff333333)
 		x, y = interact.mouse.clone().subtract(0, len(info) * font.realHalfHeight).getTuple()
 		if x < 0:
 			x = 0
@@ -258,7 +261,7 @@ class StartWindow(Window):
 		renderer.renderString(RenderableString('\\.00FCE8AD\\02卵を拾って'), int(size.x / 2), int(size.y / 4) + font.realFontHeight + font.realFontHeight + 4, 0xff000000, Location.CENTER)
 	
 	def tick(self) -> None:
-		interact.keys[pygame.K_ESCAPE].deal()  # 舍弃ESC消息
+		interact.keys[pygame.K_ESCAPE].deals()  # 舍弃ESC消息
 
 
 class LoadWindow(Window):
@@ -288,7 +291,7 @@ class LoadWindow(Window):
 				self._widgets.append(button)
 	
 	def tick(self) -> None:
-		if interact.keys[pygame.K_ESCAPE].deal():
+		if interact.keys[pygame.K_ESCAPE].deals():
 			game.setWindow(self.lastOpen or StartWindow())
 	
 	def setLastOpen(self, last: 'Window') -> 'Window':
@@ -473,7 +476,7 @@ class DeathWindow(Window):
 	def render(self, delta: float) -> None:
 		w, h = renderer.getSize().getTuple()
 		renderer.fill(0xffee0000, int(0.3 * w), int(0.3 * h), int(0.4 * w), int(0.2 * h))
-		renderer.renderString(RenderableString("\\01\\#ff000000You are dead"), int(0.5 * w), int(0.4 * h), 0xff000000, Location.CENTER)
+		renderer.renderString(RenderableString("\\01\\#ff000000You are dead"), int(0.5 * w), int(0.4 * h), 0xff000000, Location.CENTER, 0xffee0000)
 
 
 class TaskWindow(Window):
@@ -564,33 +567,33 @@ class TaskWindow(Window):
 		super().render(delta)
 		if self.looking == 1:
 			size: BlockVector = renderer.getSize()
-			renderer.renderString(RenderableString('\\.00FCE8AD\\00任务1：'), int((0.58 if renderer.is4to3.get() else 0.56) * size.x), (size.y >> 1) - font.realFontHeight, 0xff000000, Location.BOTTOM)
-			renderer.renderString(RenderableString('\\.00FCE8AD\\00\\#ffee0000胸有大志，吃100颗米粒！'), int((0.58 if renderer.is4to3.get() else 0.56) * size.x), size.y >> 1, 0xff000000, Location.TOP)
+			renderer.renderString(RenderableString('\\.ffDED0A3\\00任务1：'), int((0.58 if renderer.is4to3.get() else 0.56) * size.x), (size.y >> 1) - font.realFontHeight, 0xff000000, Location.BOTTOM)
+			renderer.renderString(RenderableString('\\.ffDED0A3\\00\\#ffee0000胸有大志，吃100颗米粒！'), int((0.58 if renderer.is4to3.get() else 0.56) * size.x), size.y >> 1, 0xff000000, Location.TOP)
 		
 		if self.looking == 2:
 			size: BlockVector = renderer.getSize()
-			renderer.renderString(RenderableString('\\.00FCE8AD\\00任务2：'), int((0.58 if renderer.is4to3.get() else 0.56) * size.x), (size.y >> 1) - font.realFontHeight, 0xff000000, Location.BOTTOM)
-			renderer.renderString(RenderableString('\\.00FCE8AD\\00\\#ffee0000年少有为，织鸡窝！'), int((0.58 if renderer.is4to3.get() else 0.56) * size.x), size.y >> 1, 0xff000000, Location.TOP)
+			renderer.renderString(RenderableString('\\.ffDED0A3\\00任务2：'), int((0.58 if renderer.is4to3.get() else 0.56) * size.x), (size.y >> 1) - font.realFontHeight, 0xff000000, Location.BOTTOM)
+			renderer.renderString(RenderableString('\\.ffDED0A3\\00\\#ffee0000年少有为，织鸡窝！'), int((0.58 if renderer.is4to3.get() else 0.56) * size.x), size.y >> 1, 0xff000000, Location.TOP)
 		
 		if self.looking == 3:
 			size: BlockVector = renderer.getSize()
-			renderer.renderString(RenderableString('\\.00FCE8AD\\00任务3：'), int((0.58 if renderer.is4to3.get() else 0.56) * size.x), (size.y >> 1) - font.realFontHeight, 0xff000000, Location.BOTTOM)
-			renderer.renderString(RenderableString('\\.00FCE8AD\\00老巫婆鸡，指点迷津！'), int((0.58 if renderer.is4to3.get() else 0.56) * size.x), size.y >> 1, 0xff000000, Location.BOTTOM)
-			renderer.renderString(RenderableString('\\.00FCE8AD\\00\\#ffee0000找到老巫婆鸡'), int((0.58 if renderer.is4to3.get() else 0.56) * size.x), size.y >> 1, 0xff000000, Location.TOP)
-			renderer.renderString(RenderableString('\\.00FCE8AD\\00并躲避狐狸的攻击'), int((0.58 if renderer.is4to3.get() else 0.56) * size.x), (size.y >> 1) + font.realFontHeight, 0xff000000, Location.TOP)
+			renderer.renderString(RenderableString('\\.ffDED0A3\\00任务3：'), int((0.58 if renderer.is4to3.get() else 0.56) * size.x), (size.y >> 1) - font.realFontHeight, 0xff000000, Location.BOTTOM)
+			renderer.renderString(RenderableString('\\.ffDED0A3\\00老巫婆鸡，指点迷津！'), int((0.58 if renderer.is4to3.get() else 0.56) * size.x), size.y >> 1, 0xff000000, Location.BOTTOM)
+			renderer.renderString(RenderableString('\\.ffDED0A3\\00\\#ffee0000找到老巫婆鸡'), int((0.58 if renderer.is4to3.get() else 0.56) * size.x), size.y >> 1, 0xff000000, Location.TOP)
+			renderer.renderString(RenderableString('\\.ffDED0A3\\00并躲避狐狸的攻击'), int((0.58 if renderer.is4to3.get() else 0.56) * size.x), (size.y >> 1) + font.realFontHeight, 0xff000000, Location.TOP)
 		
 		if self.looking == 4:
 			size: BlockVector = renderer.getSize()
-			renderer.renderString(RenderableString('\\.00FCE8AD\\00任务4：'), int((0.58 if renderer.is4to3.get() else 0.56) * size.x), (size.y >> 1) - font.realFontHeight, 0xff000000, Location.BOTTOM)
-			renderer.renderString(RenderableString('\\.00FCE8AD\\00你需要获得公鸡的受精！'), int((0.58 if renderer.is4to3.get() else 0.56) * size.x), size.y >> 1, 0xff000000, Location.BOTTOM)
-			renderer.renderString(RenderableString('\\.00FCE8AD\\00所以你需要和别的母鸡斗争'), int((0.58 if renderer.is4to3.get() else 0.56) * size.x), size.y >> 1, 0xff000000, Location.TOP)
+			renderer.renderString(RenderableString('\\.ffDED0A3\\00任务4：'), int((0.58 if renderer.is4to3.get() else 0.56) * size.x), (size.y >> 1) - font.realFontHeight, 0xff000000, Location.BOTTOM)
+			renderer.renderString(RenderableString('\\.ffDED0A3\\00你需要获得公鸡的受精！'), int((0.58 if renderer.is4to3.get() else 0.56) * size.x), size.y >> 1, 0xff000000, Location.BOTTOM)
+			renderer.renderString(RenderableString('\\.ffDED0A3\\00所以你需要和别的母鸡斗争'), int((0.58 if renderer.is4to3.get() else 0.56) * size.x), size.y >> 1, 0xff000000, Location.TOP)
 		
 		if self.looking == 5:
 			size: BlockVector = renderer.getSize()
-			renderer.renderString(RenderableString('\\.00FCE8AD\\00任务5：'), int((0.58 if renderer.is4to3.get() else 0.56) * size.x), (size.y >> 1) - font.realFontHeight, 0xff000000, Location.BOTTOM)
-			renderer.renderString(RenderableString('\\.00FCE8AD\\00下蛋是一个漫长而艰辛的过程'), int((0.58 if renderer.is4to3.get() else 0.56) * size.x), size.y >> 1, 0xff000000, Location.BOTTOM)
-			renderer.renderString(RenderableString('\\.00FCE8AD\\00你要陪她聊天'), int((0.58 if renderer.is4to3.get() else 0.56) * size.x), size.y >> 1, 0xff000000, Location.TOP)
-			renderer.renderString(RenderableString('\\.00FCE8AD\\00让它开心起来'), int((0.58 if renderer.is4to3.get() else 0.56) * size.x), (size.y >> 1) + font.realFontHeight, 0xff000000, Location.TOP)
+			renderer.renderString(RenderableString('\\.ffDED0A3\\00任务5：'), int((0.58 if renderer.is4to3.get() else 0.56) * size.x), (size.y >> 1) - font.realFontHeight, 0xff000000, Location.BOTTOM)
+			renderer.renderString(RenderableString('\\.ffDED0A3\\00下蛋是一个漫长而艰辛的过程'), int((0.58 if renderer.is4to3.get() else 0.56) * size.x), size.y >> 1, 0xff000000, Location.BOTTOM)
+			renderer.renderString(RenderableString('\\.ffDED0A3\\00你要陪她聊天'), int((0.58 if renderer.is4to3.get() else 0.56) * size.x), size.y >> 1, 0xff000000, Location.TOP)
+			renderer.renderString(RenderableString('\\.ffDED0A3\\00让它开心起来'), int((0.58 if renderer.is4to3.get() else 0.56) * size.x), (size.y >> 1) + font.realFontHeight, 0xff000000, Location.TOP)
 	
 	def passRender(self, delta: float, at: Vector | None = None) -> None:
 		s = Surface(renderer.getCanvas().get_size())
@@ -601,7 +604,7 @@ class TaskWindow(Window):
 	
 	def tick(self) -> None:
 		super().tick()
-		if interact.keys[pygame.K_m].deal():
+		if interact.keys[pygame.K_m].deals():
 			game.setWindow(self.lastOpen)
 
 
@@ -628,9 +631,9 @@ class PlotWindow(Window):
 				game.setWorld(DynamicWorld('DynamicWorld'))
 			return True
 		
-		self._widgets.append(Button(Location.CENTER, 0, 0.05, 0.4, 0.08, RenderableString("\\.00FFFFFF\\01NEXT"), Description([RenderableString("继续")]), textLocation=Location.CENTER))
+		self._widgets.append(Button(Location.CENTER, 0, 0.05, 0.4, 0.08, RenderableString("\\.FF000000\\01NEXT"), Description([RenderableString("继续")]), textLocation=Location.CENTER))
 		self._widgets[0].onMouseDown = _0
-		self._widgets.append(Button(Location.CENTER, 0, 0.15, 0.4, 0.08, RenderableString("\\.00FFFFFF\\01SKIP"), Description([RenderableString("跳过剧情")]), textLocation=Location.CENTER))
+		self._widgets.append(Button(Location.CENTER, 0, 0.15, 0.4, 0.08, RenderableString("\\.FF000000\\01SKIP"), Description([RenderableString("跳过剧情")]), textLocation=Location.CENTER))
 		self._widgets[1].onMouseDown = _1
 		
 		self._widgets[0].color = PresetColors.color
@@ -643,35 +646,35 @@ class PlotWindow(Window):
 		super().render(delta)
 		size: BlockVector = renderer.getSize()
 		if self.Sentence == 0:
-			renderer.renderString(RenderableString('\\.00FCE8AD\\00嘿！小家伙，你终于醒啦！'), int(size.x * 0.61), int(size.y * 0.28), 0xffffffff, Location.CENTER)
-			renderer.renderString(RenderableString('\\.00FCE8AD\\00别怕，这里很安全。'), int(size.x * 0.61), int(size.y * 0.28 + font.realFontHeight), 0xffffffff, Location.CENTER)
+			renderer.renderString(RenderableString('\\.0040304D\\00嘿！小家伙，你终于醒啦！'), int(size.x * 0.61), int(size.y * 0.28), 0xffffffff, Location.CENTER)
+			renderer.renderString(RenderableString('\\.0040304D\\00别怕，这里很安全。'), int(size.x * 0.61), int(size.y * 0.28 + font.realFontHeight), 0xffffffff, Location.CENTER)
 		if self.Sentence == 1:
-			renderer.renderString(RenderableString('\\.00FCE8AD\\00你是一直体弱多病的小鸡，'), int(size.x * 0.62), int(size.y * 0.28), 0xffffffff, Location.CENTER)
-			renderer.renderString(RenderableString('\\.00FCE8AD\\00没办法生蛋赚钱，'), int(size.x * 0.62), int(size.y * 0.28 + font.realFontHeight), 0xffffffff, Location.CENTER)
+			renderer.renderString(RenderableString('\\.0040304D\\00你是一直体弱多病的小鸡，'), int(size.x * 0.62), int(size.y * 0.28), 0xffffffff, Location.CENTER)
+			renderer.renderString(RenderableString('\\.0040304D\\00没办法生蛋赚钱，'), int(size.x * 0.62), int(size.y * 0.28 + font.realFontHeight), 0xffffffff, Location.CENTER)
 		if self.Sentence == 2:
-			renderer.renderString(RenderableString('\\.00FCE8AD\\00正因如此，你的主人不仅虐待你'), int(size.x * 0.62), int(size.y * 0.28), 0xffffffff, Location.CENTER)
-			renderer.renderString(RenderableString('\\.00FCE8AD\\00还把你无情地抛弃在了荒草丛中。'), int(size.x * 0.62), int(size.y * 0.28 + font.realFontHeight), 0xffffffff, Location.CENTER)
+			renderer.renderString(RenderableString('\\.0040304D\\00正因如此，你的主人不仅虐待你'), int(size.x * 0.62), int(size.y * 0.28), 0xffffffff, Location.CENTER)
+			renderer.renderString(RenderableString('\\.0040304D\\00还把你无情地抛弃在了荒草丛中。'), int(size.x * 0.62), int(size.y * 0.28 + font.realFontHeight), 0xffffffff, Location.CENTER)
 		if self.Sentence == 3:
-			renderer.renderString(RenderableString('\\.00FCE8AD\\00当我发现你的时候，你浑身是伤'), int(size.x * 0.62), int(size.y * 0.28), 0xffffffff, Location.CENTER)
-			renderer.renderString(RenderableString('\\.00FCE8AD\\00虚弱得连站都站不稳'), int(size.x * 0.62), int(size.y * 0.28 + font.realFontHeight), 0xffffffff, Location.CENTER)
+			renderer.renderString(RenderableString('\\.0040304D\\00当我发现你的时候，你浑身是伤'), int(size.x * 0.62), int(size.y * 0.28), 0xffffffff, Location.CENTER)
+			renderer.renderString(RenderableString('\\.0040304D\\00虚弱得连站都站不稳'), int(size.x * 0.62), int(size.y * 0.28 + font.realFontHeight), 0xffffffff, Location.CENTER)
 		if self.Sentence == 4:
-			renderer.renderString(RenderableString('\\.00FCE8AD\\00咱们现在来到了一个新的村庄'), int(size.x * 0.62), int(size.y * 0.28), 0xffffffff, Location.CENTER)
-			renderer.renderString(RenderableString('\\.00FCE8AD\\00这就是你以后生活的地方啦!'), int(size.x * 0.62), int(size.y * 0.28 + font.realFontHeight), 0xffffffff, Location.CENTER)
+			renderer.renderString(RenderableString('\\.0040304D\\00咱们现在来到了一个新的村庄'), int(size.x * 0.62), int(size.y * 0.28), 0xffffffff, Location.CENTER)
+			renderer.renderString(RenderableString('\\.0040304D\\00这就是你以后生活的地方啦!'), int(size.x * 0.62), int(size.y * 0.28 + font.realFontHeight), 0xffffffff, Location.CENTER)
 		if self.Sentence == 5:
-			renderer.renderString(RenderableString('\\.00FCE8AD\\00接下来的日子可能不太轻松'), int(size.x * 0.62), int(size.y * 0.28), 0xffffffff, Location.CENTER)
-			renderer.renderString(RenderableString('\\.00FCE8AD\\00你要搜集草地上的米粒来填饱肚子'), int(size.x * 0.62), int(size.y * 0.28 + font.realFontHeight), 0xffffffff, Location.CENTER)
+			renderer.renderString(RenderableString('\\.0040304D\\00接下来的日子可能不太轻松'), int(size.x * 0.62), int(size.y * 0.28), 0xffffffff, Location.CENTER)
+			renderer.renderString(RenderableString('\\.0040304D\\00你要搜集草地上的米粒来填饱肚子'), int(size.x * 0.62), int(size.y * 0.28 + font.realFontHeight), 0xffffffff, Location.CENTER)
 		if self.Sentence == 6:
-			renderer.renderString(RenderableString('\\.00FCE8AD\\00并尽可能多地收集树枝，'), int(size.x * 0.62), int(size.y * 0.28), 0xffffffff, Location.CENTER)
-			renderer.renderString(RenderableString('\\.00FCE8AD\\00为自己建造一个鸡窝'), int(size.x * 0.62), int(size.y * 0.28 + font.realFontHeight), 0xffffffff, Location.CENTER)
+			renderer.renderString(RenderableString('\\.0040304D\\00并尽可能多地收集树枝，'), int(size.x * 0.62), int(size.y * 0.28), 0xffffffff, Location.CENTER)
+			renderer.renderString(RenderableString('\\.0040304D\\00为自己建造一个鸡窝'), int(size.x * 0.62), int(size.y * 0.28 + font.realFontHeight), 0xffffffff, Location.CENTER)
 		if self.Sentence == 7:
-			renderer.renderString(RenderableString('\\.00FCE8AD\\00在这个村庄里有很多邪恶的狐狸，'), int(size.x * 0.62), int(size.y * 0.28), 0xffffffff, Location.CENTER)
-			renderer.renderString(RenderableString('\\.00FCE8AD\\00你一定要注意防范他们的攻击!'), int(size.x * 0.62), int(size.y * 0.28 + font.realFontHeight), 0xffffffff, Location.CENTER)
+			renderer.renderString(RenderableString('\\.0040304D\\00在这个村庄里有很多邪恶的狐狸，'), int(size.x * 0.62), int(size.y * 0.28), 0xffffffff, Location.CENTER)
+			renderer.renderString(RenderableString('\\.0040304D\\00你一定要注意防范他们的攻击!'), int(size.x * 0.62), int(size.y * 0.28 + font.realFontHeight), 0xffffffff, Location.CENTER)
 		if self.Sentence == 8:
-			renderer.renderString(RenderableString('\\.00FCE8AD\\00你的最终目标是逆天改命，'), int(size.x * 0.62), int(size.y * 0.28), 0xffffffff, Location.CENTER)
-			renderer.renderString(RenderableString('\\.00FCE8AD\\00生一个蛋，并孵出一只小鸡!'), int(size.x * 0.62), int(size.y * 0.28 + font.realFontHeight), 0xffffffff, Location.CENTER)
+			renderer.renderString(RenderableString('\\.0040304D\\00你的最终目标是逆天改命，'), int(size.x * 0.62), int(size.y * 0.28), 0xffffffff, Location.CENTER)
+			renderer.renderString(RenderableString('\\.0040304D\\00生一个蛋，并孵出一只小鸡!'), int(size.x * 0.62), int(size.y * 0.28 + font.realFontHeight), 0xffffffff, Location.CENTER)
 	
 	def tick(self) -> None:
-		if interact.keys[pygame.K_ESCAPE].deal():
+		if interact.keys[pygame.K_ESCAPE].deals():
 			self.Sentence += 1
 			if self.Sentence > 8:
 				game.setWindow(None)
@@ -699,8 +702,8 @@ class BuildingWindow(Window):
 	
 	def render(self, delta: float) -> None:
 		w, h = renderer.getSize().getTuple()
-		renderer.fill(0xffee0000, int(0.3 * w), int(0.3 * h), int(0.4 * w), int(0.2 * h))
-		renderer.renderString(RenderableString("\\00\\#ff000000正在织鸡窝"), int(0.5 * w), int(0.4 * h), 0xff000000, Location.CENTER)
+		renderer.fill(0xff4499ee, int(0.3 * w), int(0.3 * h), int(0.4 * w), int(0.2 * h))
+		renderer.renderString(RenderableString("\\.ff4499ee\\00\\#ff000000正在织鸡窝"), int(0.5 * w), int(0.4 * h), 0xff000000, Location.CENTER)
 	
 	def tick(self) -> None:
 		super().tick()
@@ -726,8 +729,8 @@ class NurturingWindow(Window):
 	
 	def render(self, delta: float) -> None:
 		w, h = renderer.getSize().getTuple()
-		renderer.fill(0xffee0000, int(0.3 * w), int(0.3 * h), int(0.4 * w), int(0.2 * h))
-		renderer.renderString(RenderableString("\\00\\#ff000000正在接受教育"), int(0.5 * w), int(0.4 * h), 0xff000000, Location.CENTER)
+		renderer.fill(0xffeeee55, int(0.3 * w), int(0.3 * h), int(0.4 * w), int(0.2 * h))
+		renderer.renderString(RenderableString("\\.ffeeee55\\00\\#ff000000正在接受教育"), int(0.5 * w), int(0.4 * h), 0xff000000, Location.CENTER)
 	
 	def tick(self) -> None:
 		super().tick()

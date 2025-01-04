@@ -107,10 +107,10 @@ class InputWidget(Widget):
 		self.caret: int = 0
 		self._caretOffset: int = 0  # 用于输入法那头的选中
 		self._caret: int = -1  # 用于选中
-		self.timeCount: int = -10
+		self.caretBlinkTime: int = -10
 		self._realText: str = ''
 		self._displayText: str | None = None
-		self._dealTimeLimit: int = -1
+		self._dealTimeLimit: int = -1  # 长按按键时的响应时间间隔
 		self._keyDealing: int = -1
 		self._inputting: bool = False
 	
@@ -122,25 +122,24 @@ class InputWidget(Widget):
 	
 	def __checkKey(self, keyCode: int, lastDeal) -> int:
 		status = interact.keys[keyCode] if keyCode < interact.KEY_COUNT else interact.specialKeys[keyCode & interact.KEY_COUNT]
-		if self._keyDealing == -1:  # 无处理
-			ret = status.deal()
-			if ret != 0:
+		if self._keyDealing == -1 or self._keyDealing != keyCode:  # 争夺处理，无处理
+			ret = status.dealPressTimes()
+			if status.deals():
 				self._keyDealing = keyCode
 				self._dealTimeLimit = -1
-				return ret
-		elif self._keyDealing != keyCode:  # 争夺处理
-			ret = status.deal()
-			if ret != 0:
-				self._keyDealing = keyCode
-				self._dealTimeLimit = -1
-				return ret
+				return max(ret, 1)
 		else:  # 就在处理自身
-			return status.deal()
+			if not status.peek():
+				self._keyDealing = 0
+				return lastDeal
+			ret = status.dealPressTimes()
+			return max(ret, 1)
 		return lastDeal
 	
 	def tick(self) -> None:
 		if not self._inputting:
-			self.timeCount = -10
+			self._dealTimeLimit = 8
+			self.caretBlinkTime = -10
 			interact.keys[pygame.K_BACKSPACE].deals()
 			interact.keys[pygame.K_DELETE].deals()
 			interact.specialKeys[pygame.K_UP & interact.KEY_COUNT].deals()
@@ -150,13 +149,13 @@ class InputWidget(Widget):
 			self._displayText = None
 			self.caret = len(self._realText)
 			return
-		if self.timeCount <= -10:
-			self.timeCount = 10
+		if self.caretBlinkTime <= -10:
+			self.caretBlinkTime = 10
 		else:
-			self.timeCount -= 1
+			self.caretBlinkTime -= 1
 		if self._dealTimeLimit > 0:
 			self._dealTimeLimit -= 1
-		deals = self.__checkKey(pygame.K_BACKSPACE, 0)
+		deals = self.__checkKey(pygame.K_BACKSPACE, 0)  # 当前应当处理的按键
 		deals = self.__checkKey(pygame.K_DELETE, deals)
 		deals = self.__checkKey(pygame.K_UP, deals)
 		deals = self.__checkKey(pygame.K_DOWN, deals)
@@ -169,13 +168,12 @@ class InputWidget(Widget):
 			self._dealTimeLimit -= 1
 		else:
 			if self._dealTimeLimit == -1:
-				self._dealTimeLimit = 8  # 时间限制 ##########
+				self._dealTimeLimit = 8  # 时间限制
 			match self._keyDealing:
 				case pygame.K_BACKSPACE:
 					if self._caret != -1:
 						self._caret, self.caret = min(self._caret, self.caret), max(self._caret, self.caret)
 						self._realText = self._realText[:self._caret] + self._realText[self.caret:]
-						self._dealTimeLimit = -1
 						self._caret = -1
 						deals -= 1
 					if deals > 0:  # 需要单个删除
@@ -190,12 +188,11 @@ class InputWidget(Widget):
 							self.caret -= deals
 					self._keyDealing = pygame.K_BACKSPACE
 					self._displayText = None
-					self.timeCount = 10
+					self.caretBlinkTime = 10
 				case pygame.K_DELETE:
 					if self._caret != -1:
 						self._caret, self.caret = min(self._caret, self.caret), max(self._caret, self.caret)
 						self._realText = self._realText[:self._caret] + self._realText[self.caret:]
-						self._dealTimeLimit = -1
 						self._caret = -1
 						deals -= 1
 					if deals > 0:  # 需要单个删除
@@ -204,16 +201,15 @@ class InputWidget(Widget):
 							self._realText = self._realText[:self.caret]
 						else:
 							self._realText = self._realText[:self.caret] + self._realText[self.caret + deals:]
-					self.timeCount = 10
+					self.caretBlinkTime = 10
 				case pygame.K_LEFT:
-					utils.info(123)
 					crt = self.caret
 					crt -= deals
 					if crt < 0:
 						self.caret = 0
 					else:
 						self.caret = crt
-					self.timeCount = 10
+					self.caretBlinkTime = 10
 				case pygame.K_RIGHT:
 					crt = self.caret
 					crt += deals
@@ -221,14 +217,14 @@ class InputWidget(Widget):
 						self.caret = len(self._realText)
 					else:
 						self.caret = crt
-					self.timeCount = 10
+					self.caretBlinkTime = 10
 	
 	def onInput(self, event) -> None:
 		if not self._inputting:
 			return
 		assert isinstance(event, pygame.event.Event)
 		assert event.type == pygame.TEXTINPUT
-		self.timeCount = 10
+		self.caretBlinkTime = 10
 		if self._caret != -1:
 			self._caret, self.caret = min(self._caret, self.caret), max(self._caret, self.caret)
 			self._realText = self._realText[:self._caret] + event.text + self._realText[self.caret:]
@@ -248,7 +244,7 @@ class InputWidget(Widget):
 			return
 		assert isinstance(event, pygame.event.Event)
 		assert event.type == pygame.TEXTEDITING
-		self.timeCount = 10
+		self.caretBlinkTime = 10
 		if self._caret != -1:
 			self._caret, self.caret = min(self._caret, self.caret), max(self._caret, self.caret)
 			self._displayText = self._realText[:self._caret] + event.text + self._realText[self.caret:]
@@ -295,7 +291,7 @@ class InputWidget(Widget):
 			offset = renderer.getOffset()
 			rect = (self._x + offset.x, offset.y + self._y, 0, 0)
 			pygame.key.set_text_input_rect(rect)
-			if self.timeCount > 0:
+			if self.caretBlinkTime > 0:
 				renderer.getCanvas().blit(font.render('  ', True, ((self.textColor.active >> 16) & 0xff ^ 0xff, (self.textColor.active >> 8) & 0xff ^ 0xff, self.textColor.active & 0xff ^ 0xff), ((self.color.active >> 16) & 0xff ^ 0xff, (self.color.active >> 8) & 0xff ^ 0xff, self.color.active & 0xff ^ 0xff)), (self._x, self._y))
 		else:
 			y0 = 0
@@ -311,7 +307,7 @@ class InputWidget(Widget):
 					offset = renderer.getOffset()
 					rect = (self._x + font.size(i[:c0])[0] + offset.x, offset.y + y0 + self._y, 0, 0)
 					pygame.key.set_text_input_rect(rect)
-				if self.timeCount > 0:
+				if self.caretBlinkTime > 0:
 					if cc > len(i):
 						cc -= len(i)
 					else:
@@ -343,9 +339,9 @@ class InputWindow(Window):
 		self._history: list = []
 
 	def tick(self) -> None:
-		if interact.keys[pygame.K_ESCAPE].deal():
+		if interact.keys[pygame.K_ESCAPE].dealPressTimes():
 			game.setWindow(self.lastOpen)
-		if interact.specialKeys[pygame.K_KP_ENTER & interact.KEY_COUNT].deal() or interact.keys[pygame.K_RETURN & interact.KEY_COUNT].deal():
+		if interact.specialKeys[pygame.K_KP_ENTER & interact.KEY_COUNT].dealPressTimes() or interact.keys[pygame.K_RETURN & interact.KEY_COUNT].dealPressTimes():
 			txt = self._inputer.popText()
 			if len(txt) != 0:
 				self._history.append(txt)

@@ -238,7 +238,27 @@ gateBlockTimer: int = 60
 
 class GateBlock(Ground):
 	def __init__(self, position: BlockVector):
-		super().__init__('hold.door', '传送门', BlockDescription(self, [RenderableString('传送门'), RenderableString('\\#FFEE0000    停留3秒前往巫婆鸡的异世界')]), position, resourceManager.getOrNew('block/witch'))
+		class Des(BlockDescription):
+			def __init__(this, block):
+				super().__init__(block)
+				this.colors = [
+					'\\#FFEE0000', '\\#FFEE5500', '\\#FFEEAA00',
+					'\\#FFEEEE00', '\\#FFAAEE00', '\\#FF55EE00',
+					'\\#FF00EE00', '\\#FF00EE55', '\\#FF00EEAA',
+					'\\#FF00EEEE', '\\#FF00AAEE', '\\#FF0055EE',
+					'\\#FF0000EE', '\\#FF5500EE', '\\#FFAA00EE',
+					'\\#FFEE00EE', '\\#FFEE00AA', '\\#FFEE0055',
+				]
+				this.color = -1
+			
+			def generate(this) -> list['RenderableString']:
+				if this.color >= 10:
+					this.color = -7
+				else:
+					this.color += 1
+				return [RenderableString('\\#ffaa4499' + this._block.getBlockPosition().getTuple().__str__())] + [RenderableString(this.colors[this.color] + '传' + this.colors[this.color - 1] + '送' + this.colors[this.color - 2] + '门'), RenderableString(f'\\#FFEE0000    停留{gateBlockTimer / 20:.2f}秒前往巫婆鸡的异世界')]
+		
+		super().__init__('hold.door', '传送门', Des(self), position, resourceManager.getOrNew('block/gate'))
 	
 	@classmethod
 	def load(cls, d: dict, block=None) -> 'Block':
@@ -276,7 +296,8 @@ for t in [
 	t.getMapScaledSurface().set_colorkey((0, 0, 0))
 	t.setOffset(Vector(0, -8))
 for t in [
-	resourceManager.getOrNew('block/safety_line')
+	resourceManager.getOrNew('block/safety_line'),
+	resourceManager.getOrNew('block/gate')
 ]:
 	t.getSurface().set_colorkey((0, 0, 0))
 	t.getMapScaledSurface().set_colorkey((0, 0, 0))

@@ -211,6 +211,9 @@ class Entity(Element):
 		"""
 		self._setVelocity.set(v)
 	
+	def setPosition(self, position: Vector) -> None:
+		self._position.set(position)
+	
 	def getPosition(self) -> Vector:
 		return self._position.clone()
 	
@@ -490,6 +493,8 @@ class Player(Entity, Damageable):
 		sks = []
 		for sk in self.skills.values():
 			sks.append(sk.save())
+		for sk in self.activeSkills:
+			sks.append(sk.save())
 		data['skills'] = sks
 		return data
 	
@@ -500,7 +505,10 @@ class Player(Entity, Damageable):
 		for sk in d['skills']:
 			s: Skill = skillManager.get(sk['id']).load(sk)
 			chicken.__allSkills.pop(sk['id'])
-			chicken.skills[sk['id']] = s
+			if sk['id'] >= 100:
+				chicken.activeSkills.append(s)
+			else:
+				chicken.skills[sk['id']] = s
 			s.init(chicken)
 			if s.getLevel() != -1:
 				s.upgrade()
@@ -523,9 +531,19 @@ class Player(Entity, Damageable):
 		for i in self.postGrow:
 			i(ret, src)
 		
-		if self.growth_value == 20 and self.skillget == True:
-			game.hud.sendMessage(RenderableString('\\#ffee0000获得了新技能'))
-			self.skillget = False
+		if (skc := self.growth_value // 10) > len(self.skills):
+			for i in range(skc - len(self.skills)):
+				if len(self.__allSkills) <= 0:
+					break
+				k = game.getWorld().getRandom().sample(sorted(self.__allSkills), 1)
+				sk: Skill = self.__allSkills.pop(k[0])()
+				sk.upgrade()
+				if isinstance(sk, Active):
+					self.activeSkills.append(sk)
+					game.hud.sendMessage(RenderableString('你获得了新的技能：') + self.activeSkills[-1].getName())
+				else:
+					self.skills[k[0]] = sk
+					game.hud.sendMessage(RenderableString('你获得了新的技能：') + self.skills[k[0]].getName())
 		if self.growth_value >= 100 and self.progress == 1:
 			game.hud.sendMessage(RenderableString('\\#ffee0000恭喜你，解锁了新的任务'))
 			self.progress = 2
@@ -597,18 +615,9 @@ class Player(Entity, Damageable):
 				else:
 					self.growth_value -= 100
 					game.hud.sendMessage(RenderableString('你成功下了一个蛋~'))
-					game.getWorld().addEntity(BlueEgg(self._position.clone()))
-					if len(self.__allSkills) > 0:
-						k = game.getWorld().getRandom().sample(sorted(self.__allSkills), 1)
-						sk: Skill = self.__allSkills.pop(k[0])()
-						sk.upgrade()
-						if isinstance(sk, Active):
-							self.activeSkills.append(sk)
-						else:
-							self.skills[k[0]] = sk
-						game.hud.sendMessage(RenderableString('你获得了新的技能：') + self.skills[k[0]].getName())
+					game.getWorld().addEntity(random.choice([BlueEgg, RedEgg, GoldEgg])(self._position.clone()))
 			for i in range(9):
-				push = interact.keys[pygame.K_1 + i].deal() & 1
+				push = interact.keys[pygame.K_1 + i].deals() & 1
 				if i >= len(self.activeSkills):
 					continue
 				if push:
@@ -617,7 +626,6 @@ class Player(Entity, Damageable):
 					else:
 						self.skillSelecting = i
 			if interact.right.deals():
-				utils.info('cancel')
 				self.skillSelecting = -1
 			if self.skillSelecting != -1 and interact.left.deals():
 				self.activeSkills[self.skillSelecting].onUse(game.mouseAtMap)
@@ -669,11 +677,31 @@ class Building_coop(Entity):
 
 class BlueEgg(Entity):
 	def __init__(self, position: Vector):
-		super().__init__('entity.egg.blue', '蓝色的蛋', EntityDescription(self, [RenderableString('\\#FF00D7FF蓝色的蛋'), RenderableString('\\#ff999999\\/  你别管为什么这么大')]), [a := resourceManager.getOrNew('egg/blue_egg'), a, a, a, a, a, a, a], position, 0)
+		super().__init__('entity.egg.blue', '蓝色的蛋', EntityDescription(self, [RenderableString('\\#FF00D7FF蓝色的蛋'), RenderableString('\\#ff999999\\/    你别管为什么这么大')]), [a := resourceManager.getOrNew('egg/blue_egg'), a, a, a, a, a, a, a], position, 0)
 	
 	@classmethod
 	def load(cls, d: dict, entity: Union['Entity', None] = None) -> Union['Entity', None]:
 		e = BlueEgg(Vector.load(d['position']))
+		return Entity.load(d, e)
+
+
+class GoldEgg(Entity):
+	def __init__(self, position: Vector):
+		super().__init__('entity.egg.blue', '金色的蛋', EntityDescription(self, [RenderableString('\\#FFF2B912金色的蛋'), RenderableString('\\#ff999999\\/    你别管为什么这么大')]), [a := resourceManager.getOrNew('egg/gold_egg'), a, a, a, a, a, a, a], position, 0)
+	
+	@classmethod
+	def load(cls, d: dict, entity: Union['Entity', None] = None) -> Union['Entity', None]:
+		e = BlueEgg(Vector.load(d['position']))
+		return Entity.load(d, e)
+
+
+class RedEgg(Entity):
+	def __init__(self, position: Vector):
+		super().__init__('entity.egg.blue', '绯色的蛋', EntityDescription(self, [RenderableString('\\#FFB37153绯色的蛋'), RenderableString('\\#ff999999\\/    你别管为什么这么大')]), [a := resourceManager.getOrNew('egg/dark_red_egg'), a, a, a, a, a, a, a], position, 0)
+	
+	@classmethod
+	def load(cls, d: dict, entity: Union['Entity', None] = None) -> Union['Entity', None]:
+		e = RedEgg(Vector.load(d['position']))
 		return Entity.load(d, e)
 
 
@@ -695,6 +723,8 @@ entityManager.register('entity.stick', Stick)
 entityManager.register('player', Player)
 entityManager.register('entity.coop', Coop)
 entityManager.register('entity.egg.blue', BlueEgg)
+entityManager.register('entity.egg.red', RedEgg)
+entityManager.register('entity.egg.gold', GoldEgg)
 entityManager.register('deprecated', DeprecatedPlayer)
 entityManager.register('entity.witch', Witch)
 
@@ -734,7 +764,9 @@ for t in [
 	t.getMapScaledSurface().set_colorkey((1, 1, 1))
 	t.setOffset(Vector(0, -4))
 for t in [
-	resourceManager.getOrNew('egg/blue_egg')
+	resourceManager.getOrNew('egg/blue_egg'),
+	resourceManager.getOrNew('egg/dark_red_egg'),
+	resourceManager.getOrNew('egg/gold_egg')
 ]:
 	t.getSurface().set_colorkey((0xff, 0xff, 0xff))
 	t.getMapScaledSurface().set_colorkey((0xff, 0xff, 0xff))
