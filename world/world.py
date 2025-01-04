@@ -56,7 +56,7 @@ class World(Renderable):
 			if interact.keys[pygame.K_ESCAPE].deals():
 				from window.window import PauseWindow
 				game.setWindow(PauseWindow())
-			if interact.keys[pygame.K_m].deals():
+			if interact.keys[pygame.K_TAB].deals():
 				from window.window import TaskWindow
 				game.setWindow(TaskWindow())
 			if interact.keys[pygame.K_SPACE].deals():
@@ -228,7 +228,7 @@ class DynamicWorld(World):
 		player = entityManager.get('player')(Vector(0, 0))
 		self.setPlayer(player)
 		Music_player.background_play(1)
-		Music_player.background_volume(0.1)
+		Music_player.background_set_volume(0.1)
 	
 	def generate_map(self) -> None:
 		direction = Vector(self._seed.random() - 0.5, self._seed.random() - 0.5)
@@ -305,7 +305,7 @@ class WitchWorld(World):
 		super().__init__(1, '老巫鸡的密室', None)
 		self.generate_map()  # 初始化地图
 		Music_player.background_play(2)
-		Music_player.background_volume(0.1)
+		Music_player.background_set_volume(0.1)
 	
 	def generate_map(self) -> None:
 		for i in range(-5, 5):
@@ -318,3 +318,6 @@ class WitchWorld(World):
 		for i in range(10):
 			self.addEntity(entityManager.get('enemy.dog')(Vector(self._seed.random() * 10 - 5, self._seed.random() * 10 - 5)))
 		self.addEntity(entityManager.get('entity.witch')(Vector(-4, 0)))
+
+
+#class BabybuiltWorld(World):

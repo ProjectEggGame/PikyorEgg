@@ -425,7 +425,7 @@ class Stick(Entity):
 		player = game.getWorld().getPlayer()
 		if player is not None and player.getPosition().distanceManhattan(self.getPosition()) <= 0.6:
 			Music_player.sound_play(1)
-			player.grow(2, self)
+			player.pick(2, self)
 			game.getWorld().removeEntity(self)
 			game.getWorld().addEntity(Stick(Vector(game.getWorld().getRandom().uniform(-50, 50), game.getWorld().getRandom().uniform(-50, 50))))
 	
@@ -572,7 +572,6 @@ class Player(Entity, Damageable):
 		return ret
 	
 	def nurture(self):
-		
 		if self.progress == 3:
 			from window.window import NurturingWindow
 			game.setWindow(NurturingWindow())
@@ -608,6 +607,8 @@ class Player(Entity, Damageable):
 					i.coolDown = 0
 				for i in self.activeSkills:
 					i.coolDown = 0
+			if interact.keys[pygame.K_e].deals():
+				self.pick(100, self)
 			## debug
 			if interact.keys[pygame.K_r].deals():
 				if self.growth_value < 100:
@@ -712,9 +713,9 @@ class Witch(Entity):
 	def tick(self) -> None:
 		player = game.getWorld().getPlayer()
 		if player is not None and player.getPosition().distanceManhattan(self.getPosition()) <= 0.6:
-			player.nurture()
 			game.getWorld(0).setPlayer(player)
 			game.setWorld(0)
+			player.nurture()
 
 
 # 注册实体

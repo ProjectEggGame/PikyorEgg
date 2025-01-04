@@ -217,6 +217,16 @@ class PresetColors:
 	exitText.hovering = 0xff000000
 	exitText.inactive = 0xff000000
 	exitText.click = 0xff000000
+	plotColor = ColorSet()
+	plotText = ColorSet()
+	plotText.active = 0xffFFCA18
+	plotText.hovering = 0xffFCE8AD
+	plotText.inactive = 0xffFFCA18
+	plotText.click = 0xffFFCA18
+	plotColor.active = 0xff545454
+	plotColor.hovering = 0xff7C7D7A
+	plotColor.inactive = 0xffFFCA18
+	plotColor.click = 0xffFFCA18
 
 
 class StartWindow(Window):
@@ -440,16 +450,31 @@ class SettingsWindow(Window):
 			return True
 		
 		self._widgets[4].onMouseDown = _4
-		self._widgets.append(Button(Location.CENTER, -0.1, 0, 0.2, 0.08, RenderableString('\\01ScrollLock' if renderer.lockScroll else '\\01ScrollRelease'), Description([RenderableString("地图缩放锁定" if renderer.lockScroll else '滚动滚轮以改变地图缩放')]), Location.CENTER))
+		self._widgets.append(Button(Location.CENTER, -0.1, 0, 0.2, 0.08, RenderableString('\\01 Music OFF' if Music_player.turnon else '\\01Music On'), Description([RenderableString('\\01 关掉可爱的音乐' if Music_player.turnon else '\\01打开可爱的音乐')]), Location.CENTER))
 		
 		def _5(x, y, b):
 			if b[0] == 1:
-				renderer.lockScroll = not renderer.lockScroll
-				self._widgets[5].description = Description([RenderableString('地图缩放锁定' if renderer.lockScroll else '滚动滚轮以改变地图缩放')])
-				self._widgets[5].name = RenderableString('\\01ScrollLock' if renderer.lockScroll else '\\01ScrollRelease')
+				if Music_player.turnon:
+					Music_player.background_set_volume(0.0)
+				else:
+					Music_player.background_set_volume(0.2,setting=True)
+				Music_player.turnon = not Music_player.turnon
+
+				self._widgets[5].description = Description([RenderableString('\\01 关掉可爱的音乐' if Music_player.turnon else '\\01打开超级可爱的音乐')])
+				self._widgets[5].name = RenderableString('\\01Music OFF' if Music_player.turnon else '\\01Music ON')
 			return True
 		
 		self._widgets[5].onMouseDown = _5
+		self._widgets.append(Button(Location.CENTER, 0.1, 0, 0.2, 0.08, RenderableString('\\01ScrollLock' if renderer.lockScroll else '\\01ScrollRelease'), Description([RenderableString("地图缩放锁定" if renderer.lockScroll else '滚动滚轮以改变地图缩放')]), Location.CENTER))
+		
+		def _6(x, y, b):
+			if b[0] == 1:
+				renderer.lockScroll = not renderer.lockScroll
+				self._widgets[6].description = Description([RenderableString('地图缩放锁定' if renderer.lockScroll else '滚动滚轮以改变地图缩放')])
+				self._widgets[6].name = RenderableString('\\01ScrollLock' if renderer.lockScroll else '\\01ScrollRelease')
+			return True
+		
+		self._widgets[6].onMouseDown = _6
 	
 	def setLastOpen(self, last: 'Window') -> 'Window':
 		self.lastOpen = last
@@ -590,10 +615,10 @@ class TaskWindow(Window):
 		
 		if self.looking == 5:
 			size: BlockVector = renderer.getSize()
-			renderer.renderString(RenderableString('\\.ffDED0A3\\00任务5：'), int((0.58 if renderer.is4to3.get() else 0.56) * size.x), (size.y >> 1) - font.realFontHeight, 0xff000000, Location.BOTTOM)
-			renderer.renderString(RenderableString('\\.ffDED0A3\\00下蛋是一个漫长而艰辛的过程'), int((0.58 if renderer.is4to3.get() else 0.56) * size.x), size.y >> 1, 0xff000000, Location.BOTTOM)
-			renderer.renderString(RenderableString('\\.ffDED0A3\\00你要陪她聊天'), int((0.58 if renderer.is4to3.get() else 0.56) * size.x), size.y >> 1, 0xff000000, Location.TOP)
-			renderer.renderString(RenderableString('\\.ffDED0A3\\00让它开心起来'), int((0.58 if renderer.is4to3.get() else 0.56) * size.x), (size.y >> 1) + font.realFontHeight, 0xff000000, Location.TOP)
+			renderer.renderString(RenderableString('\\.ffFCE8AD\\00任务5：'), int((0.58 if renderer.is4to3.get() else 0.56) * size.x), (size.y >> 1) - font.realFontHeight, 0xff000000, Location.BOTTOM)
+			renderer.renderString(RenderableString('\\.ffFCE8AD\\00你希望下出怎样的蛋'), int((0.58 if renderer.is4to3.get() else 0.56) * size.x), size.y >> 1, 0xff000000, Location.BOTTOM)
+			renderer.renderString(RenderableString('\\.ffFCE8AD\\00来给鸡宝宝选择不同的属性吧'), int((0.58 if renderer.is4to3.get() else 0.56) * size.x), size.y >> 1, 0xff000000, Location.TOP)
+			renderer.renderString(RenderableString('\\.ffFCE8AD\\00这会使得你获得不一样的蛋'), int((0.58 if renderer.is4to3.get() else 0.56) * size.x), (size.y >> 1) + font.realFontHeight, 0xff000000, Location.TOP)
 	
 	def passRender(self, delta: float, at: Vector | None = None) -> None:
 		s = Surface(renderer.getCanvas().get_size())
@@ -604,14 +629,14 @@ class TaskWindow(Window):
 	
 	def tick(self) -> None:
 		super().tick()
-		if interact.keys[pygame.K_m].deals():
+		if interact.keys[pygame.K_TAB].deals():
 			game.setWindow(self.lastOpen)
 
 
 class PlotWindow(Window):
 	def __init__(self):
 		super().__init__("Plot")
-		self._texture = resourceManager.getOrNew('window/plot')
+		self._texture = resourceManager.getOrNew('window/plot_1')
 		self._texture.systemScaleOffset = 0.0625
 		self._texture.adaptsMap(False)
 		self._texture.adaptsSystem(True)
@@ -631,47 +656,60 @@ class PlotWindow(Window):
 				game.setWorld(DynamicWorld('DynamicWorld'))
 			return True
 		
-		self._widgets.append(Button(Location.CENTER, 0, 0.05, 0.4, 0.08, RenderableString("\\.FF000000\\01NEXT"), Description([RenderableString("继续")]), textLocation=Location.CENTER))
+		def _2(x, y, b) -> bool:
+			if self.Sentence > 1:
+				self.Sentence -= 1
+			else:
+				game.setWindow(self.lastOpen)
+			return True
+		
+		
+		self._widgets.append(Button(Location.BOTTOM, 0.22, 0, 0.12, 0.08, RenderableString("\\.00FFFFFF\\01NEXT"), Description([RenderableString("继续")]), textLocation=Location.CENTER))
 		self._widgets[0].onMouseDown = _0
-		self._widgets.append(Button(Location.CENTER, 0, 0.15, 0.4, 0.08, RenderableString("\\.FF000000\\01SKIP"), Description([RenderableString("跳过剧情")]), textLocation=Location.CENTER))
+		self._widgets.append(Button(Location.BOTTOM, 0.38, 0, 0.12, 0.08, RenderableString("\\.00FFFFFF\\01SKIP"), Description([RenderableString("跳过剧情")]), textLocation=Location.CENTER))
 		self._widgets[1].onMouseDown = _1
+		self._widgets.append(Button(Location.BOTTOM, 0.06, 0, 0.12, 0.08, RenderableString("\\.00FFFF\\01BACK"), Description([RenderableString("上一页")]), textLocation=Location.CENTER))
+		self._widgets[2].onMouseDown = _2
 		
-		self._widgets[0].color = PresetColors.color
-		self._widgets[1].color = PresetColors.color
+		self._widgets[0].color = PresetColors.plotColor
+		self._widgets[1].color = PresetColors.plotColor
+		self._widgets[2].color = PresetColors.plotColor
 		
-		self._widgets[0].textColor = PresetColors.textColor
-		self._widgets[1].textColor = PresetColors.textColor
+		self._widgets[0].textColor = PresetColors.plotText
+		self._widgets[1].textColor = PresetColors.plotText
+		self._widgets[2].textColor = PresetColors.plotText
 	
 	def render(self, delta: float) -> None:
 		super().render(delta)
 		size: BlockVector = renderer.getSize()
 		if self.Sentence == 0:
-			renderer.renderString(RenderableString('\\.0040304D\\00嘿！小家伙，你终于醒啦！'), int(size.x * 0.61), int(size.y * 0.28), 0xffffffff, Location.CENTER)
-			renderer.renderString(RenderableString('\\.0040304D\\00别怕，这里很安全。'), int(size.x * 0.61), int(size.y * 0.28 + font.realFontHeight), 0xffffffff, Location.CENTER)
+			#之前是0.62和0.28
+			renderer.renderString(RenderableString('\\.0040304D\\00嘿！小家伙，你终于醒啦！'), int(size.x * 0.5), int(size.y * 0.4), 0xffffffff, Location.CENTER)
+			renderer.renderString(RenderableString('\\.0040304D\\00别怕，这里很安全。'), int(size.x * 0.5), int(size.y * 0.4 + font.realFontHeight), 0xffffffff, Location.CENTER)
 		if self.Sentence == 1:
-			renderer.renderString(RenderableString('\\.0040304D\\00你是一直体弱多病的小鸡，'), int(size.x * 0.62), int(size.y * 0.28), 0xffffffff, Location.CENTER)
-			renderer.renderString(RenderableString('\\.0040304D\\00没办法生蛋赚钱，'), int(size.x * 0.62), int(size.y * 0.28 + font.realFontHeight), 0xffffffff, Location.CENTER)
+			renderer.renderString(RenderableString('\\.0040304D\\00你是一直体弱多病的小鸡，'), int(size.x * 0.5), int(size.y * 0.4), 0xffffffff, Location.CENTER)
+			renderer.renderString(RenderableString('\\.0040304D\\00没办法生蛋赚钱，'), int(size.x * 0.5), int(size.y * 0.4 + font.realFontHeight), 0xffffffff, Location.CENTER)
 		if self.Sentence == 2:
-			renderer.renderString(RenderableString('\\.0040304D\\00正因如此，你的主人不仅虐待你'), int(size.x * 0.62), int(size.y * 0.28), 0xffffffff, Location.CENTER)
-			renderer.renderString(RenderableString('\\.0040304D\\00还把你无情地抛弃在了荒草丛中。'), int(size.x * 0.62), int(size.y * 0.28 + font.realFontHeight), 0xffffffff, Location.CENTER)
+			renderer.renderString(RenderableString('\\.0040304D\\00正因如此，你的主人不仅虐待你'), int(size.x * 0.5), int(size.y * 0.4), 0xffffffff, Location.CENTER)
+			renderer.renderString(RenderableString('\\.0040304D\\00还把你无情地抛弃在了荒草丛中。'), int(size.x * 0.5), int(size.y * 0.4 + font.realFontHeight), 0xffffffff, Location.CENTER)
 		if self.Sentence == 3:
-			renderer.renderString(RenderableString('\\.0040304D\\00当我发现你的时候，你浑身是伤'), int(size.x * 0.62), int(size.y * 0.28), 0xffffffff, Location.CENTER)
-			renderer.renderString(RenderableString('\\.0040304D\\00虚弱得连站都站不稳'), int(size.x * 0.62), int(size.y * 0.28 + font.realFontHeight), 0xffffffff, Location.CENTER)
+			renderer.renderString(RenderableString('\\.0040304D\\00当我发现你的时候，你浑身是伤'), int(size.x * 0.5), int(size.y * 0.4), 0xffffffff, Location.CENTER)
+			renderer.renderString(RenderableString('\\.0040304D\\00虚弱得连站都站不稳'), int(size.x * 0.5), int(size.y * 0.4 + font.realFontHeight), 0xffffffff, Location.CENTER)
 		if self.Sentence == 4:
-			renderer.renderString(RenderableString('\\.0040304D\\00咱们现在来到了一个新的村庄'), int(size.x * 0.62), int(size.y * 0.28), 0xffffffff, Location.CENTER)
-			renderer.renderString(RenderableString('\\.0040304D\\00这就是你以后生活的地方啦!'), int(size.x * 0.62), int(size.y * 0.28 + font.realFontHeight), 0xffffffff, Location.CENTER)
+			renderer.renderString(RenderableString('\\.0040304D\\00咱们现在来到了一个新的村庄'), int(size.x * 0.5), int(size.y * 0.4), 0xffffffff, Location.CENTER)
+			renderer.renderString(RenderableString('\\.0040304D\\00这就是你以后生活的地方啦!'), int(size.x * 0.5), int(size.y * 0.4 + font.realFontHeight), 0xffffffff, Location.CENTER)
 		if self.Sentence == 5:
-			renderer.renderString(RenderableString('\\.0040304D\\00接下来的日子可能不太轻松'), int(size.x * 0.62), int(size.y * 0.28), 0xffffffff, Location.CENTER)
-			renderer.renderString(RenderableString('\\.0040304D\\00你要搜集草地上的米粒来填饱肚子'), int(size.x * 0.62), int(size.y * 0.28 + font.realFontHeight), 0xffffffff, Location.CENTER)
+			renderer.renderString(RenderableString('\\.0040304D\\00接下来的日子可能不太轻松'), int(size.x * 0.5), int(size.y * 0.4), 0xffffffff, Location.CENTER)
+			renderer.renderString(RenderableString('\\.0040304D\\00你要搜集草地上的米粒来填饱肚子'), int(size.x * 0.5), int(size.y * 0.4 + font.realFontHeight), 0xffffffff, Location.CENTER)
 		if self.Sentence == 6:
-			renderer.renderString(RenderableString('\\.0040304D\\00并尽可能多地收集树枝，'), int(size.x * 0.62), int(size.y * 0.28), 0xffffffff, Location.CENTER)
-			renderer.renderString(RenderableString('\\.0040304D\\00为自己建造一个鸡窝'), int(size.x * 0.62), int(size.y * 0.28 + font.realFontHeight), 0xffffffff, Location.CENTER)
+			renderer.renderString(RenderableString('\\.0040304D\\00并尽可能多地收集树枝，'), int(size.x * 0.5), int(size.y * 0.4), 0xffffffff, Location.CENTER)
+			renderer.renderString(RenderableString('\\.0040304D\\00为自己建造一个鸡窝'), int(size.x * 0.5), int(size.y * 0.4 + font.realFontHeight), 0xffffffff, Location.CENTER)
 		if self.Sentence == 7:
-			renderer.renderString(RenderableString('\\.0040304D\\00在这个村庄里有很多邪恶的狐狸，'), int(size.x * 0.62), int(size.y * 0.28), 0xffffffff, Location.CENTER)
-			renderer.renderString(RenderableString('\\.0040304D\\00你一定要注意防范他们的攻击!'), int(size.x * 0.62), int(size.y * 0.28 + font.realFontHeight), 0xffffffff, Location.CENTER)
+			renderer.renderString(RenderableString('\\.0040304D\\00在这个村庄里有很多邪恶的狐狸，'), int(size.x * 0.5), int(size.y * 0.4), 0xffffffff, Location.CENTER)
+			renderer.renderString(RenderableString('\\.0040304D\\00你一定要注意防范他们的攻击!'), int(size.x * 0.5), int(size.y * 0.4 + font.realFontHeight), 0xffffffff, Location.CENTER)
 		if self.Sentence == 8:
-			renderer.renderString(RenderableString('\\.0040304D\\00你的最终目标是逆天改命，'), int(size.x * 0.62), int(size.y * 0.28), 0xffffffff, Location.CENTER)
-			renderer.renderString(RenderableString('\\.0040304D\\00生一个蛋，并孵出一只小鸡!'), int(size.x * 0.62), int(size.y * 0.28 + font.realFontHeight), 0xffffffff, Location.CENTER)
+			renderer.renderString(RenderableString('\\.0040304D\\00你的最终目标是逆天改命，'), int(size.x * 0.5), int(size.y * 0.4), 0xffffffff, Location.CENTER)
+			renderer.renderString(RenderableString('\\.0040304D\\00生一个蛋，并孵出一只小鸡!'), int(size.x * 0.5), int(size.y * 0.4 + font.realFontHeight), 0xffffffff, Location.CENTER)
 	
 	def tick(self) -> None:
 		if interact.keys[pygame.K_ESCAPE].deals():
@@ -684,75 +722,113 @@ BuildingWindowTimer: int = 90
 pic = 0
 
 
-class BuildingWindow(Window):
-	def __init__(self):
-		super().__init__("Building6......")
-		self.building_image = [
-			resourceManager.getOrNew('window/building/building1'),
-			resourceManager.getOrNew('window/building/building2'),
-			resourceManager.getOrNew('window/building/building3'),
-			resourceManager.getOrNew('window/building/building4'),
-			resourceManager.getOrNew('window/building/building5'),
-			resourceManager.getOrNew('window/building/building6'),
-			resourceManager.getOrNew('window/building/building7')
-		]
-		self.timer: int = 90
-		self._widgets.append(Button(Location.CENTER, 0, 0.1, 0.4, 0.08, RenderableString('\\00跳过'), Description([RenderableString("跳过动画")]), Location.CENTER))
-		self._widgets[0].onMouseDown = lambda x, y, b: b[0] == 1 and (game.setWindow(None) or game.getWorld().setPlayer(entityManager.get('player')(Vector()))) or True
-	
-	def render(self, delta: float) -> None:
-		w, h = renderer.getSize().getTuple()
-		renderer.fill(0xff4499ee, int(0.3 * w), int(0.3 * h), int(0.4 * w), int(0.2 * h))
-		renderer.renderString(RenderableString("\\.ff4499ee\\00\\#ff000000正在织鸡窝"), int(0.5 * w), int(0.4 * h), 0xff000000, Location.CENTER)
-	
-	def tick(self) -> None:
-		super().tick()
-		global pic
-		self._texture = self.building_image[self.timer % 7]
-		self.timer -= 1
-		if self.timer == 0:
-			game.setWindow(self.lastOpen)
-
-
 class NurturingWindow(Window):
 	def __init__(self):
 		super().__init__("Nurturing......")
-		self.building_image = [
-			resourceManager.getOrNew('window/building2/building1'),
-			resourceManager.getOrNew('window/building2/building2'),
-			resourceManager.getOrNew('window/building2/building3'),
-			resourceManager.getOrNew('window/building2/building4'),
-		]
+		Music_player.background_volume(0.1)
+		Music_player.sound_play(6)
+		self.nurturing_image = []
+		for i in range(1,7):
+			x = resourceManager.getOrNew(f'window/nurturing/nurturing{i}')
+			self.nurturing_image.append(x)
 		self.timer: int = 90
-		self._widgets.append(Button(Location.CENTER, 0, 0.1, 0.4, 0.08, RenderableString('\\00跳过'), Description([RenderableString("跳过动画")]), Location.CENTER))
-		self._widgets[0].onMouseDown = lambda x, y, b: b[0] == 1 and (game.setWindow(None) or game.getWorld().setPlayer(entityManager.get('player')(Vector()))) or True
+
+		def _1(x, y, b) -> bool:
+			if b[0] == 1:
+				Music_player.sound_stop(6)
+				Music_player.background_volume(0.4)
+				game.setWindow(self.lastOpen)
+			return True
+		
+		self._widgets.append(Button(Location.BOTTOM, 0.2, 0, 0.12, 0.08, RenderableString('\\01SKIP'), Description([RenderableString("跳过动画")]), Location.CENTER))
+		self._widgets[0].onMouseDown =  _1
+		self._widgets[0].color = PresetColors.plotColor
+		self._widgets[0].textColor = PresetColors.plotText
+
+	def render(self, delta: float) -> None:
+		size = renderer.getSize()
+		renderer.renderString(RenderableString("\\.ff4499ee\\00\\#ffffffff小鸡正在接受教育…………"), int(0.5 * size.x), int(0.6 * size.y), 0xffffffffff, Location.CENTER)
+		
+	def tick(self) -> None:
+		super().tick()
+		global pic
+		self._texture = self.nurturing_image[5-(int(self.timer) % 6)]
+		#self._backgroundLocation = Location.CENTER
+		self.timer -= 0.5
+		if self.timer == 0:
+			Music_player.sound_stop(6)
+			Music_player.background_volume(0.2)
+			game.setWindow(self.lastOpen)  # 这里回去还有问题
+
+
+class BuildingWindow(Window):
+	def __init__(self):
+		super().__init__("Building......")
+		Music_player.background_volume(0.1)
+		Music_player.sound_play(5)
+		self.building_image = []
+		for i in range(0,16):
+			x = resourceManager.getOrNew(f'window/building2/building{i}')
+			self.building_image.append(x)
+		self.timer: int = 90
+
+		def _1(x, y, b) -> bool:
+			if b[0] == 1:
+				Music_player.sound_stop(5)
+				Music_player.background_volume(0.4)
+				game.setWindow(self.lastOpen)
+			return True
+		
+		self._widgets.append(Button(Location.BOTTOM, 0.2, 0, 0.12, 0.08, RenderableString('\\01SKIP'), Description([RenderableString("跳过动画")]), Location.CENTER))
+		self._widgets[0].onMouseDown = _1
+		self._widgets[0].color = PresetColors.plotColor
+		self._widgets[0].textColor = PresetColors.plotText
 	
 	def render(self, delta: float) -> None:
 		w, h = renderer.getSize().getTuple()
-		renderer.fill(0xffeeee55, int(0.3 * w), int(0.3 * h), int(0.4 * w), int(0.2 * h))
-		renderer.renderString(RenderableString("\\.ffeeee55\\00\\#ff000000正在接受教育"), int(0.5 * w), int(0.4 * h), 0xff000000, Location.CENTER)
+		renderer.renderString(RenderableString("\\00\\00小鸡正在织鸡窝…………"), int(0.5 * w), int(0.7 * h), 0xffffffff, Location.CENTER)
 	
+	def passRender(self, delta: float, at: Vector | None = None) -> None:
+		s = Surface(renderer.getCanvas().get_size())
+		s.fill(self.backgroundColor & 0xffffff)
+		s.set_alpha(self.backgroundColor >> 24)
+		renderer.getCanvas().blit(s, (0, 0))
+		super().passRender(delta, at)
+		
 	def tick(self) -> None:
 		super().tick()
-		self._texture = self.building_image[self.timer % 4]
-		self.timer -= 1
+		self._texture = self.building_image[15 - (int(self.timer) % 16)]
+		self._backgroundLocation = Location.CENTER
+		self.timer -= 0.5
 		if self.timer == 0:
-			game.setWindow(self.lastOpen)
+			Music_player.sound_stop(5)
+			Music_player.background_volume(0.4)
+			game.setWindow(DynamicWorld())
 
 
-for t in [
-	resourceManager.getOrNew('window/building2/building1'),
-	resourceManager.getOrNew('window/building2/building2'),
-	resourceManager.getOrNew('window/building2/building3'),
-	resourceManager.getOrNew('window/building2/building4'),
-	resourceManager.getOrNew('window/building/building1'),
-	resourceManager.getOrNew('window/building/building2'),
-	resourceManager.getOrNew('window/building/building3'),
-	resourceManager.getOrNew('window/building/building4'),
-	resourceManager.getOrNew('window/building/building5'),
-	resourceManager.getOrNew('window/building/building6'),
-	resourceManager.getOrNew('window/building/building7')
-]:
+anim1 = []
+anim2 = []
+for i in range(1,6):
+	x = resourceManager.getOrNew(f'window/nurturing/nurturing{i}')
+	anim1.append(x)
+
+for i in range(0,16):
+	x = resourceManager.getOrNew(f'window/building2/building{i}')
+	anim2.append(x)
+
+for t in anim1:
 	t.adaptsMap(False)
 	t.adaptsSystem(True)
+	t.systemScaleOffset *= 5
+	t.adaptsSystem()
+	t.getSurface().set_colorkey((0, 0, 0))
+
+for t in anim2:
+	t.adaptsMap(False)
+	t.adaptsSystem(True)
+	t.systemScaleOffset *= 5
+	t.adaptsSystem()
+	t.getSurface().set_colorkey((0, 0, 0))
+	t.setOffset(Vector(-5, 0))
+	
 del t
