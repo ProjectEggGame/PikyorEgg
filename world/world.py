@@ -44,7 +44,7 @@ class World(Renderable):
 		return w
 	
 	def tick(self) -> None:
-		for e in self._entityList:
+		for e in self._entityList.copy():
 			e.passTick()
 		for b in self._ground.values():
 			if b is None:
@@ -57,7 +57,7 @@ class World(Renderable):
 				from window.window import PauseWindow
 				game.setWindow(PauseWindow())
 			if interact.keys[pygame.K_TAB].deals():
-				from window.window import TaskWindow
+				from window.ingame import TaskWindow
 				game.setWindow(TaskWindow())
 			if interact.keys[pygame.K_SPACE].deals():
 				if renderer.getCameraAt() is None:
@@ -69,31 +69,22 @@ class World(Renderable):
 				else:
 					game.hud.sendMessage(RenderableString('\\#cc7755ee居中锁定'))
 					renderer.cameraOffset.set(0, 0)
-			if interact.keys[pygame.K_e].deals():
-				if self.getPlayer() is not None:
-					from window.ingame import StatusWindow
-					game.setWindow(StatusWindow())
-			if interact.keys[pygame.K_RETURN].deals():
-				from window.input import AiWindow
-				game.setWindow(AiWindow())
-			if interact.keys[pygame.K_h].deals():
-				from window.window import BuildingWindow
-				game.setWindow(BuildingWindow())
 	
 	def render(self, delta: float) -> None:
 		ct = renderer.getCenter().getVector().divide(renderer.getMapScale())
 		block2 = ct.clone().add(renderer.getCamera().get()).getBlockVector().add(0, 1)
 		block1 = ct.reverse().add(renderer.getCamera().get()).getBlockVector()
 		newList = []
+		y2 = block2.y + 2
 		for e in iter(self._entityList.copy()):
 			p = e.getPosition()
-			if p.x < block1.x or p.x > block2.x or p.y < block1.y or p.y > block2.y + 2:
+			if p.x < block1.x or p.x > block2.x or p.y < block1.y or p.y > y2:
 				continue
 			if renderer.getCameraAt() is not e:
 				e.updatePosition(delta)
 			newList.append(e)
 		p = self._player.getPosition()
-		if block1.x <= p.x <= block2.x and block1.y <= p.y <= block2.y + 2:
+		if block1.x <= p.x <= block2.x and block1.y <= p.y <= y2:
 			newList.append(self._player)
 			if renderer.getCameraAt() is not self._player:
 				self._player.updatePosition(delta)
@@ -253,7 +244,7 @@ class DynamicWorld(World):
 				self.setBlockAt(i[0], blockManager.dic.get('nature.path' if self._seed.random() < 0.8 else 'nature.grass')(i[0]))
 		
 		def generateBlock(p, rate):
-			if rate < 0.3:
+			if rate < 0.4:
 				return
 			self.setBlockAt(p, blockManager.dic.get('nature.grass' if rate < 0.5 or self._seed.random() > rate else 'nature.path')(p))
 			if self.getBlockAt(b := BlockVector(p.x - 1, p.y - 1)) is None:
@@ -294,10 +285,12 @@ class DynamicWorld(World):
 			if self.getBlockAt(BlockVector(pos.x + 1, pos.y + 1)) is None:
 				generateBlock(pos, 0.7)
 		for i, j in self._ground.items():
+			if j is None:
+				continue
 			if abs(j.getBlockPosition().x) < 5 and abs(j.getBlockPosition().y) < 5:
 				continue
-			if self._seed.random() < 0.2:
-				self.addEntity(entityManager.get('enemy.dog')(Vector(self._seed.random() + j.getBlockPosition().x, self._seed.random() + j.getBlockPosition().y)))
+			if self._seed.random() < 0.05:
+				self.addEntity(entityManager.get('entity.rice')(Vector(self._seed.random() + j.getBlockPosition().x, self._seed.random() + j.getBlockPosition().y)))
 
 
 class WitchWorld(World):
@@ -319,5 +312,4 @@ class WitchWorld(World):
 			self.addEntity(entityManager.get('enemy.dog')(Vector(self._seed.random() * 10 - 5, self._seed.random() * 10 - 5)))
 		self.addEntity(entityManager.get('entity.witch')(Vector(-4, 0)))
 
-
-#class BabybuiltWorld(World):
+# class BabybuiltWorld(World):

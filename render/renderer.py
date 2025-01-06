@@ -373,8 +373,8 @@ class Renderer:
 		"""
 		return pygame.transform.scale_by(s, self._mapScale / 16)
 	
-	def uiScaleSurface(self, s: Surface) -> Surface:
-		return pygame.transform.scale_by(s, self._uiScale)
+	def uiScaleSurface(self, s: Surface, off: float) -> Surface:
+		return pygame.transform.scale_by(s, self._uiScale * off)
 	
 	def systemScaleSurface(self, s: Surface, off: float) -> Surface:
 		return pygame.transform.scale_by(s, self._systemScale * off)

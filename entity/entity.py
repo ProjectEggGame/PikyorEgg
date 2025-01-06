@@ -5,7 +5,7 @@ from typing import TYPE_CHECKING, Union, Callable, ClassVar, TypeVar
 
 from entity.active_skill import Active, ActiveFlash
 from entity.manager import entityManager, skillManager
-from entity.skill import Skill
+from entity.skill import Skill, SkillEasySatisfaction
 from utils import utils
 from window.window import DeathWindow
 
@@ -24,116 +24,16 @@ from music.music import Music_player
 
 
 class Entity(Element):
-	def __init__(self, entityID: str, name: str, description: EntityDescription, texture: list[Texture], position: Vector, speed: float = 0):
+	def __init__(self, entityID: str, name: str, description: EntityDescription, texture: list[Texture], position: Vector):
 		"""
 		:param name: 实体名称
 		:param description: 实体描述，字符串列表
 		:param texture: 纹理列表，一般认为[0][1]是前面，[2][3]是后，[4][5]是左，[6][7]是右。可以参考class Player的构造函数
 		"""
 		super().__init__(name, description, texture[0])
-		self.__renderInterval: int = 6
-		self.__velocity: Vector = Vector(0, 0)
 		self._position: Vector = position
-		self._renderPosition: Vector = position
-		self.basicMaxSpeed: float = speed
-		self._maxSpeed: float = speed
-		self._setVelocity: Vector = Vector(0, 0)
 		self._textureSet: list[Texture] = texture
 		self._id: str = entityID
-	
-	def processMove(self) -> None:
-		if (vLength := self._setVelocity.length()) == 0:
-			self.__velocity.set(0, 0)
-			return
-		rayTraceResult: list[tuple[Union['Block', BlockVector], Vector]] = game.getWorld().rayTraceBlock(self._position, self._setVelocity, vLength)
-		for block, vector in rayTraceResult:
-			block: Union['Block', BlockVector]  # 命中方块，或者命中方块坐标
-			vector: Vector  # 起始点->命中点
-			if not isinstance(block, BlockVector):
-				if block.canPass(self):  # 可通过方块，跳过
-					continue
-				block = block.getBlockPosition()
-			block: BlockVector
-			newPosition: Vector = self._position + vector
-			newVelocity: Vector = self._setVelocity - vector
-			rel: list[tuple[BlockVector, Vector]] | BlockVector | None = block.getRelativeBlock(newPosition, newVelocity)
-			if rel is None:  # 在中间
-				continue
-			elif isinstance(rel, BlockVector):  # 撞边不撞角
-				vel2: Vector = (Matrices.xOnly if rel.x == 0 else Matrices.yOnly) @ newVelocity
-				for b, v in game.getWorld().rayTraceBlock(newPosition, vel2, vel2.length()):
-					if not isinstance(b, BlockVector):
-						if b.canPass(self):
-							continue
-						# 还得判断钻缝的问题
-						b = b.getBlockPosition()
-					grb = b.getRelativeBlock(newPosition + v, v)
-					if not isinstance(grb, list) or len(grb) == 0:
-						continue
-					b2 = game.getWorld().getBlockAt(grb[0][0])
-					if b2 is None or not b2.canPass(self):
-						self.__velocity.set(vector + v)
-						return
-				# 钻缝问题处理结束
-				# 退出for循环，说明全部通过
-				self.__velocity.set(vector + vel2)
-				return
-			elif not rel:  # 空列表
-				continue  # 不影响移动
-			else:  # 撞角
-				if len(rel) == 1:  # 碰一边
-					relativeBlock: Union['Block', None] = game.getWorld().getBlockAt(rel[0][0])
-					if relativeBlock is None or not relativeBlock.canPass(self):  # 碰一边，然后恰好撞墙
-						self.__velocity.set(vector)
-					else:
-						self.__velocity.set(vector + rel[0][1])
-					return
-				# 碰一边处理结束，顶角处理开始
-				# 都能过的话，无脑，0优先。
-				# 然后这里好像还要再trace一次新的方向看看
-				relativeBlock: Union['Block', None] = game.getWorld().getBlockAt(rel[0][0])
-				if relativeBlock is not None and relativeBlock.canPass(self):  # 0能过，trace新方向
-					for b, v in game.getWorld().rayTraceBlock(newPosition, rel[0][1], rel[0][1].length()):
-						if not isinstance(b, BlockVector):
-							if b.canPass(self):
-								continue
-							# 还得判断钻缝的问题
-							b = b.getBlockPosition()
-						grb = b.getRelativeBlock(newPosition + v, v)
-						if not isinstance(grb, list) or len(grb) == 0:
-							continue
-						b2 = game.getWorld().getBlockAt(grb[0][0])
-						if b2 is None or not b2.canPass(self):
-							self.__velocity.set(vector + v)
-							return
-					# 钻缝问题处理结束
-					# 退出for循环，说明全部通过
-					self.__velocity.set(vector + rel[0][1])
-					return
-				relativeBlock = game.getWorld().getBlockAt(rel[1][0])
-				if relativeBlock is not None and relativeBlock.canPass(self):  # 1能过，trace新方向
-					for b, v in game.getWorld().rayTraceBlock(newPosition, rel[1][1], rel[1][1].length()):
-						if not isinstance(b, BlockVector):
-							if b.canPass(self):
-								continue
-							# 还得判断钻缝的问题
-							b = b.getBlockPosition()
-						grb = b.getRelativeBlock(newPosition + v, v)
-						if not isinstance(grb, list) or len(grb) == 0:
-							continue
-						b2 = game.getWorld().getBlockAt(grb[0][0])
-						if b2 is None or not b2.canPass(self):
-							self.__velocity.set(vector + v)
-							return
-					# 钻缝问题处理结束
-					# 退出for循环，说明全部通过
-					self.__velocity.set(vector + rel[1][1])
-					return
-				# 都不能过
-				self.__velocity.set(vector)
-				return
-		self.__velocity.set(self._setVelocity)
-		return
 	
 	def passTick(self) -> None:
 		"""
@@ -141,58 +41,6 @@ class Entity(Element):
 		重写时必须注意调用父类的同名函数，防止遗漏逻辑。
 		除非你一定要覆写当中的代码，否则尽量不要重写这个函数。
 		"""
-		self._position.add(self.__velocity)
-		self.processMove()
-		if abs(self.__velocity.x) >= abs(self.__velocity.y):
-			if self.__velocity.x < 0:
-				self.__renderInterval -= 1
-				if self._texture is self._textureSet[4]:
-					if self.__renderInterval <= 0:
-						self.__renderInterval = 6
-						self._texture = self._textureSet[5]
-				elif self._texture is self._textureSet[5]:
-					if self.__renderInterval <= 0:
-						self.__renderInterval = 6
-						self._texture = self._textureSet[4]
-				else:
-					self._texture = self._textureSet[4]
-			elif self.__velocity.x > 0:
-				self.__renderInterval -= 1
-				if self._texture is self._textureSet[6]:
-					if self.__renderInterval <= 0:
-						self.__renderInterval = 6
-						self._texture = self._textureSet[7]
-				elif self._texture is self._textureSet[7]:
-					if self.__renderInterval <= 0:
-						self.__renderInterval = 6
-						self._texture = self._textureSet[6]
-				else:
-					self._texture = self._textureSet[6]
-		else:
-			if self.__velocity.y < 0:
-				self.__renderInterval -= 1
-				if self._texture is self._textureSet[2]:
-					if self.__renderInterval <= 0:
-						self.__renderInterval = 6
-						self._texture = self._textureSet[3]
-				elif self._texture is self._textureSet[3]:
-					if self.__renderInterval <= 0:
-						self.__renderInterval = 6
-						self._texture = self._textureSet[2]
-				else:
-					self._texture = self._textureSet[2]
-			elif self.__velocity.y > 0:
-				self.__renderInterval -= 1
-				if self._texture is self._textureSet[0]:
-					if self.__renderInterval <= 0:
-						self.__renderInterval = 6
-						self._texture = self._textureSet[1]
-				elif self._texture is self._textureSet[1]:
-					if self.__renderInterval <= 0:
-						self.__renderInterval = 6
-						self._texture = self._textureSet[0]
-				else:
-					self._texture = self._textureSet[0]
 		self.tick()
 	
 	def tick(self) -> None:
@@ -202,14 +50,7 @@ class Entity(Element):
 		pass
 	
 	def render(self, delta: float) -> None:
-		self._texture.renderAtMap(self._renderPosition)
-	
-	def setVelocity(self, v: Vector) -> None:
-		"""
-		设置速度
-		:param v: 目标值
-		"""
-		self._setVelocity.set(v)
+		self._texture.renderAtMap(self._position)
 	
 	def setPosition(self, position: Vector) -> None:
 		self._position.set(position)
@@ -218,21 +59,13 @@ class Entity(Element):
 		return self._position.clone()
 	
 	def updatePosition(self, delta: float | None = None) -> Vector:
-		if delta is None:
-			return self._renderPosition
-		self._renderPosition = self._position + self.__velocity * delta
-		return self._renderPosition
-	
-	def getVelocity(self) -> Vector:
-		return self.__velocity.clone()
+		return self._position.clone()
 	
 	def save(self) -> dict:
 		return {
 			"id": self._id,
 			"position": self._position.save(),
-			"velocity": self.__velocity.save(),
 			"name": self.name,
-			"maxSpeed": self._maxSpeed,
 		}
 	
 	@classmethod
@@ -243,9 +76,7 @@ class Entity(Element):
 		:return: 返回entity
 		"""
 		entity._id = d["id"]
-		entity.__velocity = Vector.load(d["velocity"])
 		entity.name = d["name"]
-		entity._maxSpeed = d["maxSpeed"]
 		entity._position = Vector.load(d["position"])
 		return entity
 
@@ -357,12 +188,206 @@ class Damageable:
 		return entity
 
 
-class DeprecatedPlayer(Entity, Damageable):
+class MoveableEntity(Entity):
+	def __init__(self, entityID: str, name: str, description: EntityDescription, texture: list[Texture], position: Vector, speed: float = 0):
+		super().__init__(entityID, name, description, texture, position)
+		self.__renderInterval: int = 6
+		self.__velocity: Vector = Vector(0, 0)
+		self._maxSpeed: float = speed
+		self._setVelocity: Vector = Vector(0, 0)
+		self._renderPosition: Vector = Vector()
+		self._textureSet: list[Texture] = texture
+		self.basicMaxSpeed: float = speed
+	
+	def setVelocity(self, v: Vector) -> None:
+		"""
+		设置速度
+		:param v: 目标值
+		"""
+		self._setVelocity.set(v)
+	
+	def getVelocity(self) -> Vector:
+		return self.__velocity.clone()
+	
+	def processMove(self) -> None:
+		if (vLength := self._setVelocity.length()) == 0:
+			self.__velocity.set(0, 0)
+			return
+		rayTraceResult: list[tuple[Union['Block', BlockVector], Vector]] = game.getWorld().rayTraceBlock(self._position, self._setVelocity, vLength)
+		for block, vector in rayTraceResult:
+			block: Union['Block', BlockVector]  # 命中方块，或者命中方块坐标
+			vector: Vector  # 起始点->命中点
+			if not isinstance(block, BlockVector):
+				if block.canPass(self):  # 可通过方块，跳过
+					continue
+				block = block.getBlockPosition()
+			block: BlockVector
+			newPosition: Vector = self._position + vector
+			newVelocity: Vector = self._setVelocity - vector
+			rel: list[tuple[BlockVector, Vector]] | BlockVector | None = block.getRelativeBlock(newPosition, newVelocity)
+			if rel is None:  # 在中间
+				continue
+			elif isinstance(rel, BlockVector):  # 撞边不撞角
+				vel2: Vector = (Matrices.xOnly if rel.x == 0 else Matrices.yOnly) @ newVelocity
+				for b, v in game.getWorld().rayTraceBlock(newPosition, vel2, vel2.length()):
+					if not isinstance(b, BlockVector):
+						if b.canPass(self):
+							continue
+						# 还得判断钻缝的问题
+						b = b.getBlockPosition()
+					grb = b.getRelativeBlock(newPosition + v, v)
+					if not isinstance(grb, list) or len(grb) == 0:
+						continue
+					b2 = game.getWorld().getBlockAt(grb[0][0])
+					if b2 is None or not b2.canPass(self):
+						self.__velocity.set(vector + v)
+						return
+				# 钻缝问题处理结束
+				# 退出for循环，说明全部通过
+				self.__velocity.set(vector + vel2)
+				return
+			elif not rel:  # 空列表
+				continue  # 不影响移动
+			else:  # 撞角
+				if len(rel) == 1:  # 碰一边
+					relativeBlock: Union['Block', None] = game.getWorld().getBlockAt(rel[0][0])
+					if relativeBlock is None or not relativeBlock.canPass(self):  # 碰一边，然后恰好撞墙
+						self.__velocity.set(vector)
+					else:
+						self.__velocity.set(vector + rel[0][1])
+					return
+				# 碰一边处理结束，顶角处理开始
+				# 都能过的话，无脑，0优先。
+				# 然后这里好像还要再trace一次新的方向看看
+				relativeBlock: Union['Block', None] = game.getWorld().getBlockAt(rel[0][0])
+				if relativeBlock is not None and relativeBlock.canPass(self):  # 0能过，trace新方向
+					for b, v in game.getWorld().rayTraceBlock(newPosition, rel[0][1], rel[0][1].length()):
+						if not isinstance(b, BlockVector):
+							if b.canPass(self):
+								continue
+							# 还得判断钻缝的问题
+							b = b.getBlockPosition()
+						grb = b.getRelativeBlock(newPosition + v, v)
+						if not isinstance(grb, list) or len(grb) == 0:
+							continue
+						b2 = game.getWorld().getBlockAt(grb[0][0])
+						if b2 is None or not b2.canPass(self):
+							self.__velocity.set(vector + v)
+							return
+					# 钻缝问题处理结束
+					# 退出for循环，说明全部通过
+					self.__velocity.set(vector + rel[0][1])
+					return
+				relativeBlock = game.getWorld().getBlockAt(rel[1][0])
+				if relativeBlock is not None and relativeBlock.canPass(self):  # 1能过，trace新方向
+					for b, v in game.getWorld().rayTraceBlock(newPosition, rel[1][1], rel[1][1].length()):
+						if not isinstance(b, BlockVector):
+							if b.canPass(self):
+								continue
+							# 还得判断钻缝的问题
+							b = b.getBlockPosition()
+						grb = b.getRelativeBlock(newPosition + v, v)
+						if not isinstance(grb, list) or len(grb) == 0:
+							continue
+						b2 = game.getWorld().getBlockAt(grb[0][0])
+						if b2 is None or not b2.canPass(self):
+							self.__velocity.set(vector + v)
+							return
+					# 钻缝问题处理结束
+					# 退出for循环，说明全部通过
+					self.__velocity.set(vector + rel[1][1])
+					return
+				# 都不能过
+				self.__velocity.set(vector)
+				return
+		self.__velocity.set(self._setVelocity)
+		return
+	
+	def passTick(self) -> None:
+		self._position.add(self.__velocity)
+		self.processMove()
+		if abs(self.__velocity.x) >= abs(self.__velocity.y):
+			if self.__velocity.x < 0:
+				self.__renderInterval -= 1
+				if self._texture is self._textureSet[4]:
+					if self.__renderInterval <= 0:
+						self.__renderInterval = 6
+						self._texture = self._textureSet[5]
+				elif self._texture is self._textureSet[5]:
+					if self.__renderInterval <= 0:
+						self.__renderInterval = 6
+						self._texture = self._textureSet[4]
+				else:
+					self._texture = self._textureSet[4]
+			elif self.__velocity.x > 0:
+				self.__renderInterval -= 1
+				if self._texture is self._textureSet[6]:
+					if self.__renderInterval <= 0:
+						self.__renderInterval = 6
+						self._texture = self._textureSet[7]
+				elif self._texture is self._textureSet[7]:
+					if self.__renderInterval <= 0:
+						self.__renderInterval = 6
+						self._texture = self._textureSet[6]
+				else:
+					self._texture = self._textureSet[6]
+		else:
+			if self.__velocity.y < 0:
+				self.__renderInterval -= 1
+				if self._texture is self._textureSet[2]:
+					if self.__renderInterval <= 0:
+						self.__renderInterval = 6
+						self._texture = self._textureSet[3]
+				elif self._texture is self._textureSet[3]:
+					if self.__renderInterval <= 0:
+						self.__renderInterval = 6
+						self._texture = self._textureSet[2]
+				else:
+					self._texture = self._textureSet[2]
+			elif self.__velocity.y > 0:
+				self.__renderInterval -= 1
+				if self._texture is self._textureSet[0]:
+					if self.__renderInterval <= 0:
+						self.__renderInterval = 6
+						self._texture = self._textureSet[1]
+				elif self._texture is self._textureSet[1]:
+					if self.__renderInterval <= 0:
+						self.__renderInterval = 6
+						self._texture = self._textureSet[0]
+				else:
+					self._texture = self._textureSet[0]
+		super().passTick()
+	
+	def updatePosition(self, delta: float | None = None) -> Vector:
+		if delta is None:
+			return self._renderPosition
+		self._renderPosition = self._position + self.__velocity * delta
+		return self._renderPosition
+	
+	def render(self, delta: float) -> None:
+		self._texture.renderAtMap(self._renderPosition)
+	
+	def save(self) -> dict:
+		ret = super().save()
+		ret.update({
+			"velocity": self.__velocity.save(),
+			"maxSpeed": self._maxSpeed,
+		})
+		return ret
+	
+	@classmethod
+	def load(cls, d: dict, entity: Union['Entity', None] = None) -> Union['Entity', None]:
+		entity._position = Vector.load(d["position"])
+		entity._velocity = Vector.load(d["velocity"])
+		return entity
+
+
+class DeprecatedPlayer(MoveableEntity, Damageable):
 	def __init__(self, name: str):
 		"""
 		创建玩家
 		"""
-		Entity.__init__(self, "player", name, EntityDescription(self), [
+		MoveableEntity.__init__(self, "player", name, EntityDescription(self), [
 			resourceManager.getOrNew('player/no_player_1'),
 			resourceManager.getOrNew('player/no_player_2'),
 			resourceManager.getOrNew('player/no_player_b1'),
@@ -401,15 +426,14 @@ class DeprecatedPlayer(Entity, Damageable):
 
 class Rice(Entity):
 	def __init__(self, position: Vector):
-		super().__init__('entity.rice', '米粒', EntityDescription(self, [RenderableString("\\#FFFFD700黄色的米粒")]), [resourceManager.getOrNew('entity/rice')], position, 0)
+		super().__init__('entity.rice', '米粒', EntityDescription(self, [RenderableString("\\#FFFFD700黄色的米粒")]), [resourceManager.getOrNew('entity/rice')], position)
 	
 	def tick(self) -> None:
 		player = game.getWorld().getPlayer()
 		if player is not None and player.getPosition().distanceManhattan(self.getPosition()) <= 0.6:
 			Music_player.sound_play(0)
-			player.grow(2, self)
+			player.grow(1, self)
 			game.getWorld().removeEntity(self)
-			game.getWorld().addEntity(Rice(Vector(game.getWorld().getRandom().uniform(-50, 50), game.getWorld().getRandom().uniform(-50, 50))))
 	
 	@classmethod
 	def load(cls, d: dict, entity: Union['Entity', None] = None) -> Union['Entity', None]:
@@ -419,15 +443,14 @@ class Rice(Entity):
 
 class Stick(Entity):
 	def __init__(self, position: Vector):
-		super().__init__('entity.stick', '树枝', EntityDescription(self, [RenderableString("\\#FFFFD700坚硬的树枝")]), [resourceManager.getOrNew('entity/stick')], position, 0)
+		super().__init__('entity.stick', '树枝', EntityDescription(self, [RenderableString("\\#FFFFD700坚硬的树枝")]), [resourceManager.getOrNew('entity/stick')], position)
 	
 	def tick(self) -> None:
 		player = game.getWorld().getPlayer()
 		if player is not None and player.getPosition().distanceManhattan(self.getPosition()) <= 0.6:
 			Music_player.sound_play(1)
-			player.pick(2, self)
+			player.pick(1, self)
 			game.getWorld().removeEntity(self)
-			game.getWorld().addEntity(Stick(Vector(game.getWorld().getRandom().uniform(-50, 50), game.getWorld().getRandom().uniform(-50, 50))))
 	
 	@classmethod
 	def load(cls, d: dict, entity: Union['Entity', None] = None) -> Union['Entity', None]:
@@ -435,9 +458,12 @@ class Stick(Entity):
 		return Entity.load(d, e)
 
 
-class Player(Entity, Damageable):
+skillGet: list[int] = [10, 22, 36, 52, 70, 90, 112, 136, 162, 190, 220, 252, 286, 322, 360, 400, 442, 486, 532, 580]
+
+
+class Player(MoveableEntity, Damageable):
 	def __init__(self, position: Vector):
-		Entity.__init__(self, 'player', 'Chick', EntityDescription(self, [RenderableString("\\#FFFFD700黄色的小鸡"), RenderableString('\\/    也就是你')]), [
+		MoveableEntity.__init__(self, 'player', 'Chick', EntityDescription(self, [RenderableString("\\#FFFFD700黄色的小鸡"), RenderableString('\\/    也就是你')]), [
 			resourceManager.getOrNew('player/chick_1'),
 			resourceManager.getOrNew('player/chick_1'),
 			resourceManager.getOrNew('player/chick_b1'),
@@ -448,6 +474,7 @@ class Player(Entity, Damageable):
 			resourceManager.getOrNew('player/chick_r1'),
 		], position, 0.16)
 		Damageable.__init__(self, 100)
+		self.totalGrowth: float = 0
 		self.growth_value: float = 0  # 成长值初始化为0
 		self.backpack_stick: float = 0  # 背包里树枝数量初始化为0
 		self.preDeath: list[Callable[[], bool]] = []  # () -> bool是否取消
@@ -496,30 +523,33 @@ class Player(Entity, Damageable):
 		for sk in self.activeSkills:
 			sks.append(sk.save())
 		data['skills'] = sks
+		data['totalGrowth'] = self.totalGrowth
 		return data
 	
 	@classmethod
 	def load(cls, d: dict, entity: Union['Player', None] = None) -> 'Player':
 		chicken = Player(Vector.load(d['position']))
 		chicken.growth_value = d['growth_value']
+		chicken.totalGrowth = d['totalGrowth']
 		for sk in d['skills']:
 			s: Skill = skillManager.get(sk['id']).load(sk)
 			chicken.__allSkills.pop(sk['id'])
 			if sk['id'] >= 100:
+				assert isinstance(s, Active)
 				chicken.activeSkills.append(s)
 			else:
 				chicken.skills[sk['id']] = s
 			s.init(chicken)
 			if s.getLevel() != -1:
 				s.upgrade()
-		Entity.load(d, chicken)
+		MoveableEntity.load(d, chicken)
 		Damageable.load(d, chicken)
 		return chicken
 	
 	def grow(self, amount: float, src: Entity | str) -> float:
 		for i in self.preGrow:
 			amount = i(amount, src)
-		if self.growth_value == 100:
+		if self.growth_value == 100 or amount < 0:
 			return 0
 		val = self.growth_value + amount
 		if val > 100:
@@ -528,24 +558,26 @@ class Player(Entity, Damageable):
 		else:
 			self.growth_value = val
 			ret = amount
+		self.totalGrowth += ret
 		for i in self.postGrow:
 			i(ret, src)
-		
-		if (skc := self.growth_value // 10) > len(self.skills):
-			for i in range(skc - len(self.skills)):
-				if len(self.__allSkills) <= 0:
-					break
-				k = game.getWorld().getRandom().sample(sorted(self.__allSkills), 1)
-				sk: Skill = self.__allSkills.pop(k[0])()
-				sk.upgrade()
-				if isinstance(sk, Active):
-					self.activeSkills.append(sk)
-					game.hud.sendMessage(RenderableString('你获得了新的技能：') + self.activeSkills[-1].getName())
-				else:
-					self.skills[k[0]] = sk
-					game.hud.sendMessage(RenderableString('你获得了新的技能：') + self.skills[k[0]].getName())
+		while self.totalGrowth > skillGet[len(self.skills) + len(self.activeSkills)]:
+			if len(self.__allSkills) <= 0:
+				break
+			if len(self.skills) == 0:
+				k = 1
+			else:
+				k = game.getWorld().getRandom().sample(sorted(self.__allSkills), 1)[0]
+			sk: Skill = self.__allSkills.pop(k)()
+			sk.upgrade()
+			if isinstance(sk, Active):
+				self.activeSkills.append(sk)
+				game.hud.sendMessage(RenderableString('你获得了新的主动技能：') + self.activeSkills[-1].getName())
+			else:
+				self.skills[k] = sk
+				game.hud.sendMessage(RenderableString('你获得了新的被动技能：') + self.skills[k].getName())
 		if self.growth_value >= 100 and self.progress == 1:
-			game.hud.sendMessage(RenderableString('\\#ffee0000恭喜你，解锁了新的任务'))
+			game.hud.sendMessage(RenderableString('\\#ffeeee00\\.ffee6666恭喜你，解锁了新的任务'))
 			self.progress = 2
 		return ret
 	
@@ -563,21 +595,16 @@ class Player(Entity, Damageable):
 			ret = amount
 		for i in self.postPick:
 			i(ret, src)
-		if self.backpack_stick >= 10 and self.progress == 2:  # 加一个对小鸡位置的描述：小鸡在家中
-			from window.window import BuildingWindow
-			game.setWindow(BuildingWindow())
-			# 播放小鸡施工建筑（音乐+动画）
-			game.hud.sendMessage(RenderableString('\\#ffee0000恭喜你，解锁了新的任务'))
-			self.progress = 3
 		return ret
 	
 	def nurture(self):
 		if self.progress == 3:
-			from window.window import NurturingWindow
+			from window.ingame import NurturingWindow
+			game.hud.sendMessage(RenderableString('\\#ffeeee00\\.ffee6666恭喜你，解锁了新的任务'))
 			game.setWindow(NurturingWindow())
-			# 播放小鸡受到巫婆鸡教诲的动画+音乐
-			game.hud.sendMessage(RenderableString('\\#ffee0000恭喜你，解锁了新的任务'))
 			self.progress = 4
+		elif self.progress > 3:
+			game.hud.sendMessage(RenderableString('\\#ffee0000你已经接受过教诲了'))
 		else:
 			game.hud.sendMessage(RenderableString('\\#ffee0000需要先完成前面的任务才可以接受巫婆鸡的教诲'))
 	
@@ -607,7 +634,6 @@ class Player(Entity, Damageable):
 					i.coolDown = 0
 				for i in self.activeSkills:
 					i.coolDown = 0
-			if interact.keys[pygame.K_e].deals():
 				self.pick(100, self)
 			## debug
 			if interact.keys[pygame.K_r].deals():
@@ -631,6 +657,24 @@ class Player(Entity, Damageable):
 			if self.skillSelecting != -1 and interact.left.deals():
 				self.activeSkills[self.skillSelecting].onUse(game.mouseAtMap)
 				self.skillSelecting = -1
+			if interact.keys[pygame.K_e].deals():
+				from window.ingame import StatusWindow
+				game.setWindow(StatusWindow())
+			if interact.keys[pygame.K_RETURN].deals():
+				from window.input import AiWindow
+				game.setWindow(AiWindow())
+			if interact.keys[pygame.K_h].deals():
+				if self.progress >= 2:
+					if self.progress == 2:
+						game.hud.sendMessage(RenderableString('\\#ffeeee00\\.ffee6666恭喜你，解锁了新的任务'))
+						self.progress = 3
+					if -3 < self._position.x < 3 and -3 < self._position.y < 3:
+						from window.ingame import BuildingWindow
+						game.setWindow(BuildingWindow())
+					else:
+						game.hud.sendMessage(RenderableString('\\#ffee0000请在家里搭窝，不然蛋会被捣蛋的狐狸偷走~'))
+				else:
+					game.hud.sendMessage(RenderableString('\\#ffee0000你还没有解锁这个任务~'))
 		self.setVelocity(v.normalize().multiply(self._maxSpeed))
 		for i in self.postTick:
 			i()
@@ -642,7 +686,7 @@ class Player(Entity, Damageable):
 
 class Coop(Entity):
 	def __init__(self, position: Vector):
-		super().__init__('entity.coop', '鸡窝', EntityDescription(self, [RenderableString('鸡舍')]), [resourceManager.getOrNew('entity/coop')], position, 0)
+		super().__init__('entity.coop', '鸡窝', EntityDescription(self, [RenderableString('鸡舍')]), [resourceManager.getOrNew('entity/coop')], position)
 	
 	@classmethod
 	def load(cls, d: dict, entity: Union['Entity', None] = None) -> Union['Entity', None]:
@@ -655,16 +699,9 @@ building_time = 0
 
 class Building_coop(Entity):
 	def __init__(self, position: Vector):
-		super().__init__('entity.coop', '鸡窝', EntityDescription(self, [RenderableString('鸡舍')]), [resourceManager.getOrNew('entity/coop')], position, 0)
+		super().__init__('entity.coop', '鸡窝', EntityDescription(self, [RenderableString('鸡舍')]), [resourceManager.getOrNew('entity/coop')], position)
 	
 	def passTick(self) -> None:
-		"""
-		内置函数，不应当额外调用，不应当随意重写。
-		重写时必须注意调用父类的同名函数，防止遗漏逻辑。
-		除非你一定要覆写当中的代码，否则尽量不要重写这个函数。
-		"""
-		self._position.add(self.__velocity)
-		self.processMove()
 		i = int(building_time)
 		self._texture = self._textureSet[i]
 		building_time += 0.5
@@ -678,7 +715,7 @@ class Building_coop(Entity):
 
 class BlueEgg(Entity):
 	def __init__(self, position: Vector):
-		super().__init__('entity.egg.blue', '蓝色的蛋', EntityDescription(self, [RenderableString('\\#FF00D7FF蓝色的蛋'), RenderableString('\\#ff999999\\/    你别管为什么这么大')]), [a := resourceManager.getOrNew('egg/blue_egg'), a, a, a, a, a, a, a], position, 0)
+		super().__init__('entity.egg.blue', '蓝色的蛋', EntityDescription(self, [RenderableString('\\#FF00D7FF蓝色的蛋'), RenderableString('\\#ff999999\\/    你别管为什么这么大')]), [a := resourceManager.getOrNew('egg/blue_egg'), a, a, a, a, a, a, a], position)
 	
 	@classmethod
 	def load(cls, d: dict, entity: Union['Entity', None] = None) -> Union['Entity', None]:
@@ -688,7 +725,7 @@ class BlueEgg(Entity):
 
 class GoldEgg(Entity):
 	def __init__(self, position: Vector):
-		super().__init__('entity.egg.blue', '金色的蛋', EntityDescription(self, [RenderableString('\\#FFF2B912金色的蛋'), RenderableString('\\#ff999999\\/    你别管为什么这么大')]), [a := resourceManager.getOrNew('egg/gold_egg'), a, a, a, a, a, a, a], position, 0)
+		super().__init__('entity.egg.blue', '金色的蛋', EntityDescription(self, [RenderableString('\\#FFF2B912金色的蛋'), RenderableString('\\#ff999999\\/    你别管为什么这么大')]), [a := resourceManager.getOrNew('egg/gold_egg'), a, a, a, a, a, a, a], position)
 	
 	@classmethod
 	def load(cls, d: dict, entity: Union['Entity', None] = None) -> Union['Entity', None]:
@@ -698,7 +735,7 @@ class GoldEgg(Entity):
 
 class RedEgg(Entity):
 	def __init__(self, position: Vector):
-		super().__init__('entity.egg.blue', '绯色的蛋', EntityDescription(self, [RenderableString('\\#FFB37153绯色的蛋'), RenderableString('\\#ff999999\\/    你别管为什么这么大')]), [a := resourceManager.getOrNew('egg/dark_red_egg'), a, a, a, a, a, a, a], position, 0)
+		super().__init__('entity.egg.blue', '绯色的蛋', EntityDescription(self, [RenderableString('\\#FFB37153绯色的蛋'), RenderableString('\\#ff999999\\/    你别管为什么这么大')]), [a := resourceManager.getOrNew('egg/dark_red_egg'), a, a, a, a, a, a, a], position)
 	
 	@classmethod
 	def load(cls, d: dict, entity: Union['Entity', None] = None) -> Union['Entity', None]:
@@ -708,7 +745,7 @@ class RedEgg(Entity):
 
 class Witch(Entity):
 	def __init__(self, position: Vector):
-		super().__init__('entity.witch', '老巫婆鸡', EntityDescription(self, [RenderableString('鸡长老')]), [resourceManager.getOrNew('entity/witch/witch')], position, 0)
+		super().__init__('entity.witch', '老巫婆鸡', EntityDescription(self, [RenderableString('鸡长老')]), [resourceManager.getOrNew('entity/witch/witch')], position)
 	
 	def tick(self) -> None:
 		player = game.getWorld().getPlayer()
@@ -743,7 +780,6 @@ for t in [
 	t.getMapScaledSurface().set_colorkey((0, 0, 0))
 	t.setOffset(Vector(0, -6))
 for t in [
-	resourceManager.getOrNew('entity/rice'),
 	resourceManager.getOrNew('entity/stick'),
 	resourceManager.getOrNew('entity/coop'),
 	resourceManager.getOrNew('entity/witch/witch')
@@ -751,6 +787,10 @@ for t in [
 	t.getSurface().set_colorkey((0, 0, 0))
 	t.getMapScaledSurface().set_colorkey((0, 0, 0))
 	t.setOffset(Vector(0, -2))
+t = resourceManager.getOrNew('entity/rice')
+t.setOffset(Vector(0, -3))
+t.getSurface().set_colorkey((0, 0, 0))
+t.getMapScaledSurface().set_colorkey((0, 0, 0))
 resourceManager.getOrNew('entity/coop').setOffset(Vector(0, -5))
 resourceManager.getOrNew('entity/witch/witch').setOffset(Vector(0, -7))
 for t in [

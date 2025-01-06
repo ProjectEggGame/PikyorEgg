@@ -20,7 +20,10 @@ class Skill:
 		self.player = None
 		self.description: SkillDescription = description
 		self.texture = resourceManager.getOrNew(f'skill/{self._id}')
+		self.texture.uiScaleOffset = 0.025
+		self.texture.systemScaleOffset = 0.1
 		self.texture.adaptsSystem()
+		self.texture.adaptsUI()
 		self.texture.adaptsMap(False)
 		self.coolDown: int = 0
 		self.maxCoolDown: int = 0
@@ -30,6 +33,10 @@ class Skill:
 	def init(self, player) -> None:
 		"""加载时，技能和玩家同时加载，所以技能拿不到game.getWorld().getPlayer()。独立出来以方便处理。"""
 		self.player = player
+	
+	def getID(self) -> int:
+		"""获取技能ID"""
+		return self._id
 	
 	def getCoolDown(self) -> int:
 		"""
@@ -49,8 +56,11 @@ class Skill:
 			return -1
 		return self._level
 	
+	def getMaxLevel(self) -> int:
+		return 10
+	
 	def upgradeCost(self) -> int:
-		return self._level
+		return 1
 	
 	def getName(self=None) -> RenderableString:
 		return RenderableString('\\00空白技能')
@@ -61,7 +71,7 @@ class Skill:
 		:return: 宽度
 		"""
 		self.texture.renderAtInterface(at)
-		return self.texture.getSystemScaledSurface().get_width()
+		return self.texture.getUiScaledSurface().get_width()
 	
 	def upgrade(self) -> bool:
 		"""
@@ -96,21 +106,24 @@ class SkillEasySatisfaction(Skill):
 	
 	def getName(self=None) -> RenderableString:
 		if self is None or self._level == 0:
-			return RenderableString('\\10\\#ffeeee00爱米')
+			return RenderableString('\\#ffeeee00爱米')
 		else:
-			return RenderableString('\\10\\#ffeeee00爱米' + toRomanNumeral(self._level))
+			return RenderableString('\\#ffeeee00爱米' + (toRomanNumeral(self._level) if self._level < 20 else '(MAX)'))
+	
+	def getMaxLevel(self) -> int:
+		return 20
 	
 	def upgrade(self) -> bool:
-		if super().upgrade():
+		if self._level < 20 and super().upgrade():
 			self.description.d[0] = self.getName()
-			self.description.d[1] = RenderableString(f'\\#ffee55dd    从米粒中获得额外{self._level}点成长')
+			self.description.d[1] = RenderableString(f'\\#ffee55dd    从米粒中获得额外{self._level / 10:.1f}点成长')
 			return True
 		return False
 	
 	def onGrow(self, amount: int, src: Union['Entity', str]) -> int:
 		from entity.entity import Rice
 		if isinstance(src, Rice):
-			amount += self._level
+			amount += self._level / 10
 		return amount
 
 
@@ -124,12 +137,15 @@ class SkillResistance(Skill):
 	
 	def getName(self=None) -> RenderableString:
 		if self is None or self._level == 0:
-			return RenderableString('\\10\\#ffeeeedd坚毅')
+			return RenderableString('\\#ffeeeedd坚毅')
 		else:
-			return RenderableString('\\10\\#ffeeeedd坚毅' + toRomanNumeral(self._level))
+			return RenderableString('\\#ffeeeedd坚毅' + (toRomanNumeral(self._level) if self._level < 100 else '(MAX)'))
+	
+	def getMaxLevel(self) -> int:
+		return 100
 	
 	def upgrade(self) -> bool:
-		if super().upgrade():
+		if self._level < 100 and super().upgrade():
 			self.description.d[0] = self.getName()
 			self.description.d[1] = RenderableString(f'\\#ffee55dd    减少受到的{float(self._level * 100 / (10 + self._level)):.2f}%伤害')
 			return True
@@ -152,20 +168,23 @@ class SkillFastGrow(Skill):
 	
 	def getName(self=None) -> RenderableString:
 		if self is None or self._level == 0:
-			return RenderableString('\\10\\#ffee8844揠苗')
+			return RenderableString('\\#ffee8844揠苗')
 		else:
-			return RenderableString('\\10\\#ffee8844揠苗' + toRomanNumeral(self._level))
+			return RenderableString('\\#ffee8844揠苗' + (toRomanNumeral(self._level) if self._level < 100 else '(MAX)'))
+	
+	def getMaxLevel(self) -> int:
+		return 100
 	
 	def upgrade(self) -> bool:
-		if super().upgrade():
+		if self._level < 100 and super().upgrade():
 			self.description.d[0] = self.getName()
-			self.description.d[1] = RenderableString(f'\\#ffee55dd    每秒获得{self._level / 5:.2f}点成长')
+			self.description.d[1] = RenderableString(f'\\#ffee55dd    每秒获得{self._level / 50:.2f}点成长')
 			self.description.d[2] = RenderableString(f'\\#ffee0000    但是每秒受到{self._level * 20 / (200 + self._level << 1):.2f}点伤害！')
 			return True
 		return False
 	
 	def onTick(self):
-		if self.player.grow(self._level / 100, 'SkillFastGrow') != 0:
+		if self.player.grow(self._level / 1000, 'SkillFastGrow') != 0:
 			self.player.damage(self._level / (200 + self._level << 1), self.player)
 
 
@@ -189,13 +208,12 @@ class SkillRevive(Skill):
 	
 	def getName(self=None) -> RenderableString:
 		if self is None or self._level == 0:
-			return RenderableString('\\10\\#ffffff66屹立不倒')
+			return RenderableString('\\#ffffff66屹立不倒')
 		else:
-			return RenderableString('\\10\\#ffffff66屹立不倒' + (toRomanNumeral(self._level) if self._level < 20 else "(MAX)"))
+			return RenderableString('\\#ffffff66屹立不倒' + (toRomanNumeral(self._level) if self._level < 10 else "(MAX)"))
 	
 	def upgrade(self) -> bool:
-		if self._level < 20:
-			self._level += 1
+		if self._level < 20 and super().upgrade():
 			self.maxCoolDown = 2500 - self._level * 100
 			self.description.d[0] = self.getName()
 			self.description.d[2] = RenderableString(f'\\#ffee5555    体力回复 {20 + 3 * self._level:.2f}%')
@@ -222,15 +240,14 @@ class SkillSwift(Skill):
 	
 	def getName(self=None) -> RenderableString:
 		if self is None or self._level == 0:
-			return RenderableString('\\10\\#ff96F8F5迅捷')
+			return RenderableString('\\#ff96F8F5迅捷')
 		else:
-			return RenderableString('\\10\\#ff96F8F5迅捷' + (toRomanNumeral(self._level) if self._level < 20 else "(MAX)"))
+			return RenderableString('\\#ff96F8F5迅捷' + (toRomanNumeral(self._level) if self._level < 10 else "(MAX)"))
 	
 	def upgrade(self) -> bool:
-		if self._level < 20:
-			self._level += 1
+		if self._level < 10 and super().upgrade():
 			self.player.basicMaxSpeed -= self.modifier
-			self.modifier = 0.01 * self._level
+			self.modifier = 0.005 * self._level
 			self.player.basicMaxSpeed += self.modifier
 			self.description.d[0] = self.getName()
 			return True

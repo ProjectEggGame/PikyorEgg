@@ -88,10 +88,10 @@ class Active(Skill):
 
 class ActiveFlash(Active):
 	def __init__(self):
-		self.name = RenderableString('\\10\\#ff44aaee闪现')
+		self.name = RenderableString('\\#ff44aaee闪现')
+		super().__init__(101, SkillDescription(self, [self.name, RenderableString('    \\#ffaa4499向前方闪现一段距离')]))
 		self.maxCoolDown = 1200
 		self.shouldSetPosition: Vector | None | tuple[Vector, float] = None
-		super().__init__(101, SkillDescription(self, [self.name, RenderableString('    \\#ffaa4499向前方闪现一段距离')]))
 	
 	def init(self, player) -> None:
 		super().init(player)
@@ -99,9 +99,12 @@ class ActiveFlash(Active):
 	
 	def getName(self=None) -> RenderableString:
 		if self is None or self._level == 0:
-			return RenderableString('\\10\\#ff44aaee闪现')
+			return RenderableString('\\#ff44aaee闪现')
 		else:
-			return RenderableString('\\10\\#ff44aaee闪现' + (toRomanNumeral(self._level) if self._level < 5 else "(MAX)"))
+			return RenderableString('\\#ff44aaee闪现' + (toRomanNumeral(self._level) if self._level < 5 else "(MAX)"))
+	
+	def getMaxLevel(self) -> int:
+		return 5
 	
 	def upgrade(self) -> bool:
 		if self._level < 5 and super().upgrade():
@@ -162,10 +165,10 @@ class ActiveFlash(Active):
 
 class ActiveAdrenalin(Active):
 	def __init__(self):
-		self.name = RenderableString('\\10\\#ffaa0000肾上腺素')
+		self.name = RenderableString('\\#ffaa0000肾上腺素')
+		super().__init__(102, SkillDescription(self, [self.name, RenderableString('    \\#ffaa4499短时间内不受伤害'), RenderableString(f'    \\#ffaa0000持续0.00秒')]))
 		self.timeCount = 0
 		self.maxCoolDown = 1200
-		super().__init__(102, SkillDescription(self, [self.name, RenderableString('    \\#ffaa4499短时间内不受伤害'), RenderableString(f'    \\#ffaa0000持续0.00秒')]))
 	
 	def init(self, player) -> None:
 		super().init(player)
@@ -174,9 +177,12 @@ class ActiveAdrenalin(Active):
 	
 	def getName(self=None) -> RenderableString:
 		if self is None or self._level == 0:
-			return RenderableString('\\10\\#ffaa0000肾上腺素')
+			return RenderableString('\\#ffaa0000肾上腺素')
 		else:
-			return RenderableString('\\10\\#ffaa0000肾上腺素' + (toRomanNumeral(self._level) if self._level < 5 else "(MAX)"))
+			return RenderableString('\\#ffaa0000肾上腺素' + (toRomanNumeral(self._level) if self._level < 5 else "(MAX)"))
+	
+	def getMaxLevel(self) -> int:
+		return 5
 	
 	def upgrade(self) -> bool:
 		if self._level < 5 and super().upgrade():
@@ -219,8 +225,7 @@ class ActiveAdrenalin(Active):
 
 class ActiveAttack(Active):
 	def __init__(self):
-		self.name = RenderableString('\\10\\#ffeeee00猛啄')
-		self.maxCoolDown = 120
+		self.name = RenderableString('\\#ffeeee00猛啄')
 		super().__init__(103, SkillDescription(self, [self.name, RenderableString('    \\#ffaa4499向狐狸发起进攻！'), RenderableString(f'    \\#ffaa4499攻击范围 1.5L 2W'), RenderableString(f'    \\#ffeeee00对范围内狐狸造成0点伤害')]))
 	
 	def init(self, player) -> None:
@@ -229,25 +234,20 @@ class ActiveAttack(Active):
 	
 	def getName(self=None) -> RenderableString:
 		if self is None or self._level == 0:
-			return RenderableString('\\10\\#ffeeee00猛啄')
+			return RenderableString('\\#ffeeee00猛啄')
 		else:
-			return RenderableString('\\10\\#ffeeee00猛啄' + (toRomanNumeral(self._level) if self._level < 10 else "(MAX)"))
+			return RenderableString('\\#ffeeee00猛啄' + (toRomanNumeral(self._level) if self._level < 10 else "(MAX)"))
 	
 	def upgrade(self) -> bool:
 		if self._level < 10 and super().upgrade():
 			self.description.d[0] = self.getName()
-			self.maxCoolDown = 120 - self._level * 5
+			self.description.d[3] = RenderableString(f'    \\#ffeeee00对范围内狐狸造成{10 + self._level}点伤害')
 			return True
 		return False
 	
 	def render(self, delta: float, mouseAtMap: Vector | BlockVector, chosen: bool = False, isRenderIcon: bool = False) -> int | None:
 		if isRenderIcon:
 			ret = super().render(delta, mouseAtMap)
-			if self.coolDown > 0:
-				s = Surface(self.texture.getSystemScaledSurface().get_size())
-				s.set_alpha(0xaa)
-				renderer.getCanvas().blit(s, mouseAtMap.getTuple())
-				renderer.renderString(RenderableString(f'\\11{int(self.coolDown / 20)}'), mouseAtMap.x + (s.get_width() >> 1), mouseAtMap.y + (s.get_height() >> 1), 0xffffffff, Location.CENTER)
 			return ret
 		elif chosen:
 			renderSkill(1.5, 1, mouseAtMap - self.player.getPosition(), 0x55eeee00 if self.coolDown <= 0 else 0x55ee4444)
@@ -278,10 +278,10 @@ class ActiveAttack(Active):
 
 class ActiveSwift(Active):
 	def __init__(self):
-		self.name = RenderableString('\\10\\#ff0088cc疾跑')
+		self.name = RenderableString('\\#ff0088cc疾跑')
+		super().__init__(104, SkillDescription(self, [self.name, RenderableString('    \\#ffaa4499快，快，快……我不行了')]))
 		self.timeCount = 0
 		self.maxCoolDown = 800
-		super().__init__(104, SkillDescription(self, [self.name, RenderableString('    \\#ffaa4499快，快，快……我不行了')]))
 	
 	def init(self, player) -> None:
 		super().init(player)
@@ -293,20 +293,20 @@ class ActiveSwift(Active):
 		if self.timeCount > 0:
 			self.timeCount -= 1
 			if self.timeCount == 0:
-				self.player.basicMaxSpeed -= 0.2
+				self.player.basicMaxSpeed -= 0.1
 	
 	def getName(self=None) -> RenderableString:
 		if self is None or self._level == 0:
-			return RenderableString('\\10\\#ff0088cc疾跑')
+			return RenderableString('\\#ff0088cc疾跑')
 		else:
-			return RenderableString('\\10\\#ff0088cc疾跑' + (toRomanNumeral(self._level) if self._level < 10 else "(MAX)"))
+			return RenderableString('\\#ff0088cc疾跑' + (toRomanNumeral(self._level) if self._level < 10 else "(MAX)"))
 	
 	def onUse(self, mouseAtMap: Vector) -> None:
 		if self.coolDown > 0:
 			return
 		self.timeCount = 40 + self._level * 5
 		self.coolDown = self.maxCoolDown
-		self.player.basicMaxSpeed += 0.2
+		self.player.basicMaxSpeed += 0.1
 	
 	def upgrade(self) -> bool:
 		if self._level < 10 and super().upgrade():

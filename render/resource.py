@@ -22,6 +22,7 @@ class Texture:
 		self._file = open(f'assets/texture/{file}.bmp', 'rb')
 		self._surface: Surface = pygame.image.load_basic(self._file)
 		self.systemScaleOffset: float = 0.025
+		self.uiScaleOffset: float = 0.025
 		self._mapScaled: Surface | None = renderer.mapScaleSurface(self._surface) if self._mapObject else None
 		self._uiScaled: Surface | None = None
 		self._systemScaled: Surface | None = None
@@ -35,7 +36,7 @@ class Texture:
 	def adaptsUI(self, val: bool = True) -> None:
 		if self._uiObject != val:
 			self._uiObject = val
-			self._uiScaled: Surface | None = renderer.uiScaleSurface(self._surface)
+			self._uiScaled: Surface | None = renderer.uiScaleSurface(self._surface, self.uiScaleOffset)
 	
 	def adaptsSystem(self, val: bool = True) -> None:
 		if self._systemObject != val:
@@ -72,7 +73,7 @@ class Texture:
 	
 	def changeUiScale(self) -> None:
 		if self._uiObject:
-			self._uiScaled = renderer.uiScaleSurface(self._surface)
+			self._uiScaled = renderer.uiScaleSurface(self._surface, self.uiScaleOffset)
 	
 	def changeSystemScale(self) -> None:
 		if self._systemObject:

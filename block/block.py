@@ -1,6 +1,7 @@
 from typing import TYPE_CHECKING, Union
 
 from block.manager import blockManager
+from entity.manager import entityManager
 from render.resource import resourceManager
 from utils.element import Element
 from utils.game import game
@@ -155,6 +156,12 @@ class Wall(Block):
 class GrassBlock(Ground):
 	def __init__(self, position: 'BlockVector'):
 		super().__init__('nature.grass', "草地", BlockDescription(self, [RenderableString("\\#FF4BAB25青色的草地")]), position, resourceManager.getOrNew('block/grass'))
+	
+	def tick(self) -> None:
+		if self.canPass():
+			rd = game.getWorld().getRandom()
+			if len(game.getWorld().getEntities()) <= 40 and rd.random() < 0.00001 * (40 - len(game.getWorld().getEntities())):
+				game.getWorld().addEntity(entityManager.get(rd.choice(['entity.stick', 'entity.rice']))(Vector(rd.random() + self._position.x, rd.random() + self._position.y)))
 	
 	@classmethod
 	def load(cls, d: dict, block=None) -> 'GrassBlock':

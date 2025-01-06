@@ -47,23 +47,23 @@ def renderThread():
 	while game.running:
 		try:
 			nowRender = time.perf_counter_ns()
-			if True or nowRender - lastRender >= 1_000_000:
-				lastRender = nowRender
-				if renderer.dealScreen4to3Change():
-					game.getWindow().onResize()
-				if renderer.peekScaleChange():
-					resourceManager.changeScale()
-					if renderer.systemScaleChanged():
-						font.setScale(renderer.getSystemScale() * 0.6)
-					renderer.dealScaleChange()
-				game.render((nowRender - lastTick) / 60_000_000)
-				count += 1
-				if nowRender - lastCount >= 1_000_000_000:
-					renderer.fps = count * 1_000_000_000 / (nowRender - lastCount)
-					count = 0
-					lastCount = nowRender
-			else:
-				time.sleep(0)
+			# if True or nowRender - lastRender >= 1_000_000:
+			lastRender = nowRender
+			if renderer.dealScreen4to3Change():
+				game.getWindow().onResize()
+			if renderer.peekScaleChange():
+				resourceManager.changeScale()
+				if renderer.systemScaleChanged():
+					font.setScale(renderer.getSystemScale() * 0.6)
+				renderer.dealScaleChange()
+			game.render((nowRender - lastTick) / 60_000_000)
+			count += 1
+			if nowRender - lastCount >= 1_000_000_000:
+				renderer.fps = count * 1_000_000_000 / (nowRender - lastCount)
+				count = 0
+				lastCount = nowRender
+			# else:
+			# 	time.sleep(0)
 		except Exception as e:
 			utils.printException(e)
 			game.running = False

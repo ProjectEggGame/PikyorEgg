@@ -1,6 +1,6 @@
 from typing import Union
 
-from entity.entity import Entity, Damageable
+from entity.entity import Entity, Damageable, MoveableEntity
 from entity.manager import entityManager
 from render.resource import Texture, resourceManager
 from utils import utils
@@ -9,9 +9,9 @@ from utils.text import RenderableString, EntityDescription
 from utils.vector import Vector
 
 
-class Enemy(Entity, Damageable):
+class Enemy(MoveableEntity, Damageable):
 	def __init__(self, entityID: str, name: str, description: EntityDescription, texture: list[Texture], position: Vector, health: float = 100, speed: float = 0.06):
-		Entity.__init__(self, entityID, name, description, texture, position, speed)
+		MoveableEntity.__init__(self, entityID, name, description, texture, position, speed)
 		Damageable.__init__(self, health)
 		self._attackTimer: int = 0
 		self._attackCoolDown: int = 10
@@ -40,10 +40,10 @@ class Enemy(Entity, Damageable):
 		elif self._aiVelocity.lengthManhattan() != 0:
 			self._aiVelocity.set(0, 0)
 			self.setVelocity(Vector())
-		Entity.passTick(self)
+		MoveableEntity.passTick(self)
 	
 	def save(self) -> dict:
-		d = Entity.save(self)
+		d = MoveableEntity.save(self)
 		d['attackTimer'] = self._attackTimer
 		d['attackCoolDown'] = self._attackCoolDown
 		d['hasAI'] = self._hasAI
@@ -54,7 +54,7 @@ class Enemy(Entity, Damageable):
 	def load(cls, d: dict, entity: Union['Entity', None] = None) -> Union['Entity', None]:
 		assert entity is not None
 		assert isinstance(entity, Enemy)
-		Entity.load(d, entity)
+		MoveableEntity.load(d, entity)
 		entity._attackTimer = d['attackTimer']
 		entity._attackCoolDown = d['attackCoolDown']
 		entity._hasAI = d['hasAI']
