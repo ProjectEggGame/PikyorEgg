@@ -1,7 +1,7 @@
 import pygame
 
 from interact.status import Status, ScrollStatus
-from utils import utils
+from utils.util import utils
 from utils.vector import BlockVector
 
 

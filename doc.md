@@ -748,11 +748,17 @@
     - 函数装饰器。用法是，在函数的定义处加入@符号使用。
     - 不会对函数本体和返回值造成什么影响。
     - 调用完成时，输出函数的入参和返回值。例如：
+
 ```python
-from utils import prints
+
+from utils.util import prints
+
+
 @prints
 def func(*args, **kwagrs):
 	print(args[0])
+
+
 func(123, 234, 'hello', kw=('EmsiaetKadosh', 213))
 # 输出结果：
 # 123
@@ -762,11 +768,17 @@ func(123, 234, 'hello', kw=('EmsiaetKadosh', 213))
     - 函数装饰器。用法是，在函数的定义处加入@符号使用。
     - 不会对函数本体和返回值造成什么影响。
     - 调用完成时，输出函数的运行时间。例如：
+
 ```python
-from utils import times
+
+from utils.util import times
+
+
 @times
 def func(*args, **kwagrs):
 	print(args[0])
+
+
 func(123, 234, 'hello', kw=('EmsiaetKadosh', 213))
 # 输出结果：
 # 123

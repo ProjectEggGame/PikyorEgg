@@ -2,24 +2,21 @@ import asyncio
 import time
 
 import pygame
-from threading import Thread, Lock
+from threading import Thread
 
-from pygame import SRCALPHA
-
-from entity.entity import Player
-from interact import interact
+from interact.interacts import interact
 from render import font
 
 from render.renderer import renderer
 from render.resource import resourceManager
 from save import configs
-from utils import utils
+from utils.util import utils
 from utils.game import game
 from window.hud import Hud
 from window.input import InputWindow, asyncTasks
 from window.window import FloatWindow, StartWindow
 
-# 这句是必要的，会注册到entityManager上
+# 这句是必要的，会将entity/enemy.py中的实体类型注册到entityManager上
 from entity import enemy
 
 nowRender = time.perf_counter_ns()

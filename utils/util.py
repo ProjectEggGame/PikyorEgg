@@ -1,7 +1,7 @@
 import time
+import traceback
 import types
 from sys import stdout, stderr
-import traceback
 from threading import Lock
 from typing import Callable
 

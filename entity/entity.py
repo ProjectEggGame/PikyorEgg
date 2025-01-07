@@ -1,19 +1,18 @@
 import random
 
 import pygame
-from typing import TYPE_CHECKING, Union, Callable, ClassVar, TypeVar
+from typing import TYPE_CHECKING, Union, Callable
 
-from entity.active_skill import Active, ActiveFlash
+from entity.active_skill import Active
 from entity.manager import entityManager, skillManager
-from entity.skill import Skill, SkillEasySatisfaction
-from utils import utils
+from entity.skill import Skill
+from utils.util import utils
 from window.window import DeathWindow
 
 if TYPE_CHECKING:
 	from block.block import Block
 
-from item.item import BackPack
-from interact import interact
+from interact.interacts import interact
 from utils.vector import Vector, BlockVector, Matrices
 from render.resource import resourceManager
 from utils.game import game
@@ -377,8 +376,8 @@ class MoveableEntity(Entity):
 	
 	@classmethod
 	def load(cls, d: dict, entity: Union['Entity', None] = None) -> Union['Entity', None]:
-		entity._position = Vector.load(d["position"])
 		entity._velocity = Vector.load(d["velocity"])
+		entity._maxSpeed = d["maxSpeed"]
 		return entity
 
 
@@ -398,7 +397,6 @@ class DeprecatedPlayer(MoveableEntity, Damageable):
 			resourceManager.getOrNew('player/no_player_r2'),
 		], Vector(), 0.16)
 		Damageable.__init__(self, 100)
-		self.inventory = BackPack()
 		self.hunger = 0
 	
 	def onDeath(self) -> None:
@@ -514,7 +512,7 @@ class Player(MoveableEntity, Damageable):
 		return amount
 	
 	def save(self) -> dict:
-		data = Entity.save(self)
+		data = MoveableEntity.save(self)
 		data.update(Damageable.save(self))
 		data['growth_value'] = self.growth_value
 		sks = []

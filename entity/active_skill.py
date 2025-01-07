@@ -17,16 +17,16 @@ def renderSkill(distance: float, halfWidth: float, direction: Vector, color: int
 	ver = Vector(direction.y, -direction.x)
 	ver.normalize().multiply(halfWidth)
 	d = direction.clone().normalize().multiply(scale)
-	r = pos + ver
-	r.multiply(scale)
-	l = pos - ver
-	l.multiply(scale)
+	rightDirection = pos + ver
+	rightDirection.multiply(scale)
+	leftDirection = pos - ver
+	leftDirection.multiply(scale)
 	pts = [
-		r.getBlockVector(),
-		(r + (dh := d * (distance - halfWidth))).getBlockVector(),
+		rightDirection.getBlockVector(),
+		(rightDirection + (dh := d * (distance - halfWidth))).getBlockVector(),
 		(pos * scale + d * distance).getBlockVector(),
-		(l + dh).getBlockVector(),
-		l.getBlockVector(),
+		(leftDirection + dh).getBlockVector(),
+		leftDirection.getBlockVector(),
 	]
 	minX = min(pts, key=lambda x: x.x).x
 	minY = min(pts, key=lambda x: x.y).y
@@ -88,8 +88,7 @@ class Active(Skill):
 
 class ActiveFlash(Active):
 	def __init__(self):
-		self.name = RenderableString('\\#ff44aaee闪现')
-		super().__init__(101, SkillDescription(self, [self.name, RenderableString('    \\#ffaa4499向前方闪现一段距离')]))
+		super().__init__(101, SkillDescription(self, [RenderableString('\\10\\#ff44aaee闪现'), RenderableString('    \\#ffaa4499向前方闪现一段距离')]))
 		self.maxCoolDown = 1200
 		self.shouldSetPosition: Vector | None | tuple[Vector, float] = None
 	
@@ -99,9 +98,9 @@ class ActiveFlash(Active):
 	
 	def getName(self=None) -> RenderableString:
 		if self is None or self._level == 0:
-			return RenderableString('\\#ff44aaee闪现')
+			return RenderableString('\\10\\#ff44aaee闪现')
 		else:
-			return RenderableString('\\#ff44aaee闪现' + (toRomanNumeral(self._level) if self._level < 5 else "(MAX)"))
+			return RenderableString('\\10\\#ff44aaee闪现' + (toRomanNumeral(self._level) if self._level < 5 else "(MAX)"))
 	
 	def getMaxLevel(self) -> int:
 		return 5
@@ -132,7 +131,7 @@ class ActiveFlash(Active):
 		if isRenderIcon:
 			ret = super().render(delta, at)
 			if self.coolDown > 0:
-				s = Surface(self.texture.getSystemScaledSurface().get_size())
+				s = Surface(self.texture.getUiScaledSurface().get_size())
 				s.set_alpha(0xaa)
 				renderer.getCanvas().blit(s, at.getTuple())
 				renderer.renderString(RenderableString(f'\\11{int(self.coolDown / 20)}'), at.x + (s.get_width() >> 1), at.y + (s.get_height() >> 1), 0xffffffff, Location.CENTER)
@@ -165,8 +164,7 @@ class ActiveFlash(Active):
 
 class ActiveAdrenalin(Active):
 	def __init__(self):
-		self.name = RenderableString('\\#ffaa0000肾上腺素')
-		super().__init__(102, SkillDescription(self, [self.name, RenderableString('    \\#ffaa4499短时间内不受伤害'), RenderableString(f'    \\#ffaa0000持续0.00秒')]))
+		super().__init__(102, SkillDescription(self, [RenderableString('\\10\\#ffaa0000肾上腺素'), RenderableString('    \\#ffaa4499短时间内不受伤害'), RenderableString(f'    \\#ffaa0000持续0.00秒')]))
 		self.timeCount = 0
 		self.maxCoolDown = 1200
 	
@@ -177,9 +175,9 @@ class ActiveAdrenalin(Active):
 	
 	def getName(self=None) -> RenderableString:
 		if self is None or self._level == 0:
-			return RenderableString('\\#ffaa0000肾上腺素')
+			return RenderableString('\\10\\#ffaa0000肾上腺素')
 		else:
-			return RenderableString('\\#ffaa0000肾上腺素' + (toRomanNumeral(self._level) if self._level < 5 else "(MAX)"))
+			return RenderableString('\\10\\#ffaa0000肾上腺素' + (toRomanNumeral(self._level) if self._level < 5 else "(MAX)"))
 	
 	def getMaxLevel(self) -> int:
 		return 5
@@ -196,7 +194,7 @@ class ActiveAdrenalin(Active):
 		if isRenderIcon:
 			ret = super().render(delta, at)
 			if self.coolDown > 0:
-				s = Surface(self.texture.getSystemScaledSurface().get_size())
+				s = Surface(self.texture.getUiScaledSurface().get_size())
 				s.set_alpha(0xaa)
 				renderer.getCanvas().blit(s, at.getTuple())
 				renderer.renderString(RenderableString(f'\\11{int(self.coolDown / 20)}'), at.x + (s.get_width() >> 1), at.y + (s.get_height() >> 1), 0xffffffff, Location.CENTER)
@@ -225,8 +223,7 @@ class ActiveAdrenalin(Active):
 
 class ActiveAttack(Active):
 	def __init__(self):
-		self.name = RenderableString('\\#ffeeee00猛啄')
-		super().__init__(103, SkillDescription(self, [self.name, RenderableString('    \\#ffaa4499向狐狸发起进攻！'), RenderableString(f'    \\#ffaa4499攻击范围 1.5L 2W'), RenderableString(f'    \\#ffeeee00对范围内狐狸造成0点伤害')]))
+		super().__init__(103, SkillDescription(self, [RenderableString('\\10\\#ffeeee00猛啄'), RenderableString('    \\#ffaa4499向狐狸发起进攻！'), RenderableString(f'    \\#ffaa4499攻击范围 1.5L 2W'), RenderableString(f'    \\#ffeeee00对范围内狐狸造成0点伤害')]))
 	
 	def init(self, player) -> None:
 		super().init(player)
@@ -234,9 +231,9 @@ class ActiveAttack(Active):
 	
 	def getName(self=None) -> RenderableString:
 		if self is None or self._level == 0:
-			return RenderableString('\\#ffeeee00猛啄')
+			return RenderableString('\\10\\#ffeeee00猛啄')
 		else:
-			return RenderableString('\\#ffeeee00猛啄' + (toRomanNumeral(self._level) if self._level < 10 else "(MAX)"))
+			return RenderableString('\\10\\#ffeeee00猛啄' + (toRomanNumeral(self._level) if self._level < 10 else "(MAX)"))
 	
 	def upgrade(self) -> bool:
 		if self._level < 10 and super().upgrade():
@@ -278,8 +275,7 @@ class ActiveAttack(Active):
 
 class ActiveSwift(Active):
 	def __init__(self):
-		self.name = RenderableString('\\#ff0088cc疾跑')
-		super().__init__(104, SkillDescription(self, [self.name, RenderableString('    \\#ffaa4499快，快，快……我不行了')]))
+		super().__init__(104, SkillDescription(self, [RenderableString('\\10\\#ff0088cc疾跑'), RenderableString('    \\#ffaa4499快，快，快……我不行了')]))
 		self.timeCount = 0
 		self.maxCoolDown = 800
 	
@@ -297,9 +293,9 @@ class ActiveSwift(Active):
 	
 	def getName(self=None) -> RenderableString:
 		if self is None or self._level == 0:
-			return RenderableString('\\#ff0088cc疾跑')
+			return RenderableString('\\10\\#ff0088cc疾跑')
 		else:
-			return RenderableString('\\#ff0088cc疾跑' + (toRomanNumeral(self._level) if self._level < 10 else "(MAX)"))
+			return RenderableString('\\10\\#ff0088cc疾跑' + (toRomanNumeral(self._level) if self._level < 10 else "(MAX)"))
 	
 	def onUse(self, mouseAtMap: Vector) -> None:
 		if self.coolDown > 0:
@@ -318,7 +314,7 @@ class ActiveSwift(Active):
 		if isRenderIcon:
 			ret = super().render(delta, mouseAtMap)
 			if self.coolDown > 0:
-				s = Surface(self.texture.getSystemScaledSurface().get_size())
+				s = Surface(self.texture.getUiScaledSurface().get_size())
 				s.set_alpha(0xaa)
 				renderer.getCanvas().blit(s, mouseAtMap.getTuple())
 				renderer.renderString(RenderableString(f'\\11{int(self.coolDown / 20)}'), mouseAtMap.x + (s.get_width() >> 1), mouseAtMap.y + (s.get_height() >> 1), 0xffffffff, Location.CENTER)

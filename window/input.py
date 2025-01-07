@@ -3,13 +3,11 @@ import asyncio
 import pygame.event
 from pygame import Surface
 
-from interact import interact, Status
+from interact.interacts import interact
 from render.font import Font
 from render.renderer import Location, renderer
-from utils import utils
 from utils.game import game
 from utils.text import RenderableString, Description
-from utils.vector import Vector
 from window.widget import Widget
 from window.window import Window
 from LLA import chat_with_ai as ai

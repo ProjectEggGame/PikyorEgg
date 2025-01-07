@@ -8,7 +8,6 @@ from render.resource import Texture
 from utils.game import game
 from utils.text import Description, RenderableString
 
-from utils.vector import Vector
 from utils.vector import BlockVector
 
 

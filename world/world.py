@@ -5,10 +5,10 @@ import pygame
 
 from block.manager import blockManager
 from entity.manager import entityManager
-from interact import interact
+from interact.interacts import interact
 from render.renderer import renderer
 from save.save import Archive
-from utils import utils
+from utils.util import utils
 from utils.game import game
 from utils.text import RenderableString
 
@@ -18,7 +18,6 @@ if TYPE_CHECKING:
 from render.renderable import Renderable
 from utils.vector import Vector, BlockVector
 from block.block import Block
-from window.widget import Button
 from music.music import Music_player
 
 

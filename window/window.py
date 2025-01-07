@@ -5,7 +5,7 @@ import pygame
 from pygame import Surface
 
 from entity.manager import entityManager
-from interact import interact
+from interact.interacts import interact
 from render import font
 from render.renderer import renderer
 from save.save import Archive
@@ -400,7 +400,7 @@ class SettingsWindow(Window):
 			return True
 		
 		self._widgets[1].onMouseDown = _1
-		from utils import utils
+		from utils.util import utils
 		
 		class Des2(Description):
 			def __init__(self):

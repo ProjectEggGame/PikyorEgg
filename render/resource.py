@@ -4,7 +4,7 @@ import pygame.image
 from pygame import Surface
 from utils.vector import Vector, BlockVector
 from render.renderer import renderer
-from utils import utils, times
+from utils.util import utils
 
 
 # 锁定窗口比例，要么4:3，要么16:9。主要按高度分配
@@ -55,7 +55,7 @@ class Texture:
 		:param fromSize: 源图截取大小
 		:return:
 		"""
-		renderer.renderAsBlock(self._mapScaled if self._mapScaled is not None else self._surface, at if self._offset is None else at + self._offset, fromPos, fromSize)
+		renderer.renderAsBlock(self._mapScaled if self._mapScaled is not None else self._surface, at if self._offset is None else self._offset + at.getVector(), fromPos, fromSize)
 	
 	def renderAtMap(self, at: Vector, fromPos: Vector | None = None, fromSize: Vector | None = None):
 		"""

@@ -6,7 +6,7 @@ import os
 import types
 from typing import Callable
 
-from utils import utils
+from utils.util import utils
 
 
 def readConfig() -> dict[str, any]:

@@ -1,7 +1,7 @@
 from openai import OpenAI
 from typing import List, Dict
 
-from utils import utils
+from utils.util import utils
 
 client = OpenAI(
 	base_url='http://10.15.88.73:5034/v1',

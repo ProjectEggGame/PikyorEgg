@@ -3,7 +3,7 @@ from typing import Union
 from entity.entity import Entity, Damageable, MoveableEntity
 from entity.manager import entityManager
 from render.resource import Texture, resourceManager
-from utils import utils
+from utils.util import utils
 from utils.game import game
 from utils.text import RenderableString, EntityDescription
 from utils.vector import Vector

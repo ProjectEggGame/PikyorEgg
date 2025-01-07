@@ -1,7 +1,7 @@
 import math
 from typing import Union
 
-from utils import utils
+from utils.util import utils
 from utils.error import InvalidOperationException
 
 

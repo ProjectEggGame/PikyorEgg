@@ -1,7 +1,7 @@
 import pygame.font
 from pygame import Surface
 
-from utils import utils, times
+from utils.util import utils, times
 
 fontHeight: int = 30
 

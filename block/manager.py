@@ -1,8 +1,3 @@
-from typing import TYPE_CHECKING, Type
-
-if TYPE_CHECKING:
-	from block.block import Block
-
 
 class BlockManager:
 	def __init__(self):

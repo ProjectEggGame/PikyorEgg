@@ -5,10 +5,9 @@ from pygame import Surface
 
 from render.renderable import Renderable
 from render.renderer import renderer, Location
-from utils import times
 from utils.game import game
 from utils.text import RenderableString
-from utils.vector import Vector, BlockVector
+from utils.vector import BlockVector
 
 
 class Hud(Renderable):
@@ -46,10 +45,10 @@ class Hud(Renderable):
 		surface.set_colorkey((0, 0, 0))
 		surface.set_alpha(0xcc)
 		pygame.draw.polygon(surface, (0xff, 0xff, 0xff), [(0, 0), (sw, 0), (sw - (sh >> 1), sh), (0, sh)])
-		x0 = (barHeight - 1)
-		up = sw - x0 - (barHeight >> 1)
-		down = sw - x0 - barHeight
-		pygame.draw.polygon(surface, (1, 1, 1), [(barLeft - 1, x0), (up, x0), (down, h2 := (sh - x0)), (barLeft - 1, h2)])  # 背景黑条
+		barBackgroundX = (barHeight - 1)
+		up = sw - barBackgroundX - (barHeight >> 1)
+		down = sw - barBackgroundX - barHeight
+		pygame.draw.polygon(surface, (1, 1, 1), [(barLeft - 1, barBackgroundX), (up, barBackgroundX), (down, subBarY := (sh - barBackgroundX)), (barLeft - 1, subBarY)])  # 背景黑条
 		renderer.getCanvas().blit(surface, (margin, margin))
 		surface.fill((0, 0, 0))
 		surface.set_alpha(0xff)
@@ -65,74 +64,74 @@ class Hud(Renderable):
 				(downNow, barHeight << 1),
 				(barLeft, barHeight << 1)
 			])
-		d = self.lastDisplayHealth - self.displayHealth
-		if d < 0:  # 有回血
-			d = -d
+		valueDelta = self.lastDisplayHealth - self.displayHealth
+		if valueDelta < 0:  # 有回血
+			valueDelta = -valueDelta
 			pygame.draw.polygon(surface, (0x33, 0x88, 0xff), [
 				(upNow, barHeight),
 				(barLeft + up * self.lastDisplayHealth, barHeight),
 				(barLeft + down * self.lastDisplayHealth, barHeight << 1),
 				(downNow, barHeight << 1)
 			])
-			if d <= 0.002:
+			if valueDelta <= 0.002:
 				self.lastDisplayHealth = self.displayHealth
 			else:
-				self.lastDisplayHealth += 0.002 + d * 0.01
-		elif d > 0:  # 有扣血
+				self.lastDisplayHealth += 0.002 + valueDelta * 0.01
+		elif valueDelta > 0:  # 有扣血
 			pygame.draw.polygon(surface, (0xff, 0x33, 0x33), [
 				(upNow, barHeight),
 				(barLeft + up * self.lastDisplayHealth, barHeight),
 				(barLeft + down * self.lastDisplayHealth, barHeight << 1),
 				(downNow, barHeight << 1)
 			])
-			if d <= 0.002:
+			if valueDelta <= 0.002:
 				self.lastDisplayHealth = self.displayHealth
 			else:
-				self.lastDisplayHealth -= 0.002 + d * 0.01
+				self.lastDisplayHealth -= 0.002 + valueDelta * 0.01
 		
 		upStart = barLeft + (up >> 1) - (barHeight >> 2)
 		upEnd = barLeft + up - (barHeight >> 2)
 		downStart = barLeft + (down >> 1)
 		upNow = upStart + (up - (barHeight >> 2) + 1 >> 1) * self.displayHunger
 		downNow = downStart + (down + 1 >> 1) * self.displayHunger
-		h2 = margin + (barHeight >> 1)
+		subBarY = margin + (barHeight >> 1)
 		pygame.draw.polygon(surface, (1, 1, 1), [
-			(upEnd + 1, h2 - 1),
-			(upStart - 1, h2 - 1),
+			(upEnd + 1, subBarY - 1),
+			(upStart - 1, subBarY - 1),
 			(downStart - 1, barHeight << 1),
 			(barLeft + down + 1, barHeight << 1)
 		])
 		if self.displayHunger != 0:
 			pygame.draw.polygon(surface, (0xc0, 0xb0, 0x10), [
-				(upNow, h2),
-				(upStart, h2),
+				(upNow, subBarY),
+				(upStart, subBarY),
 				(downStart, barHeight << 1),
 				(downNow, barHeight << 1)
 			])
-		d = self.lastDisplayHunger - self.displayHunger
-		if d < 0:  # 有回血
-			d = -d
+		valueDelta = self.lastDisplayHunger - self.displayHunger
+		if valueDelta < 0:  # 有回血
+			valueDelta = -valueDelta
 			pygame.draw.polygon(surface, (0xf0, 0xf0, 0x60), [
-				(upNow, h2),
-				(upStart + (up - (barHeight >> 2) + 1 >> 1) * self.lastDisplayHunger, h2),
+				(upNow, subBarY),
+				(upStart + (up - (barHeight >> 2) + 1 >> 1) * self.lastDisplayHunger, subBarY),
 				(downStart + (down + 1 >> 1) * self.lastDisplayHunger, barHeight << 1),
 				(downNow, barHeight << 1)
 			])
-			if d <= 0.002:
+			if valueDelta <= 0.002:
 				self.lastDisplayHunger = self.displayHunger
 			else:
-				self.lastDisplayHunger += 0.002 + d * 0.01
-		elif d > 0:  # 有扣血
+				self.lastDisplayHunger += 0.002 + valueDelta * 0.01
+		elif valueDelta > 0:  # 有扣血
 			pygame.draw.polygon(surface, (0xee, 0, 0), [
-				(upNow, h2),
-				(upStart + (up - (barHeight >> 2) + 1 >> 1) * self.lastDisplayHunger, h2),
+				(upNow, subBarY),
+				(upStart + (up - (barHeight >> 2) + 1 >> 1) * self.lastDisplayHunger, subBarY),
 				(downStart + (down + 1 >> 1) * self.lastDisplayHunger, barHeight << 1),
 				(downNow, barHeight << 1)
 			])
-			if d <= 0.002:
+			if valueDelta <= 0.002:
 				self.lastDisplayHunger = self.displayHunger
 			else:
-				self.lastDisplayHunger -= 0.002 + d * 0.01
+				self.lastDisplayHunger -= 0.002 + valueDelta * 0.01
 		renderer.getCanvas().blit(surface, (margin, margin))
 		
 		renderer.renderString(RenderableString('\\11' + player.name), margin << 1, margin + (sh >> 1), 0xff000000, Location.LEFT)
@@ -147,8 +146,8 @@ class Hud(Renderable):
 		
 		while len(self.messages) != 0 and game.tickCount - self.messages[0][0] > 80:
 			self.messages.popleft()
-		p = h >> 3
-		from render import font
+		yMessage = h >> 3
+		xCenter = w >> 1
 		for tick, message in self.messages.copy():
-			message.renderSmall(renderer.getCanvas(), w - message.lengthSmall() >> 1, p, 0xff000000, 0xccffffff)
-			p += font.realHalfHeight
+			renderer.renderString(message, xCenter, yMessage, 0xff000000, Location.TOP, 0xccffffff, -1)
+			yMessage += font.realHalfHeight

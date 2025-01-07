@@ -1,4 +1,4 @@
-from utils import times
+from utils.util import times
 from utils.vector import Vector
 from render.resource import Texture
 

@@ -11,3 +11,9 @@ AOE爆炸
 效果系统：
 
 场景设计：突然爆炸性出现一坨狐狸
+
+我们还需要做的：
+nice NPC（老巫婆鸡，实现移动功能）
+LLM decision making（可以放在下蛋的部分，让AI来决定下什么样子的蛋）
+report
+readme.md

@@ -1,4 +1,4 @@
-from utils import prints, times
+from utils.util import times
 
 
 @times

@@ -3,14 +3,11 @@
 """
 import pygame
 
-from interact import interact
+from interact.interacts import interact
 from render.renderer import renderer
-from utils import utils
-from utils.error import NullPointerException
 from typing import TYPE_CHECKING, Union
 
 from utils.sync import SynchronizedStorage
-from utils.text import RenderableString
 from utils.vector import Vector
 
 if TYPE_CHECKING:

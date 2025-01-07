@@ -1,18 +1,17 @@
-from collections import deque
 from enum import Enum
 from typing import Union, TYPE_CHECKING
 
-from interact import interact
+from interact.interacts import interact
 from render import font
 from save import configs
-from utils import utils, times
+from utils.util import utils
 from utils.text import RenderableString
 
 if TYPE_CHECKING:
 	from entity.entity import Entity
 
 import pygame
-from pygame import Surface, SRCALPHA
+from pygame import Surface
 from utils.vector import Vector, BlockVector
 from utils.error import IllegalStatusException, InvalidOperationException
 from utils.sync import SynchronizedStorage
@@ -260,7 +259,7 @@ class Renderer:
 		else:
 			self._canvas.blit(src, self._mapBasis.clone().add((mapPoint + fromPos).multiply(self._mapScale)).getTuple(), (fromPos.x, fromPos.y, fromSize.x, fromSize.y))
 	
-	def renderString(self, text: RenderableString, x: int, y: int, defaultColor: int, location: Location = Location.LEFT_TOP, defaultBackground: int = 0) -> None:
+	def renderString(self, text: RenderableString, x: int, y: int, defaultColor: int, location: Location = Location.LEFT_TOP, defaultBackground: int = 0, forceSize: int = 0) -> None:
 		"""
 		:param text: 要显示的文本
 		:param x: 参考坐标
@@ -268,36 +267,32 @@ class Renderer:
 		:param defaultColor: 默认颜色
 		:param location: 渲染位置，默认左上角
 		:param defaultBackground: 默认背景色，传入0xff有助于提升性能
+		:param forceSize: 强制渲染小(-1)/大(1)字体，或按原字体渲染(0 and other)
 		"""
 		self.assertRendering()
 		if len(text.set) == 0:
 			return
-		height = font.realFontHeight if text.set[0].font < 10 else font.realHalfHeight
+		height = font.realFontHeight if text.set[0].font < 10 or forceSize == 1 else font.realHalfHeight
+		renderFunction = text.renderSmall if forceSize == -1 else text.renderGiant if forceSize == 1 else text.renderAt
 		match location:
 			case Location.LEFT_TOP:
-				text.renderAt(self._canvas, x, y, defaultColor, defaultBackground)
+				renderFunction(self._canvas, x, y, defaultColor, defaultBackground)
 			case Location.LEFT:
-				text.renderAt(self._canvas, x, y - (height >> 1), defaultColor, defaultBackground)
+				renderFunction(self._canvas, x, y - (height >> 1), defaultColor, defaultBackground)
 			case Location.LEFT_BOTTOM:
-				text.renderAt(self._canvas, x, y - height, defaultColor, defaultBackground)
+				renderFunction(self._canvas, x, y - height, defaultColor, defaultBackground)
 			case Location.TOP:
-				l: int = text.length()
-				text.renderAt(self._canvas, x - (l >> 1), y, defaultColor, defaultBackground)
+				renderFunction(self._canvas, x - ((text.lengthSmall() if forceSize == -1 else text.lengthGiant() if forceSize == 1 else text.length()) >> 1), y, defaultColor, defaultBackground)
 			case Location.CENTER:
-				l: int = text.length()
-				text.renderAt(self._canvas, x - (l >> 1), y - (height >> 1), defaultColor, defaultBackground)
+				renderFunction(self._canvas, x - ((text.lengthSmall() if forceSize == -1 else text.lengthGiant() if forceSize == 1 else text.length()) >> 1), y - (height >> 1), defaultColor, defaultBackground)
 			case Location.BOTTOM:
-				l: int = text.length()
-				text.renderAt(self._canvas, x - (l >> 1), y - height, defaultColor, defaultBackground)
+				renderFunction(self._canvas, x - ((text.lengthSmall() if forceSize == -1 else text.lengthGiant() if forceSize == 1 else text.length()) >> 1), y - height, defaultColor, defaultBackground)
 			case Location.RIGHT_TOP:
-				l: int = text.length()
-				text.renderAt(self._canvas, x - l, y, defaultColor, defaultBackground)
+				renderFunction(self._canvas, x - (text.lengthSmall() if forceSize == -1 else text.lengthGiant() if forceSize == 1 else text.length()), y, defaultColor, defaultBackground)
 			case Location.RIGHT:
-				l: int = text.length()
-				text.renderAt(self._canvas, x - l, y - (height >> 1), defaultColor, defaultBackground)
+				renderFunction(self._canvas, x - (text.lengthSmall() if forceSize == -1 else text.lengthGiant() if forceSize == 1 else text.length()), y - (height >> 1), defaultColor, defaultBackground)
 			case Location.RIGHT_BOTTOM:
-				l: int = text.length()
-				text.renderAt(self._canvas, x - l, y - height, defaultColor, defaultBackground)
+				renderFunction(self._canvas, x - (text.lengthSmall() if forceSize == -1 else text.lengthGiant() if forceSize == 1 else text.length()), y - height, defaultColor, defaultBackground)
 	
 	def setUiScale(self, scl: float) -> None:
 		self._customUiScale = scl

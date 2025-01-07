@@ -1,10 +1,9 @@
 from typing import TYPE_CHECKING, Union
 
-import pygame
 from pygame import Surface
 
 from render import font
-from utils import utils
+from utils.util import utils
 
 if TYPE_CHECKING:
 	from block.block import Block
@@ -84,6 +83,11 @@ class InnerStringConfig:
 		smallFont = self.font if self.font >= 10 else self.font + 10
 		dx = font.allFonts[smallFont].draw(screen, self.string, x, y, defaultColor if self.color == 0x1_ffff_ffff else self.color, self.bold, self.italic, self.underline, self.delete, defaultBackground if self.background == 0x1_ffff_ffff else self.background)
 		return x + dx
+
+	def renderGiant(self, screen: Surface, x: int, y: int, defaultColor: int, defaultBackground: int = 0) -> int:
+		smallFont = self.font if self.font < 10 else self.font - 10
+		dx = font.allFonts[smallFont].draw(screen, self.string, x, y, defaultColor if self.color == 0x1_ffff_ffff else self.color, self.bold, self.italic, self.underline, self.delete, defaultBackground if self.background == 0x1_ffff_ffff else self.background)
+		return x + dx
 	
 	def clone(self) -> 'InnerStringConfig':
 		ret: 'InnerStringConfig' = InnerStringConfig()
@@ -111,6 +115,12 @@ class InnerStringConfig:
 		if self.string is None:
 			return 0
 		smallFont = self.font if self.font >= 10 else self.font + 10
+		return font.allFonts[smallFont].get(self.bold, self.italic, self.underline, self.delete).size(self.string)[0]
+
+	def lengthGiant(self) -> int:
+		if self.string is None:
+			return 0
+		smallFont = self.font if self.font < 10 else self.font - 10
 		return font.allFonts[smallFont].get(self.bold, self.italic, self.underline, self.delete).size(self.string)[0]
 	
 	def __str__(self) -> str:
@@ -227,6 +237,12 @@ class RenderableString:
 			s += i.lengthSmall()
 		return s
 	
+	def lengthGiant(self) -> int:
+		s = 0
+		for i in self.set:
+			s += i.lengthGiant()
+		return s
+	
 	def renderAt(self, screen: Surface, x: int, y: int, defaultColor: int, defaultBackground: int = 0) -> int:
 		for i in self.set:
 			x = i.renderAt(screen, x, y, defaultColor, defaultBackground)
@@ -235,6 +251,11 @@ class RenderableString:
 	def renderSmall(self, screen: Surface, x: int, y: int, defaultColor: int, defaultBackground: int = 0) -> int:
 		for i in self.set:
 			x = i.renderSmall(screen, x, y, defaultColor, defaultBackground)
+		return x
+
+	def renderGiant(self, screen: Surface, x: int, y: int, defaultColor: int, defaultBackground: int = 0) -> int:
+		for i in self.set:
+			x = i.renderGiant(screen, x, y, defaultColor, defaultBackground)
 		return x
 	
 	def __add__(self, other: 'RenderableString') -> 'RenderableString':
