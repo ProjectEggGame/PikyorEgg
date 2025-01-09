@@ -180,3 +180,65 @@ class Widget(Renderable):
 class Button(Widget):
 	def __init__(self, location: Location, x: float, y: float, width: float, height: float, name: RenderableString, description: Description, textLocation: Location = Location.CENTER, texture: Texture = None):
 		super().__init__(location, x, y, width, height, name, description, textLocation, texture)
+
+
+class PullObject(Widget):
+	def __init__(self, location: Location, x: float, y: float, width: float, height: float, name: RenderableString, description: Description, textLocation: Location = Location.CENTER, texture: Texture = None):
+		super().__init__(location, x, y, width, height, name, description, textLocation, texture, )
+		self.offset = BlockVector()
+		self.pull = False
+		self.suck_position = []
+		self.suck_status = []
+			
+		def down(x, y, buttons):
+			self.pull = True
+			self.offset.set(x - self._x, y - self._y)
+			return True
+	
+		def up(x, y, buttons):
+			self.pull = False
+			return True
+		
+		self.onMouseDown = down
+		self.onMouseUp = up
+
+	def isMouseIn(self, x: int, y: int):
+		if self.pull:
+			suck_current = self.suck_position[self.suck_status.index(False)]
+			if abs(x - suck_current.x) < 50 and abs(y - suck_current.y) < 50:
+				self._x = suck_current.x
+				self._y = suck_current.y
+				
+			else:
+				self._x = x - self.offset.x
+				self._y = y - self.offset.y
+
+			match self.location:
+				case Location.LEFT_TOP:
+					self.x = self._x / renderer.getCanvas().get_width()
+					self.y = self._y / renderer.getCanvas().get_height()
+				case Location.LEFT:
+					self.x = self._x / renderer.getCanvas().get_width()
+					self.y = (self._y - (renderer.getSize().y - self._h >> 1)) / renderer.getCanvas().get_height()
+				case Location.LEFT_BOTTOM:
+					self.x = self._x / renderer.getCanvas().get_width()
+					self.y = (self._y - (renderer.getSize().y - self._h)) / renderer.getCanvas().get_height()
+				case Location.TOP:
+					self.x = (self._x - (renderer.getSize().x - self._w >> 1)) / renderer.getCanvas().get_width()
+					self.y = self._y / renderer.getCanvas().get_height()
+				case Location.CENTER:
+					self.x = (self._x - (renderer.getSize().x - self._w >> 1)) / renderer.getCanvas().get_width()
+					self.y = (self._y - (renderer.getSize().y - self._h >> 1)) / renderer.getCanvas().get_height()
+				case Location.BOTTOM:
+					self.x = (self._x - (renderer.getSize().x - self._w >> 1)) / renderer.getCanvas().get_width()
+					self.y = (self._y - (renderer.getSize().y - self._h)) / renderer.getCanvas().get_height()
+				case Location.RIGHT_TOP:
+					self.x = (self._x - (renderer.getSize().x - self._w)) / renderer.getCanvas().get_width()
+					self.y = self._y / renderer.getCanvas().get_height()
+				case Location.RIGHT:
+					self.x = (self._x - (renderer.getSize().x - self._w)) / renderer.getCanvas().get_width()
+					self.y = (self._y - (renderer.getSize().y - self._h >> 1)) / renderer.getCanvas().get_height()
+				case Location.RIGHT_BOTTOM:
+					self.x = (self._x - (renderer.getSize().x - self._w)) / renderer.getCanvas().get_width()
+					self.y = (self._y - (renderer.getSize().y - self._h)) / renderer.getCanvas().get_height()
+		return super().isMouseIn(x, y)

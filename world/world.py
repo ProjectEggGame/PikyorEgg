@@ -242,6 +242,8 @@ class DynamicWorld(World):
 			if isinstance(i[0], BlockVector):
 				self.setBlockAt(i[0], blockManager.dic.get('nature.path' if self._seed.random() < 0.8 else 'nature.grass')(i[0]))
 		
+		#第二段生成
+
 		def generateBlock(p, rate):
 			if rate < 0.4:
 				return

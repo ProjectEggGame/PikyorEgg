@@ -14,7 +14,7 @@ from utils.text import RenderableString, Description
 from utils.vector import Vector, BlockVector
 from render.renderable import Renderable
 from render.resource import Texture, resourceManager
-from window.widget import Widget, Button, Location, ColorSet
+from window.widget import Widget, Button, Location, ColorSet , PullObject
 from world.world import World, WitchWorld
 from music.music import Music_player
 
@@ -249,7 +249,7 @@ class StartWindow(Window):
 		self._widgets.append(Button(Location.CENTER, 0, 0.15, 0.4, 0.08, RenderableString("\\.00FCE8AD\\01LOAD"), Description([RenderableString("加载存档")]), textLocation=Location.CENTER))
 		self._widgets[1].onMouseDown = lambda x, y, b: b[0] == 1 and game.setWindow(LoadWindow().setLastOpen(self)) or True
 		self._widgets.append(Button(Location.CENTER, 0, 0.25, 0.4, 0.08, RenderableString("\\.00FCE8AD\\01OPTIONS"), Description([RenderableString("设置")]), textLocation=Location.CENTER))
-		self._widgets[2].onMouseDown = lambda x, y, b: b[0] == 1 and game.setWindow(SettingsWindow().setLastOpen(self)) or True
+		self._widgets[2].onMouseDown = lambda x, y, b: b[0] == 1 and game.setWindow(babyeggwindow().setLastOpen(self)) or True
 		self._widgets.append(Button(Location.CENTER, 0, 0.35, 0.4, 0.08, RenderableString("\\.00FCE8AD\\01SHUT DOWN"), Description([RenderableString("结束游戏")]), textLocation=Location.CENTER))
 		self._widgets[3].onMouseDown = lambda x, y, b: b[0] == 1 and game.quit() or True
 		self._widgets[0].color = PresetColors.color
@@ -504,3 +504,39 @@ class DeathWindow(Window):
 		w, h = renderer.getSize().getTuple()
 		renderer.fill(0xffee0000, int(0.3 * w), int(0.3 * h), int(0.4 * w), int(0.2 * h))
 		renderer.renderString(RenderableString("\\01\\#ff000000You are dead"), int(0.5 * w), int(0.4 * h), 0xff000000, Location.CENTER, 0xffee0000)
+
+
+class babyeggwindow(Window):
+	def __init__(self):
+		super().__init__("Babybirth")
+		self._texture = resourceManager.getOrNew('window/factory')
+
+		self._texture.adaptsMap(False)
+		self._texture.adaptsUI(False)
+		self._texture.adaptsSystem(True)
+		
+
+		class Pulling(PullObject):
+			def __init__(self, x: float, y: float, name: RenderableString, description: Description ):
+				super().__init__(Location.CENTER, x, y, 0.12, 0.08, name, description, textLocation = Location.CENTER, texture= None)
+				self.suck_position = [Vector(646,40+20*i)for i in range(5)]
+				self.suck_status = [False]*5
+			
+		A = Pulling( -0.25, -0.2, RenderableString("\\.00FCE8AD\\00美丽"), Description([RenderableString("1")]))
+		
+		self._widgets.append(A)	
+
+		self._widgets.append(Button(Location.BOTTOM, 0.38, 0, 0.12, 0.08, RenderableString("\\.00FCE8AD\\00确认"), Description([RenderableString("按下确认就不能修改啦")]), textLocation=Location.CENTER))
+		
+		
+	
+	def render(self, delta: float) -> None:
+		super().render(delta)
+		size: BlockVector = renderer.getSize()
+		renderer.renderString(RenderableString('\\.00FCE8AD\\00蛋蛋制造工厂'), int(size.x / 2), int(size.y / 4), 0xff000000, Location.CENTER)
+
+
+	
+	def tick(self) -> None:
+		super().tick()
+

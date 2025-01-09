@@ -669,6 +669,7 @@ class Player(MoveableEntity, Damageable):
 					if -3 < self._position.x < 3 and -3 < self._position.y < 3:
 						from window.ingame import BuildingWindow
 						game.setWindow(BuildingWindow())
+						game.getWorld().addEntity(entityManager.get('entity.coop')(self._position.clone()))
 					else:
 						game.hud.sendMessage(RenderableString('\\#ffee0000请在家里搭窝，不然蛋会被捣蛋的狐狸偷走~'))
 				else:
@@ -789,7 +790,7 @@ t = resourceManager.getOrNew('entity/rice')
 t.setOffset(Vector(0, -3))
 t.getSurface().set_colorkey((0, 0, 0))
 t.getMapScaledSurface().set_colorkey((0, 0, 0))
-resourceManager.getOrNew('entity/coop').setOffset(Vector(0, -5))
+resourceManager.getOrNew('entity/coop').setOffset(Vector(0, -25))
 resourceManager.getOrNew('entity/witch/witch').setOffset(Vector(0, -7))
 for t in [
 	resourceManager.getOrNew('player/chick_1'),
