@@ -440,50 +440,111 @@ class BuildingWindow(Window):
 			Music_player.background_set_volume(0.1)
 			game.setWindow(None)
 
+class QuestionWindow(Window):
+	def __init__(self,num):
+		super().__init__("Plot")
+		self.num = num
 
-class EggBirthWindow(Window):
-	def __init__(self):
-		super().__init__("EGG!!")
-		Music_player.background_set_volume(0.1)
-		Music_player.sound_play(5)
-		self.building_image = []
-		for i in range(0, 16):
-			x = resourceManager.getOrNew(f'window/building2/building{i}')
-			self.building_image.append(x)
-		self.timer: int = 120
+		#题库
+		self.Question = ["Which module does not belong to Python?",
+				   "Which one is not the author of the game?",
+				   "In this game, what can't the chick do?"]
+		self.Anwser = [["kivy","pygame","os","robot"],
+				 ["teasfrog","EmsiaetKadosh","NicolePotion","IcyOxygenXY"],
+				 ["Eat rice","Pick up sticks","Dig holes","Fight with hens"]]
+		self.clue = ["字","姐姐","茄子"]
+		self.clue_position = [3,0,2]
+		self.printclue = "?"
+		self.choice = 5
+		self.flag = False
+		self.tip = [False,0]		
 		
-		def _1(x, y, b) -> bool:
-			if b[0] == 1:
-				Music_player.sound_stop(5)
-				Music_player.background_set_volume(0.1)
-				game.setWindow(self.lastOpen)
+		def _0(x,y,b) -> bool:
+			self.tip[0] = True
+			
 			return True
 		
-		self._widgets.append(Button(Location.BOTTOM, 0.2, 0, 0.12, 0.08, RenderableString('\\01SKIP'), Description([RenderableString("跳过动画")]), Location.CENTER))
-		self._widgets[0].onMouseDown = _1
-		self._widgets[0].color = PresetColors.plotColor
-		self._widgets[0].textColor = PresetColors.plotText
-	
-	def render(self, delta: float) -> None:
-		w, h = renderer.getSize().getTuple()
-		renderer.renderString(RenderableString("\\00\\00小鸡宝宝要孵出来啦！"), int(0.5 * w), int(0.2 * h), 0xffffffff, Location.CENTER)
+		def _1(x,y,b) -> bool:
+			self.choice = 0
+			self.flag = True
+			print(self.flag,self.choice)
+			_w()
+			return True
+		
+		def _2(x,y,b) -> bool:
+			self.choice = 1
+			self.flag = True
+			print(self.flag,self.choice)
+			_w()
+			return True
+		
+		def _3(x,y,b) -> bool:
+			self.choice = 2
+			self.flag = True
+			print(self.flag,self.choice)
+			_w()
+			return True
+		
+		def _4(x,y,b) -> bool:
+			self.choice = 3
+			self.flag = True
+			print(self.flag,self.choice)
+			_w()
+			return True
+		print()
 
-	def passRender(self, delta: float, at: Vector | None = None) -> None:
-		s = Surface(renderer.getCanvas().get_size())
-		s.fill(self.backgroundColor & 0xffffff)
-		s.set_alpha(self.backgroundColor >> 24)
-		renderer.getCanvas().blit(s, (0, 0))
-		super().passRender(delta, at)
-	
+		def _w():
+			if self.flag == True:
+				print("1")
+				if self.choice == self.clue_position[self.num]:
+					print("正确答案")
+					self.tip[1] = 2
+					self.printclue = self.clue[self.num]
+					PresetColors.plotColor.active = 0xff1BA803
+					self._widgets[self.choice].color = PresetColors.plotColor
+					self._widgets[self.choice].textColor = PresetColors.plotText
+				else:
+					print("错误答案")
+					self.tip[1] = 1
+					self.printclue = "你失去本题线索"
+					PresetColors.plotColor.active = 0xffD40004
+					self._widgets[self.choice].color = PresetColors.plotColor
+					self._widgets[self.choice].textColor = PresetColors.plotText
+					
+				self._widgets[0].onMouseDown = _0
+				self._widgets[1].onMouseDown = _0
+				self._widgets[2].onMouseDown = _0
+				self._widgets[3].onMouseDown = _0
+
+		
+		self._widgets.append(Button(Location.CENTER, 0.15, -0.1, 0.30, 0.08, RenderableString(f"\\.00FFFFFF\\01{self.Anwser[self.num][0]}"), Description([RenderableString("A")]), textLocation=Location.CENTER))
+		self._widgets.append(Button(Location.CENTER, 0.15, 0, 0.30, 0.08, RenderableString(f"\\.00FFFFFF\\01{self.Anwser[self.num][1]}"), Description([RenderableString("B")]), textLocation=Location.CENTER))
+		self._widgets.append(Button(Location.CENTER, 0.15, 0.1, 0.30, 0.08, RenderableString(f"\\.00FFFF\\01{self.Anwser[self.num][2]}"), Description([RenderableString("C")]), textLocation=Location.CENTER))
+		self._widgets.append(Button(Location.CENTER, 0.15, 0.2, 0.30, 0.08, RenderableString(f"\\.00FFFF\\01{self.Anwser[self.num][3]}"), Description([RenderableString("D")]), textLocation=Location.CENTER))
+		self._widgets[0].onMouseDown = _1
+		self._widgets[1].onMouseDown = _2
+		self._widgets[2].onMouseDown = _3
+		self._widgets[3].onMouseDown = _4
+		
+
+	def render(self, delta: float) -> None:
+		super().render(delta)
+		size: BlockVector = renderer.getSize()
+		renderer.renderString(RenderableString(f'\\.0040304D\\00{self.Question[self.num]}'), int(size.x * 0.65), int(size.y * 0.2), 0xffffffff, Location.CENTER)
+		#线索
+		renderer.renderString(RenderableString('\\.0040304D\\00线索：'), int(size.x * 0.1), int(size.y * 0.2), 0xffffffff, Location.CENTER)
+		renderer.renderString(RenderableString(f'\\.0040304D\\00{self.printclue}'), int(size.x * 0.2), int(size.y * 0.4), 0xffffffff, Location.CENTER)
+		if self.tip[1] == 1 and self.tip[0] == True:
+			renderer.renderString(RenderableString(f'\\.0040304D\\10正确答案：{self.Anwser[self.num][self.clue_position[self.num]]}'), int(size.x * 0.2), int(size.y * 0.55), 0xffD40004, Location.CENTER)
+			renderer.renderString(RenderableString('\\.0040304D\\10只有一次答题机会呢'), int(size.x * 0.2), int(size.y * 0.6), 0xffD40004, Location.CENTER)
+		
+		if self.tip[1] == 2 and self.tip[0] == True:
+			renderer.renderString(RenderableString('\\.0040304D\\10你已经答对了'), int(size.x * 0.2), int(size.y * 0.55), 0xff1BA803, Location.CENTER)
+			renderer.renderString(RenderableString('\\.0040304D\\10还有2个线索等着你'), int(size.x * 0.2), int(size.y * 0.6), 0xff1BA803, Location.CENTER)
+		
+
 	def tick(self) -> None:
-		super().tick()
-		self._texture = self.building_image[15 - (int(self.timer >> 2) % 16)]
-		self._backgroundLocation = Location.CENTER
-		self.timer -= 1
-		if self.timer == 0:
-			Music_player.sound_stop(5)
-			Music_player.background_set_volume(0.1)
-			game.setWindow(None)
+		pass
 
 
 
