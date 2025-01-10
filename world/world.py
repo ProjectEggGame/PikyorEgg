@@ -219,7 +219,7 @@ class DynamicWorld(World):
 		self.setPlayer(player)
 		game.hud.sendMessage(RenderableString('第一个任务有啦！Tab查看任务吧'))
 		Music_player.background_play(1)
-		Music_player.background_set_volume(0.1)
+
 	
 	def generate_map(self) -> None:
 		direction = Vector(self._seed.random() - 0.5, self._seed.random() - 0.5)
@@ -297,7 +297,7 @@ class DynamicWorld(World):
 		super().tick()
 		if game.getWorld().getID() == 0 and game.getWindow() == None and Music_player.musicplaying != 1:
 			Music_player.background_play(1)
-			Music_player.background_set_volume(0.1)
+
 		
 
 class WitchWorld(World):
@@ -305,7 +305,7 @@ class WitchWorld(World):
 		super().__init__(1, '老巫鸡的密室', None)
 		self.generate_map()  # 初始化地图
 		Music_player.background_play(2)
-		Music_player.background_set_volume(0.1)
+
 	
 	def generate_map(self) -> None:
 		for i in range(0, 15):

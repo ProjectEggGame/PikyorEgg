@@ -16,13 +16,20 @@ class music:  #所有的音频都放在两个列表里 music_list放世界的背
 
 class music_player:
     def __init__(self):
-        self.turnon = True
+        self.turnon_music = True  #背景音乐开关
+        self.turnon_sound = True  #音效开关
+        self.volume_music = 0.4  #背景音乐音量 初始为0.4
+        self.volume_sound = 0.3  #音效音量 初始为0.3
+        self.volume_music_before = 0.4  #背景音乐音量 初始为0.4
+        self.volume_sound_before = 0.3  #音效音量 初始为0.3
+
         self.musicplaying = 0
         self.pausetime = [0]*len(music.music_list)
+        self.sound = [0]*len(music.sound_list)
 
 
     def background_play(self, i, loop=-1):
-        if self.turnon :
+        if self.turnon_music :
             #存储音频暂停时间
             status = pygame.mixer.music.get_busy()
             if status :
@@ -35,14 +42,15 @@ class music_player:
             pygame.mixer.music.set_pos(self.pausetime[i])
             
             self.musicplaying = i 
-            pygame.mixer.music.set_volume(0.4)
+            pygame.mixer.music.set_volume(self.volume_music)
     
-    def background_set_volume(self, perc, setting = False) -> None: 
-        
-            #接受0.0-1.0之间的值 不同的音乐进来可能也是音量不一样的 需要调试
-            #世界转换的时候用
-        if self.turnon or setting:
-            pygame.mixer.music.set_volume(perc)
+    def background_weaken_volume(self) -> None: 
+        if self.turnon_music:
+            pygame.mixer.music.set_volume(0.1*int(Music_player.volume_music*5 + 1))
+
+    def background_restore_volume(self) -> None: 
+        if self.turnon_music:
+            pygame.mixer.music.set_volume(Music_player.volume_music)
     
     def background_get_volume(self) : 
         if self.turnon :
@@ -52,28 +60,97 @@ class music_player:
             return 0.0
 
     def sound_play(self,i):
-        if self.turnon :
-            self.sound = [0]*len(music.sound_list)
+        if self.turnon_sound :
             self.sound[i] = pygame.mixer.Sound(music.sound_list[i])
-            self.sound[i].set_volume(0.3)
+            self.sound[i].set_volume(self.volume_sound)
             self.sound[i].play()
 
     def sound_stop(self,i):
-        if self.turnon :
+        if self.turnon_sound :
             self.sound[i].stop()
 
     def pause(self):  
-        if self.turnon :
+        if self.turnon_music :
             #存储音频暂停时间
             status = pygame.mixer.music.get_busy()
             if status :
                 pause = int(pygame.mixer.music.get_pos()/1000)
                 self.pausetime[self.musicplaying] = pause
-                pygame.mixer.music.stop
+                pygame.mixer.music.stop()
+    
+    def background_volume_press(self, openorclose):
+        if openorclose:
+            if self.volume_music_before == 0.0:
+                self.volume_music_before = 0.4
+            pygame.mixer.music.set_volume(self.volume_music_before)
+            self.volume_music = self.volume_music_before
+        else:
+            pygame.mixer.music.set_volume(0.0)
+            self.volume_music = 0.0
+
+        
+    def sound_volume_press(self, openorclose):
+        if openorclose:
+            if self.volume_sound_before == 0.0:
+                self.volume_sound_before =0.3
+            self.volume_sound = self.volume_sound_before
+        else:
+            self.volume_sound = 0.0
+
+    def music_volume_drag(self, percentage):
+        #将拖拽输入的结果立刻告诉按钮
+        if percentage == 0.0:
+            self.turnon_music = False
+        else:
+            self.turnon_music = True
+
+        self.volume_music = percentage
+        self.volume_music_before = percentage
+        pygame.mixer.music.set_volume(self.volume_music)
+        
+
+    def sound_volume_drag(self, percentage):
+        if percentage == 0.0:
+            self.turnon_sound = False
+        else:
+            self.turnon_sound = True
+        self.volume_sound = percentage
+        self.volume_before = percentage
+        #音效暂时做不到实时变化 改完之后 下一次播放会有变化
+
 
     def stop(self):
         if self.turnon :
-            pygame.mixer.music.stop
+            pygame.mixer.music.stop()
 
 Music_player = music_player()
         
+
+""" 
+逻辑应该是：
+点击关闭 音量拖拽条到0 
+点击打开 音量拖拽条到上次设置的 如果没设置过 或者是0 那就是0.4
+
+按钮为打开时 将拖拽条脱到0 按钮自动转为关闭
+按钮为关闭时 将拖拽条拖到非0 按钮自动转为打开
+
+目前实现了：
+点击关闭后
+self.volume_music = 0 但 self.volume_music_before 仍等于关闭前音量
+
+点击打开后
+当前音乐音量设置为self.volume_music_before 如果该值为0 则设置成0.4
+音效的话 考虑到设置的时候应该没有音效 就是对下一次音效有作用（）
+
+拖拽条：
+可以通过变量 Music_player.volume_music 获得现在的音量 
+
+函数 music_volume_drag(self, percentage) 可以percentage = 拖拽后的数
+会让self.volume_music 和 self.volume_music_before一起变化
+也就是当下背景音乐和“关闭前音量”一起变化
+
+该函数会检查percentage是否为0 及时告诉bool类型的self.turnon_music 让按钮跟着变
+
+
+音效同理
+"""

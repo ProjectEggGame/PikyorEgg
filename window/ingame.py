@@ -362,7 +362,7 @@ class PlotWindow(Window):
 class NurturingWindow(Window):
 	def __init__(self):
 		super().__init__("Nurturing......")
-		Music_player.background_set_volume(0.1)
+		Music_player.background_weaken_volume
 		Music_player.sound_play(6)
 		self.nurturing_image = []
 		for i in range(1, 7):
@@ -373,7 +373,7 @@ class NurturingWindow(Window):
 		def _1(x, y, b) -> bool:
 			if b[0] == 1:
 				Music_player.sound_stop(6)
-				Music_player.background_set_volume(0.4)
+				Music_player.background_restore_volume
 				game.setWindow(self.lastOpen)
 			return True
 		
@@ -392,14 +392,14 @@ class NurturingWindow(Window):
 		self.timer -= 1
 		if self.timer == 0:
 			Music_player.sound_stop(6)
-			Music_player.background_set_volume(0.2)
+			Music_player.background_weaken_volume
 			game.setWindow(None) # 这里回去还有问题
 			
 
 class BuildingWindow(Window):
 	def __init__(self):
 		super().__init__("Building......")
-		Music_player.background_set_volume(0.1)
+		Music_player.background_weaken_volume()
 		Music_player.sound_play(5)
 		self.building_image = []
 		for i in range(0, 16):
@@ -410,7 +410,7 @@ class BuildingWindow(Window):
 		def _1(x, y, b) -> bool:
 			if b[0] == 1:
 				Music_player.sound_stop(5)
-				Music_player.background_set_volume(0.1)
+				Music_player.background_restore_volume()
 				game.setWindow(self.lastOpen)
 			return True
 		
@@ -437,7 +437,7 @@ class BuildingWindow(Window):
 		self.timer -= 1
 		if self.timer == 0:
 			Music_player.sound_stop(5)
-			Music_player.background_set_volume(0.1)
+			Music_player.background_weaken_volume
 			game.setWindow(None)
 
 class QuestionWindow(Window):

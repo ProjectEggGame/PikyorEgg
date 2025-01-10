@@ -252,7 +252,7 @@ class StartWindow(Window):
 		self._widgets.append(Button(Location.CENTER, 0, 0.15, 0.4, 0.08, RenderableString("\\.00FCE8AD\\01LOAD"), Description([RenderableString("加载存档")]), textLocation=Location.CENTER))
 		self._widgets[1].onMouseDown = lambda x, y, b: b[0] == 1 and game.setWindow(LoadWindow().setLastOpen(self)) or True
 		self._widgets.append(Button(Location.CENTER, 0, 0.25, 0.4, 0.08, RenderableString("\\.00FCE8AD\\01OPTIONS"), Description([RenderableString("设置")]), textLocation=Location.CENTER))
-		self._widgets[2].onMouseDown = lambda x, y, b: b[0] == 1 and game.setWindow(EggFactoryWindow().setLastOpen(self)) or True
+		self._widgets[2].onMouseDown = lambda x, y, b: b[0] == 1 and game.setWindow(SettingsWindow().setLastOpen(self)) or True
 		self._widgets.append(Button(Location.CENTER, 0, 0.35, 0.4, 0.08, RenderableString("\\.00FCE8AD\\01SHUT DOWN"), Description([RenderableString("结束游戏")]), textLocation=Location.CENTER))
 		self._widgets[3].onMouseDown = lambda x, y, b: b[0] == 1 and game.quit() or True
 		self._widgets[0].color = PresetColors.color
@@ -456,31 +456,51 @@ class SettingsWindow(Window):
 			return True
 		
 		self._widgets[4].onMouseDown = _4
-		self._widgets.append(Button(Location.CENTER, -0.1, 0, 0.2, 0.08, RenderableString('\\01 Music ON' if Music_player.turnon else '\\01Music OFF'), Description([RenderableString('关掉可爱的音乐' if Music_player.turnon else '打开可爱的音乐')]), Location.CENTER))
+		self._widgets.append(Button(Location.CENTER, -0.1, 0, 0.2, 0.08, RenderableString('\\01 Music OFF' if Music_player.turnon_music else '\\01Music ON'), Description([RenderableString('关掉可爱的音乐' if Music_player.turnon_music else '打开可爱的音乐')]), Location.CENTER))
 		
 		def _5(x, y, b):
 			if b[0] == 1:
-				if Music_player.turnon:
-					Music_player.background_set_volume(0.0)
+				if Music_player.turnon_music:
+					Music_player.background_volume_press(False)
 				else:
-					Music_player.background_set_volume(0.2, setting=True)
-				Music_player.turnon = not Music_player.turnon
+					Music_player.background_volume_press(True)
+				Music_player.turnon_music = not Music_player.turnon_music 
 				
-				self._widgets[5].description = Description([RenderableString('关掉可爱的音乐' if Music_player.turnon else '打开超级可爱的音乐')])
-				self._widgets[5].name = RenderableString('\\01Music ON' if Music_player.turnon else '\\01Music OFF')
+				self._widgets[5].description = Description([RenderableString('关掉可爱的音乐' if Music_player.turnon_music else '打开超级可爱的音乐')])
+				self._widgets[5].name = RenderableString('\\01Music OFF' if Music_player.turnon_music else '\\01Music ON')
 			return True
 		
 		self._widgets[5].onMouseDown = _5
-		self._widgets.append(Button(Location.CENTER, 0.1, 0, 0.2, 0.08, RenderableString('\\01ScrollLock' if renderer.lockScroll else '\\01ScrollRelease'), Description([RenderableString("地图缩放锁定" if renderer.lockScroll else '滚动滚轮以改变地图缩放')]), Location.CENTER))
+		self._widgets.append(Button(Location.CENTER, 0.3, 0, 0.2, 0.08, 
+		RenderableString('\\01 Sound OFF' if Music_player.turnon_sound else '\\01Sound ON'), Description([RenderableString('关掉古怪的音效'if Music_player.turnon_sound else '打开超级古怪的音效')]), Location.CENTER))
 		
+
 		def _6(x, y, b):
 			if b[0] == 1:
-				renderer.lockScroll = not renderer.lockScroll
-				self._widgets[6].description = Description([RenderableString('地图缩放锁定' if renderer.lockScroll else '滚动滚轮以改变地图缩放')])
-				self._widgets[6].name = RenderableString('\\01ScrollLock' if renderer.lockScroll else '\\01ScrollRelease')
+				if Music_player.turnon_sound:
+					Music_player.sound_volume_press(False)
+				else:
+					Music_player.sound_volume_press(True)
+				Music_player.turnon_sound = not Music_player.turnon_sound 
+				
+				self._widgets[6].description = Description([RenderableString('关掉古怪的音效' if Music_player.turnon_sound else '打开超级古怪的音效')])
+				self._widgets[6].name = RenderableString('\\01Sound OFF' if Music_player.turnon_sound else '\\01Sound ON')
 			return True
 		
 		self._widgets[6].onMouseDown = _6
+
+		
+		
+		self._widgets.append(Button(Location.CENTER, 0.1, 0, 0.2, 0.08, RenderableString('\\01ScrollLock' if renderer.lockScroll else '\\01ScrollRelease'), Description([RenderableString("地图缩放锁定" if renderer.lockScroll else '滚动滚轮以改变地图缩放')]), Location.CENTER))
+		
+		def _7(x, y, b):
+			if b[0] == 1:
+				renderer.lockScroll = not renderer.lockScroll
+				self._widgets[7].description = Description([RenderableString('地图缩放锁定' if renderer.lockScroll else '滚动滚轮以改变地图缩放')])
+				self._widgets[7].name = RenderableString('\\01ScrollLock' if renderer.lockScroll else '\\01ScrollRelease')
+			return True
+		
+		self._widgets[7].onMouseDown = _7
 	
 	def setLastOpen(self, last: 'Window') -> 'Window':
 		self.lastOpen = last
