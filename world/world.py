@@ -328,7 +328,12 @@ class DynamicWorld(World):
 			else:
 				if self._seed.random() < 0.05:
 					self.addEntity(entityManager.get('entity.rice')(Vector(self._seed.random() + j.getBlockPosition().x, self._seed.random() + j.getBlockPosition().y)))
-
+	def tick(self):
+		super().tick()
+		if game.getWorld().getID() == 0 and game.getWindow() == None and Music_player.musicplaying != 1:
+			Music_player.background_play(1)
+			Music_player.background_set_volume(0.1)
+		
 
 class WitchWorld(World):
 	def __init__(self):

@@ -604,6 +604,7 @@ class Player(MoveableEntity, Damageable):
 		return ret
 	
 	def nurture(self):
+		self.setPosition(Vector(0,0))
 		if self.progress == 3:
 			from window.ingame import NurturingWindow
 			game.hud.sendMessage(RenderableString('\\#ffeeee00\\.ffee6666恭喜你，解锁了新的任务'))

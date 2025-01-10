@@ -147,6 +147,61 @@ class EnemyDog(Enemy):
 		return e
 
 
+class EnemyChicken(Enemy):
+	def __init__(self, position: Vector):
+		super().__init__("enemy.oldchicken", "丰腴的情敌", EntityDescription(self, [
+			RenderableString("\\#ffee0000丰腴的情敌"),
+			RenderableString("\\#ffee55dd\\/    喜欢蹦蹦跳跳"),
+			enemyUnit(),
+			basicDamage(15),
+			searchRange(2),
+		]), [
+			resourceManager.getOrNew("entity/enemychicken/ENchicken_1"),
+			resourceManager.getOrNew("entity/enemychicken/ENchicken_2"),
+			resourceManager.getOrNew("entity/enemychickenENchicken_3"),
+			resourceManager.getOrNew("entity/enemychicken/ENchicken_4"),
+			resourceManager.getOrNew("entity/enemychicken/ENchicken_5"),
+			resourceManager.getOrNew("entity/enemychicken/ENchicken_6"),
+			resourceManager.getOrNew("entity/enemychicken/ENchicken_7"),
+			resourceManager.getOrNew("entity/enemychicken/ENchicken_8"),
+		], position)
+		
+	def tick(self) -> None:
+		if self._attackTimer:
+			self._attackTimer -= 1
+
+	def ai(self) -> None:
+		if game.getWorld() is None:
+			return
+		player = game.getWorld().getPlayer()
+		if player is None:
+			self._lockOn = None
+			self._aiVelocity.set(0, 0)
+			return
+		if self._lockOn is None or player is not self._lockOn:
+			if player.getPosition().distanceManhattan(self.getPosition()) <= 2:
+				self._lockOn = game.getWorld().getPlayer()
+		else:
+			if player.getPosition().distanceManhattan(self.getPosition()) > 2:
+				self._lockOn = None
+				self._aiVelocity.set(0, 0)
+			elif utils.fequal((dist := player.getPosition().distance(self.getPosition())), 0):
+				self._aiVelocity.set(0, 0)
+			elif utils.fless(dist, self._maxSpeed):
+				self._aiVelocity.set(0, 0)
+				if self._attackTimer <= 0:
+					self._lockOn.damage(15, self)
+					self._attackTimer = self._attackCoolDown
+			else:
+				self._aiVelocity = self._lockOn.getPosition().subtract(self.getPosition()).normalize().multiply(min(self._maxSpeed, self.getPosition().distance(self._lockOn.getPosition())))
+	
+	@classmethod
+	def load(cls, d: dict, entity: Union['Entity', None] = None) -> Union['Entity', None]:
+		assert entity is None
+		e = EnemyChicken(Vector.load(d['position']))
+		Enemy.load(d, e)
+		return e
+
 entityManager.register('enemy.dog', EnemyDog)
 
 

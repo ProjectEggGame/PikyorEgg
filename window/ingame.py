@@ -393,8 +393,8 @@ class NurturingWindow(Window):
 		if self.timer == 0:
 			Music_player.sound_stop(6)
 			Music_player.background_set_volume(0.2)
-			game.setWindow(self.lastOpen)  # 这里回去还有问题
-
+			game.setWindow(None) # 这里回去还有问题
+			
 
 class BuildingWindow(Window):
 	def __init__(self):
