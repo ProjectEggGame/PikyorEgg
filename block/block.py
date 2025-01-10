@@ -287,14 +287,38 @@ class GateBlock(Ground):
 				game.setWorld(world)
 
 
+class BrickGroundBlock(Ground):
+	def __init__(self, position: BlockVector):
+		super().__init__('struct.brick', "砖块", BlockDescription(self, [RenderableString("\\#FFBABABA砖块")]), position, resourceManager.getOrNew('block/brick'))
+	
+	@classmethod
+	def load(cls, d: dict, block=None) -> 'BrickGroundBlock':
+		ret = BrickGroundBlock(BlockVector.load(d['position']))
+		super().load(d, ret)
+		return ret
+
+
+class BrickWallBlock(Wall):
+	def __init__(self, position: BlockVector):
+		super().__init__('struct.brick_wall', "砖墙", BlockDescription(self, [RenderableString("\\#FFBABABA砖墙")]), position, resourceManager.getOrNew('block/brick_wall'))
+	
+	@classmethod
+	def load(cls, d: dict, block=None) -> 'BrickWallBlock':
+		ret = BrickWallBlock(BlockVector.load(d['position']))
+		super().load(d, ret)
+		return ret
+
+
 blockManager.register('nature.grass', GrassBlock)
 blockManager.register('nature.path', PathBlock)
 blockManager.register('nature.farmland', FarmlandBlock)
 blockManager.register('system.error', ErrorBlock)
 blockManager.register('hold.fence', Fence)
 blockManager.register('hold.safety_line', SafetyLine)
-blockManager.register('witch.blue', WitchBlock)
 blockManager.register('hold.door', GateBlock)
+blockManager.register('witch.blue', WitchBlock)
+blockManager.register('struct.brick', BrickGroundBlock)
+blockManager.register('struct.brick_wall', BrickWallBlock)
 
 for t in [
 	resourceManager.getOrNew('block/fence')

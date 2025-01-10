@@ -30,7 +30,7 @@ class Entity(Element):
 		:param texture: 纹理列表，一般认为[0][1]是前面，[2][3]是后，[4][5]是左，[6][7]是右。可以参考class Player的构造函数
 		"""
 		super().__init__(name, description, texture[0])
-		self._position: Vector = position
+		self._position: Vector = position.clone()
 		self._textureSet: list[Texture] = texture
 		self._id: str = entityID
 	
@@ -197,6 +197,8 @@ class MoveableEntity(Entity):
 		self._renderPosition: Vector = Vector()
 		self._textureSet: list[Texture] = texture
 		self.basicMaxSpeed: float = speed
+		self.modifiedMaxSpeed: float = speed
+		self.moveable: int = 0  # 防止多个源同时禁用移动，而其中一个较先解锁导致问题
 	
 	def setVelocity(self, v: Vector) -> None:
 		"""
@@ -209,6 +211,8 @@ class MoveableEntity(Entity):
 		return self.__velocity.clone()
 	
 	def processMove(self) -> None:
+		if self.moveable:
+			return
 		if (vLength := self._setVelocity.length()) == 0:
 			self.__velocity.set(0, 0)
 			return
@@ -359,9 +363,9 @@ class MoveableEntity(Entity):
 	
 	def updatePosition(self, delta: float | None = None) -> Vector:
 		if delta is None:
-			return self._renderPosition
+			return self._renderPosition.clone()
 		self._renderPosition = self._position + self.__velocity * delta
-		return self._renderPosition
+		return self._renderPosition.clone()
 	
 	def render(self, delta: float) -> None:
 		self._texture.renderAtMap(self._renderPosition)
@@ -370,14 +374,15 @@ class MoveableEntity(Entity):
 		ret = super().save()
 		ret.update({
 			"velocity": self.__velocity.save(),
-			"maxSpeed": self._maxSpeed,
+			"basicMaxSpeed": self.basicMaxSpeed
 		})
 		return ret
 	
 	@classmethod
 	def load(cls, d: dict, entity: Union['Entity', None] = None) -> Union['Entity', None]:
 		entity._velocity = Vector.load(d["velocity"])
-		entity._maxSpeed = d["maxSpeed"]
+		entity.basicMaxSpeed = d["basicMaxSpeed"]
+		entity.modifiedMaxSpeed = entity.basicMaxSpeed
 		return entity
 
 
@@ -620,12 +625,12 @@ class Player(MoveableEntity, Damageable):
 			if interact.keys[pygame.K_d].peek():
 				v.add(1, 0)
 			if interact.specialKeys[pygame.K_LSHIFT & interact.KEY_COUNT].peek():
-				self._maxSpeed = self.basicMaxSpeed * 0.5
+				self._maxSpeed = self.modifiedMaxSpeed * 0.5
 			elif interact.specialKeys[pygame.K_LCTRL & interact.KEY_COUNT].peek():
-				self._maxSpeed = self.basicMaxSpeed * 2
+				self._maxSpeed = self.modifiedMaxSpeed * 2
 			else:
-				self._maxSpeed = self.basicMaxSpeed
-			## debug
+				self._maxSpeed = self.modifiedMaxSpeed
+			# TODO: debug作弊代码，待删除
 			if interact.keys[pygame.K_q].deals():
 				self.grow(100, self)
 				for i in self.skills.values():
@@ -633,7 +638,7 @@ class Player(MoveableEntity, Damageable):
 				for i in self.activeSkills:
 					i.coolDown = 0
 				self.pick(100, self)
-			## debug
+			# debug
 			if interact.keys[pygame.K_r].deals():
 				if self.growth_value < 100:
 					game.hud.sendMessage(RenderableString('\\#ffee0000你还没长大，不能下蛋~'))
@@ -674,7 +679,10 @@ class Player(MoveableEntity, Damageable):
 						game.hud.sendMessage(RenderableString('\\#ffee0000请在家里搭窝，不然蛋会被捣蛋的狐狸偷走~'))
 				else:
 					game.hud.sendMessage(RenderableString('\\#ffee0000你还没有解锁这个任务~'))
-		self.setVelocity(v.normalize().multiply(self._maxSpeed))
+		if self.moveable == 0:
+			self.setVelocity(v.normalize().multiply(self._maxSpeed))
+		else:
+			self.setVelocity(Vector(0, 0))
 		for i in self.postTick:
 			i()
 	
@@ -686,25 +694,6 @@ class Player(MoveableEntity, Damageable):
 class Coop(Entity):
 	def __init__(self, position: Vector):
 		super().__init__('entity.coop', '鸡窝', EntityDescription(self, [RenderableString('鸡舍')]), [resourceManager.getOrNew('entity/coop')], position)
-	
-	@classmethod
-	def load(cls, d: dict, entity: Union['Entity', None] = None) -> Union['Entity', None]:
-		e = Coop(Vector.load(d['position']))
-		return Entity.load(d, e)
-
-
-building_time = 0
-
-
-class Building_coop(Entity):
-	def __init__(self, position: Vector):
-		super().__init__('entity.coop', '鸡窝', EntityDescription(self, [RenderableString('鸡舍')]), [resourceManager.getOrNew('entity/coop')], position)
-	
-	def passTick(self) -> None:
-		i = int(building_time)
-		self._texture = self._textureSet[i]
-		building_time += 0.5
-		self.tick()
 	
 	@classmethod
 	def load(cls, d: dict, entity: Union['Entity', None] = None) -> Union['Entity', None]:

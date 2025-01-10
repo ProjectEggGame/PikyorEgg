@@ -49,6 +49,7 @@ class Game:
 		elif self._window.get() is not None and self._window.get().pauseGame():
 			delta = 1
 		renderer.begin(delta, self._window.get() is None)
+		self.mouseAtMap = interact.mouse.clone().subtract(renderer.getCenter()).getVector().divide(renderer.getMapScale()).add(renderer.getCamera().get())  # 由tick触发计算移动至render触发计算
 		if self._mainWorld is not None:
 			self._mainWorld.passRender(delta)
 		self.hud.render(delta)
@@ -89,7 +90,7 @@ class Game:
 	
 	def processMouse(self, event: pygame.event.Event | None = None):
 		if self._mainWorld is not None and self._window.get() is None:
-			self.mouseAtMap = interact.mouse.clone().subtract(renderer.getCenter()).getVector().divide(renderer.getMapScale()).add(renderer.getCamera().get())
+			# self.mouseAtMap = interact.mouse.clone().subtract(renderer.getCenter()).getVector().divide(renderer.getMapScale()).add(renderer.getCamera().get())  # 废弃代码段：移动至render触发计算
 			target1, target2 = None, None
 			targetDist1, targetDist2 = 1, 1
 			for e in (self._mainWorld.getEntities() + [self._mainWorld.getPlayer()]):

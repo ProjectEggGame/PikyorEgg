@@ -18,6 +18,7 @@ class Enemy(MoveableEntity, Damageable):
 		self._lockOn: Entity | None = None
 		self._hasAI: bool = True
 		self._aiVelocity: Vector = Vector(0, 0)  # AI建议的实体移动速度。
+		self._randomVelocity: Vector = Vector(0, 0)  # 随机移动
 	
 	def ai(self) -> None:
 		"""
@@ -40,6 +41,19 @@ class Enemy(MoveableEntity, Damageable):
 		elif self._aiVelocity.lengthManhattan() != 0:
 			self._aiVelocity.set(0, 0)
 			self.setVelocity(Vector())
+		if self._randomVelocity.lengthManhattan() != 0:
+			if self._aiVelocity.lengthManhattan() == 0:
+				self.setVelocity(self._randomVelocity)
+				if game.getWorld().getRandom().random() < 0.01:
+					self._randomVelocity.set(0, 0)
+			else:
+				self._randomVelocity.set(0, 0)
+		else:
+			if game.getWorld().getRandom().random() < 0.01:
+				vel = Vector(game.getWorld().getRandom().random() - 0.5, game.getWorld().getRandom().random() - 0.5)
+				if vel.lengthManhattan() != 0:
+					vel.normalize().multiply(self.modifiedMaxSpeed * 0.4)
+					self._randomVelocity = vel
 		MoveableEntity.passTick(self)
 	
 	def save(self) -> dict:

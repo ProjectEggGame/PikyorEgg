@@ -11,7 +11,7 @@ from utils.text import RenderableString, Description
 from window.widget import Widget
 from window.window import Window
 from LLA import chat_with_ai as ai
-
+from utils.text import font as _f
 
 aiHistory: list = []
 asyncAiTask = None
@@ -267,7 +267,6 @@ class InputWidget(Widget):
 			renderer.getCanvas().blit(s, (self._x, self._y))
 		text = self._realText if self._displayText is None else self._displayText
 		texts = []
-		from utils.text import font as _f
 		font = _f.allFonts[10].get(False, False, False, False)
 		length = len(text)
 		pr = 0

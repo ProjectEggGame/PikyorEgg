@@ -7,6 +7,7 @@ from render.renderer import renderer, Location
 from render.resource import Texture
 from utils.game import game
 from utils.text import Description, RenderableString
+from utils.util import utils
 
 from utils.vector import BlockVector
 
@@ -182,13 +183,78 @@ class Button(Widget):
 		super().__init__(location, x, y, width, height, name, description, textLocation, texture)
 
 
+class Slider(Widget):
+	def __init__(self, location: Location, x: float, y: float, width: float, height: float, name: RenderableString, description: Description, textLocation: Location = Location.CENTER, texture: Texture = None):
+		super().__init__(location, x, y, width, height, name, description, textLocation, texture)
+		self.offset = BlockVector()
+		self.pull: bool = False
+		self.value: float = 0
+		
+		def down(x, y, buttons):
+			if buttons[0] == 1:
+				self.pull = True
+		
+		def up(x, y, buttons):
+			if buttons[0] == 1:
+				self.pull = False
+		
+		self.onMouseDown = down
+		self.onMouseUp = up
+	
+	def isMouseIn(self, x: int, y: int):
+		if self.pull:
+			self.value = utils.frange((x - self._x) / self._w, 0, 1)
+			return True
+		return super().isMouseIn(x, y)
+	
+	def render(self, delta: float) -> None:
+		if self._texture is not None:
+			self._texture.renderAtInterface(BlockVector(self._x, self._y))
+		else:
+			colorSelector = self.color.inactive if not self.active else self.color.active if not self._isMouseIn else self.color.hovering
+			colorReversed = ~colorSelector
+			head = colorSelector & 0xff000000
+			colorSelector -= head
+			colorSelector = ((colorSelector >> 16) & 0xff, (colorSelector >> 8) & 0xff, colorSelector & 0xff)
+			colorReversed = ((colorReversed >> 16) & 0xff, (colorReversed >> 8) & 0xff, colorReversed & 0xff)
+			if head == 0xff000000:
+				renderer.getCanvas().fill(colorSelector, (self._x, self._y, self._w, self._h))
+			elif head != 0:
+				s = Surface((self._w, self._h))
+				s.fill(colorSelector)
+				s.set_alpha(head >> 24)
+				renderer.getCanvas().blit(s, (self._x, self._y))
+			s = Surface((self._w * self.value, self._h))
+			s.fill(colorReversed)
+			s.set_alpha(head >> 26)
+			renderer.getCanvas().blit(s, (self._x, self._y))
+		name = self.name.clone().append(f'\\01: {self.value:.2f}%')
+		match self.textLocation:
+			case Location.LEFT_TOP:
+				renderer.renderString(name, self._x, self._y, self.textColor.inactive if not self.active else self.textColor.active if not self._isMouseIn else self.textColor.hovering, Location.LEFT_TOP, self.color.inactive if not self.active else self.color.active if not self._isMouseIn else self.color.hovering)
+			case Location.LEFT:
+				renderer.renderString(name, self._x, self._y + (self._h >> 1), self.textColor.inactive if not self.active else self.textColor.active if not self._isMouseIn else self.textColor.hovering, Location.LEFT, self.color.inactive if not self.active else self.color.active if not self._isMouseIn else self.color.hovering)
+			case Location.LEFT_BOTTOM:
+				renderer.renderString(name, self._x, self._y + self._h, self.textColor.inactive if not self.active else self.textColor.active if not self._isMouseIn else self.textColor.hovering, Location.LEFT_BOTTOM, self.color.inactive if not self.active else self.color.active if not self._isMouseIn else self.color.hovering)
+			case Location.TOP:
+				renderer.renderString(name, self._x + (self._w >> 1), self._y, self.textColor.inactive if not self.active else self.textColor.active if not self._isMouseIn else self.textColor.hovering, Location.TOP, self.color.inactive if not self.active else self.color.active if not self._isMouseIn else self.color.hovering)
+			case Location.CENTER:
+				renderer.renderString(name, self._x + (self._w >> 1), self._y + (self._h >> 1), self.textColor.inactive if not self.active else self.textColor.active if not self._isMouseIn else self.textColor.hovering, Location.CENTER, self.color.inactive if not self.active else self.color.active if not self._isMouseIn else self.color.hovering)
+			case Location.BOTTOM:
+				renderer.renderString(name, self._x + (self._w >> 1), self._y + self._h, self.textColor.inactive if not self.active else self.textColor.active if not self._isMouseIn else self.textColor.hovering, Location.BOTTOM, self.color.inactive if not self.active else self.color.active if not self._isMouseIn else self.color.hovering)
+			case Location.RIGHT_TOP:
+				renderer.renderString(name, self._x + self._w, self._y, self.textColor.inactive if not self.active else self.textColor.active if not self._isMouseIn else self.textColor.hovering, Location.RIGHT_TOP, self.color.inactive if not self.active else self.color.active if not self._isMouseIn else self.color.hovering)
+			case Location.RIGHT:
+				renderer.renderString(name, self._x + self._w, self._y + (self._h >> 1), self.textColor.inactive if not self.active else self.textColor.active if not self._isMouseIn else self.textColor.hovering, Location.RIGHT, self.color.inactive if not self.active else self.color.active if not self._isMouseIn else self.color.hovering)
+			case Location.RIGHT_BOTTOM:
+				renderer.renderString(name, self._x + self._w, self._y + self._h, self.textColor.inactive if not self.active else self.textColor.active if not self._isMouseIn else self.textColor.hovering, Location.RIGHT_BOTTOM)
+
+
 class PullObject(Widget):
 	def __init__(self, location: Location, x: float, y: float, width: float, height: float, name: RenderableString, description: Description, textLocation: Location = Location.CENTER, texture: Texture = None):
 		super().__init__(location, x, y, width, height, name, description, textLocation, texture, )
 		self.offset = BlockVector()
 		self.pull = False
-		self.suck_position = []
-		self.suck_status = []
 			
 		def down(x, y, buttons):
 			self.pull = True
@@ -204,15 +270,8 @@ class PullObject(Widget):
 
 	def isMouseIn(self, x: int, y: int):
 		if self.pull:
-			suck_current = self.suck_position[self.suck_status.index(False)]
-			if abs(x - suck_current.x) < 50 and abs(y - suck_current.y) < 50:
-				self._x = suck_current.x
-				self._y = suck_current.y
-				
-			else:
-				self._x = x - self.offset.x
-				self._y = y - self.offset.y
-
+			self._x = x - self.offset.x
+			self._y = y - self.offset.y
 			match self.location:
 				case Location.LEFT_TOP:
 					self.x = self._x / renderer.getCanvas().get_width()
@@ -241,4 +300,6 @@ class PullObject(Widget):
 				case Location.RIGHT_BOTTOM:
 					self.x = (self._x - (renderer.getSize().x - self._w)) / renderer.getCanvas().get_width()
 					self.y = (self._y - (renderer.getSize().y - self._h)) / renderer.getCanvas().get_height()
+			self._isMouseIn = True
+			return True
 		return super().isMouseIn(x, y)

@@ -17,7 +17,7 @@ if TYPE_CHECKING:
 
 from render.renderable import Renderable
 from utils.vector import Vector, BlockVector
-from block.block import Block
+from block.block import Block, BrickWallBlock, BrickGroundBlock
 from music.music import Music_player
 
 
@@ -286,13 +286,48 @@ class DynamicWorld(World):
 				generateBlock(pos, 0.7)
 			if self.getBlockAt(BlockVector(pos.x + 1, pos.y + 1)) is None:
 				generateBlock(pos, 0.7)
+		
+		def generateTower(p: BlockVector, rate: float):
+			for vec in [
+				BlockVector(p.x - 1, p.y - 1),
+				BlockVector(p.x - 1, p.y),
+				BlockVector(p.x - 1, p.y + 1),
+				BlockVector(p.x, p.y - 1),
+				BlockVector(p.x, p.y + 1),
+				BlockVector(p.x + 1, p.y - 1),
+				BlockVector(p.x + 1, p.y),
+				BlockVector(p.x + 1, p.y + 1),
+			]:
+				blk = self.getBlockAt(vec)
+				if blk is None or isinstance(blk, BrickWallBlock):
+					if self._seed.random() < rate:
+						self.setBlockAt(vec, blockManager.dic.get('struct.brick')(vec))
+						generateTower(vec, rate - 0.07)
+					elif blk is None:
+						self.setBlockAt(vec, blockManager.dic.get('struct.brick_wall')(vec))
+				if blk is not None and blk._blockID.startswith('nature'):
+					if self.getBlockAt(p).tryHold(fence := blockManager.dic.get('hold.safety_line')(p)):
+						self.getBlockAt(p).holdAppend(fence)
+		
+		self.setBlockAt(p := ref.clone().multiply(1.3).getBlockVector(), blockManager.dic.get('struct.brick')(p))
+		generateTower(p, 1)
+		
+		# 第一段实体
 		for i, j in self._ground.items():
 			if j is None:
 				continue
+			if not j.canPass():
+				continue
 			if abs(j.getBlockPosition().x) < 5 and abs(j.getBlockPosition().y) < 5:
 				continue
-			if self._seed.random() < 0.05:
-				self.addEntity(entityManager.get('entity.rice')(Vector(self._seed.random() + j.getBlockPosition().x, self._seed.random() + j.getBlockPosition().y)))
+			if isinstance(j, BrickGroundBlock):
+				while self._seed.random() < 0.5:
+					self.addEntity(entityManager.get('entity.rice')(Vector(self._seed.random() + j.getBlockPosition().x, self._seed.random() + j.getBlockPosition().y)))
+				while self._seed.random() < 0.2:
+					self.addEntity(entityManager.get('enemy.dog')(Vector(self._seed.random() + j.getBlockPosition().x, self._seed.random() + j.getBlockPosition().y)))
+			else:
+				if self._seed.random() < 0.05:
+					self.addEntity(entityManager.get('entity.rice')(Vector(self._seed.random() + j.getBlockPosition().x, self._seed.random() + j.getBlockPosition().y)))
 
 
 class WitchWorld(World):

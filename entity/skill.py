@@ -200,7 +200,7 @@ class SkillRevive(Skill):
 	def render(self, delta: float, at: BlockVector, chosen: bool = None, isRenderIcon: bool = None) -> int:
 		ret = super().render(delta, at)
 		if self.coolDown > 0:
-			s = Surface(self.texture.getSystemScaledSurface().get_size())
+			s = Surface(self.texture.getMapScaledSurface().get_size())
 			s.set_alpha(0xaa)
 			renderer.getCanvas().blit(s, at.getTuple())
 			renderer.renderString(RenderableString(f'\\11{int(self.coolDown / 20)}'), at.x + (s.get_width() >> 1), at.y + (s.get_height() >> 1), 0xffffffff, Location.CENTER)
@@ -246,9 +246,9 @@ class SkillSwift(Skill):
 	
 	def upgrade(self) -> bool:
 		if self._level < 10 and super().upgrade():
-			self.player.basicMaxSpeed -= self.modifier
+			self.player.modifiedMaxSpeed -= self.modifier
 			self.modifier = 0.005 * self._level
-			self.player.basicMaxSpeed += self.modifier
+			self.player.modifiedMaxSpeed += self.modifier
 			self.description.d[0] = self.getName()
 			return True
 		return False

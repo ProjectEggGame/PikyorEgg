@@ -3,13 +3,14 @@ from pygame import Surface
 
 from entity.manager import skillManager
 from entity.skill import Skill
+from interact.interacts import interact
 from render.renderer import renderer, Location
 from utils.game import game
 from utils.text import SkillDescription, RenderableString, toRomanNumeral
 from utils.vector import Vector, BlockVector
 
 
-def renderSkill(distance: float, halfWidth: float, direction: Vector, color: int) -> None:
+def renderSkill(distance: float, halfWidth: float, direction: Vector, color: int, withLine: bool = True) -> None:
 	pos: Vector = game.getWorld().getPlayer().updatePosition()
 	basis = renderer.getMapBasis()
 	canvas: Surface = renderer.getCanvas()
@@ -46,10 +47,15 @@ def renderSkill(distance: float, halfWidth: float, direction: Vector, color: int
 	sfc.set_colorkey((0, 0, 0))
 	pygame.draw.polygon(sfc, ((color >> 16) & 0xff, (color >> 8) & 0xff, color & 0xff), pts)
 	canvas.blit(sfc, (basis + offset).getTuple())
+	if withLine:
+		pygame.draw.line(renderer.getCanvas(), (0xee, 0, 0, 0x88), pos.multiply(scale).getBlockVector().add(basis).getTuple(), interact.mouse.getTuple(), max(1, int(renderer.getMapScale() / 24)))
 
 
-def renderSkillRange(r: float, color: int) -> None:
-	pos: Vector | BlockVector = game.getWorld().getPlayer().updatePosition()
+def renderSkillRange(r: float, color: int, pos: Vector | BlockVector | None = None, withLine: bool = True) -> None:
+	if pos is None:
+		pos: Vector | BlockVector = game.getWorld().getPlayer().updatePosition()
+	else:
+		pos = pos.clone()
 	basis = renderer.getMapBasis()
 	canvas: Surface = renderer.getCanvas()
 	scale = renderer.getMapScale()
@@ -61,6 +67,8 @@ def renderSkillRange(r: float, color: int) -> None:
 	sfc.set_colorkey((0, 0, 0))
 	canvas.blit(sfc, (pos - BlockVector(r, r)).getTuple())
 	pygame.draw.circle(canvas, ((color >> 16) & 0xff, (color >> 8) & 0xff, color & 0xff), (pos.x, pos.y), r, int(scale * 0.05))
+	if withLine:
+		pygame.draw.line(renderer.getCanvas(), (0xee, 0, 0, 0x88), pos.getTuple(), interact.mouse.getTuple(), max(1, int(renderer.getMapScale() / 24)))
 
 
 class Active(Skill):
@@ -119,13 +127,13 @@ class ActiveFlash(Active):
 		if self.coolDown > 0:
 			self.coolDown -= 1
 		if self.shouldSetPosition is not None:
-			if isinstance(self.shouldSetPosition, tuple):
-				self.player.basicMaxSpeed += self.shouldSetPosition[1]
-				self.player.setPosition(self.shouldSetPosition[0])
+			if isinstance(self.shouldSetPosition, Vector):
+				self.player.moveable -= 1
+				self.player.setPosition(self.shouldSetPosition)
+				self.shouldSetPosition = 0
+			elif isinstance(self.shouldSetPosition, int):
 				self.shouldSetPosition = None
-			elif isinstance(self.shouldSetPosition, Vector):
-				self.shouldSetPosition = (self.shouldSetPosition, self.player.basicMaxSpeed)
-				self.player.basicMaxSpeed = 0
+				self.player.moveable += 1
 	
 	def render(self, delta: float, at: Vector | BlockVector, chosen: bool = False, isRenderIcon: bool = False) -> None:
 		if isRenderIcon:
@@ -137,12 +145,12 @@ class ActiveFlash(Active):
 				renderer.renderString(RenderableString(f'\\11{int(self.coolDown / 20)}'), at.x + (s.get_width() >> 1), at.y + (s.get_height() >> 1), 0xffffffff, Location.CENTER)
 			return ret
 		elif chosen:
-			renderSkill(3, 0.2, at - self.player.getPosition(), 0x554499ee if self.coolDown <= 0 else 0x55ee4444)
+			renderSkill(3, 0.2, at - self.player.updatePosition(), 0x554499ee if self.coolDown <= 0 else 0x55ee4444)
 	
 	def onUse(self, mouseAtMap: Vector) -> None:
 		if self.coolDown > 0:
 			return
-		direction = (mouseAtMap - (pos := self.player.getPosition())).normalize().multiply(3)
+		direction = (mouseAtMap - (pos := self.player.updatePosition())).normalize().multiply(3)
 		from block.block import Block
 		block: Block = game.getWorld().getBlockAt((tar := pos + direction).getBlockVector())
 		if block is not None and block.canPass(self.player):
@@ -247,12 +255,12 @@ class ActiveAttack(Active):
 			ret = super().render(delta, mouseAtMap)
 			return ret
 		elif chosen:
-			renderSkill(1.5, 1, mouseAtMap - self.player.getPosition(), 0x55eeee00 if self.coolDown <= 0 else 0x55ee4444)
+			renderSkill(1.5, 1, mouseAtMap - self.player.updatePosition(), 0x55eeee00 if self.coolDown <= 0 else 0x55ee4444)
 	
 	def onUse(self, mouseAtMap: Vector) -> None:
 		if self.coolDown > 0:
 			return
-		pos = self.player.getPosition()
+		pos = self.player.updatePosition()
 		direction = mouseAtMap - pos
 		direction.normalize()
 		from entity.entity import Damageable
@@ -261,7 +269,7 @@ class ActiveAttack(Active):
 			if not isinstance(e, Damageable):
 				continue
 			assert isinstance(e, Entity) and isinstance(e, Damageable)
-			pe = e.getPosition()
+			pe = e.updatePosition()
 			rel = pe - pos
 			if rel.lengthManhattan() > 2.2:
 				continue
@@ -289,7 +297,7 @@ class ActiveSwift(Active):
 		if self.timeCount > 0:
 			self.timeCount -= 1
 			if self.timeCount == 0:
-				self.player.basicMaxSpeed -= 0.1
+				self.player.modifiedMaxSpeed -= 0.1
 	
 	def getName(self=None) -> RenderableString:
 		if self is None or self._level == 0:
@@ -302,7 +310,7 @@ class ActiveSwift(Active):
 			return
 		self.timeCount = 40 + self._level * 5
 		self.coolDown = self.maxCoolDown
-		self.player.basicMaxSpeed += 0.1
+		self.player.modifiedMaxSpeed += 0.1
 	
 	def upgrade(self) -> bool:
 		if self._level < 10 and super().upgrade():
@@ -323,7 +331,83 @@ class ActiveSwift(Active):
 			renderSkillRange(1.5, 0x550088cc if self.coolDown <= 0 else 0x550088cc)
 
 
+class ActiveBreak(Active):
+	def __init__(self):
+		super().__init__(105, SkillDescription(self, [RenderableString('\\10\\#ffaa0000头槌'), RenderableString(f'    \\#ffaa4499对范围内狐狸造成0点伤害'), RenderableString(f"    \\#ffaa4499吃得越饱，伤害越高"), RenderableString(f'    \\#ffee0000会消耗已有的40%的成长值')]))
+		self.maxCoolDown = 600
+		self.shouldResetMoveable = False
+	
+	def init(self, player) -> None:
+		super().init(player)
+		self.player.preTick.append(self.onTick)
+	
+	def getName(self=None) -> RenderableString:
+		if self is None or self._level == 0:
+			return RenderableString('\\10\\#ffaa0000头槌')
+		else:
+			return RenderableString('\\10\\#ffaa0000头槌' + (toRomanNumeral(self._level) if self._level < 10 else "(MAX)"))
+	
+	def upgrade(self) -> bool:
+		if self._level < 10 and super().upgrade():
+			self.description.d[0] = self.getName()
+			self.description.d[2] = RenderableString(f'    \\#ffaa4499对范围内狐狸造成{7 + self.player.growth_value * 0.01 * (self._level + 10)}点伤害')
+			return True
+		return False
+	
+	def onUse(self, mouseAtMap: Vector) -> None:
+		if self.coolDown <= 0:
+			self.coolDown = self.maxCoolDown
+			self.player.moveable -= 1
+			self.shouldResetMoveable = True
+			self.player.setPosition(self.__matchPosition())
+			from entity.enemy import Enemy
+			for e in game.getWorld().getEntities():
+				if isinstance(e, Enemy):
+					e.damage(7 + self.player.growth_value * 0.01 * (self._level + 10), self.player)
+	
+	def onTick(self) -> None:
+		super().onTick()
+		if self.shouldResetMoveable:
+			self.player.moveable += 1
+			self.shouldResetMoveable = False
+	
+	def render(self, delta: float, mouseAtMap: Vector | BlockVector, chosen: bool = False, isRenderIcon: bool = False) -> int | None:
+		if isRenderIcon:
+			ret = super().render(delta, mouseAtMap)
+			if self.coolDown > 0:
+				s = Surface(self.texture.getUiScaledSurface().get_size())
+				s.set_alpha(0xaa)
+				renderer.getCanvas().blit(s, mouseAtMap.getTuple())
+				renderer.renderString(RenderableString(f'\\11{int(self.coolDown / 20)}'), mouseAtMap.x + (s.get_width() >> 1), mouseAtMap.y + (s.get_height() >> 1), 0xffffffff, Location.CENTER)
+			return ret
+		elif chosen:
+			renderSkillRange((3.5 + self._level * 0.2), 0x440088cc if self.coolDown <= 0 else 0x440088cc)
+			renderSkillRange(1.5, 0x44eeee00 if self.coolDown <= 0 else 0x44ee4444, position := self.__matchPosition(), withLine=False)
+			position = position.multiply(renderer.getMapScale()).getBlockVector().add(renderer.getMapBasis())
+			pygame.draw.line(renderer.getCanvas(), (0xee, 0xee, 0, 0x88), (position.x - renderer.getMapScale(), position.y), (position.x + renderer.getMapScale(), position.y), max(1, int(renderer.getMapScale() / 24)))
+			pygame.draw.line(renderer.getCanvas(), (0xee, 0xee, 0, 0x88), (position.x, position.y - renderer.getMapScale()), (position.x, position.y + renderer.getMapScale()), max(1, int(renderer.getMapScale() / 24)))
+
+	def __matchPosition(self) -> Vector:
+		relative = game.mouseAtMap.clone().subtract(self.player.updatePosition())
+		if relative.length() > (3.5 + self._level * 0.2):
+			relative.normalize().multiply((3.5 + self._level * 0.2))
+		position = relative + self.player.updatePosition()
+		targetBlock = game.getWorld().getBlockAt(position.getBlockVector())
+		if targetBlock is None or not targetBlock.canPass(self.player):
+			results = game.getWorld().rayTraceBlock(position, relative.reverse(), (3.5 + self._level * 0.2))
+			for r in results:
+				if isinstance(r[0], BlockVector):
+					continue
+				if r[0].canPass(self.player):
+					position = position + r[1]
+					break
+			else:
+				position = self.player.updatePosition()
+		return position
+
+
 skillManager.register(101, ActiveFlash)
 skillManager.register(102, ActiveAdrenalin)
 skillManager.register(103, ActiveAttack)
 skillManager.register(104, ActiveSwift)
+skillManager.register(105, ActiveBreak)

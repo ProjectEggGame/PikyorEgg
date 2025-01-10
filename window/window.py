@@ -14,7 +14,7 @@ from utils.text import RenderableString, Description
 from utils.vector import Vector, BlockVector
 from render.renderable import Renderable
 from render.resource import Texture, resourceManager
-from window.widget import Widget, Button, Location, ColorSet , PullObject
+from window.widget import Widget, Button, Location, ColorSet, PullObject, Slider
 from world.world import World, WitchWorld
 from music.music import Music_player
 
@@ -249,7 +249,7 @@ class StartWindow(Window):
 		self._widgets.append(Button(Location.CENTER, 0, 0.15, 0.4, 0.08, RenderableString("\\.00FCE8AD\\01LOAD"), Description([RenderableString("加载存档")]), textLocation=Location.CENTER))
 		self._widgets[1].onMouseDown = lambda x, y, b: b[0] == 1 and game.setWindow(LoadWindow().setLastOpen(self)) or True
 		self._widgets.append(Button(Location.CENTER, 0, 0.25, 0.4, 0.08, RenderableString("\\.00FCE8AD\\01OPTIONS"), Description([RenderableString("设置")]), textLocation=Location.CENTER))
-		self._widgets[2].onMouseDown = lambda x, y, b: b[0] == 1 and game.setWindow(babyeggwindow().setLastOpen(self)) or True
+		self._widgets[2].onMouseDown = lambda x, y, b: b[0] == 1 and game.setWindow(EggFactoryWindow().setLastOpen(self)) or True
 		self._widgets.append(Button(Location.CENTER, 0, 0.35, 0.4, 0.08, RenderableString("\\.00FCE8AD\\01SHUT DOWN"), Description([RenderableString("结束游戏")]), textLocation=Location.CENTER))
 		self._widgets[3].onMouseDown = lambda x, y, b: b[0] == 1 and game.quit() or True
 		self._widgets[0].color = PresetColors.color
@@ -269,7 +269,8 @@ class StartWindow(Window):
 		size: BlockVector = renderer.getSize()
 		renderer.renderString(RenderableString('\\.00FCE8AD\\00捡 蛋'), int(size.x / 2), int(size.y / 4), 0xff000000, Location.CENTER)
 		renderer.renderString(RenderableString('\\.00FCE8AD\\02Pikyor Egg!'), int(size.x / 2), int(size.y / 4) + font.realFontHeight + 2, 0xff000000, Location.CENTER)
-		# renderer.renderString(RenderableString('\\.00FCE8AD\\02卵を拾って'), int(size.x / 2), int(size.y / 4) + font.realFontHeight + font.realFontHeight + 4, 0xff000000, Location.CENTER)
+	
+	# renderer.renderString(RenderableString('\\.00FCE8AD\\02卵を拾って'), int(size.x / 2), int(size.y / 4) + font.realFontHeight + font.realFontHeight + 4, 0xff000000, Location.CENTER)
 	
 	def tick(self) -> None:
 		interact.keys[pygame.K_ESCAPE].deals()  # 舍弃ESC消息
@@ -506,37 +507,55 @@ class DeathWindow(Window):
 		renderer.renderString(RenderableString("\\01\\#ff000000You are dead"), int(0.5 * w), int(0.4 * h), 0xff000000, Location.CENTER, 0xffee0000)
 
 
-class babyeggwindow(Window):
+class EggFactoryWindow(Window):
 	def __init__(self):
 		super().__init__("Babybirth")
-		self._texture = resourceManager.getOrNew('window/factory')
-
-		self._texture.adaptsMap(False)
-		self._texture.adaptsUI(False)
-		self._texture.adaptsSystem(True)
+		self._texture = resourceManager.getOrNew('window/start')
 		
-
+		# self._texture.adaptsMap(False)
+		# self._texture.adaptsUI(False)
+		# self._texture.adaptsSystem(True)
+		
 		class Pulling(PullObject):
-			def __init__(self, x: float, y: float, name: RenderableString, description: Description ):
-				super().__init__(Location.CENTER, x, y, 0.12, 0.08, name, description, textLocation = Location.CENTER, texture= None)
-				self.suck_position = [Vector(646,40+20*i)for i in range(5)]
-				self.suck_status = [False]*5
-			
-		A = Pulling( -0.25, -0.2, RenderableString("\\.00FCE8AD\\00美丽"), Description([RenderableString("1")]))
+			def __init__(this, x: float, y: float, name: RenderableString, description: Description):
+				super().__init__(Location.CENTER, x, y, 0.12, 0.08, name, description, textLocation=Location.CENTER, texture=None)
+				this.window = self
+				
+				def up(mx, my, buttons):
+					if not this.pull:
+						return True
+					this.pull = False
+					if mx > renderer.getCanvas().get_width() * 0.7:
+						self._selected.add(this)
+					elif this in self._selected:
+						self._selected.remove(this)
+				this.onMouseUp = up
 		
-		self._widgets.append(A)	
-
-		self._widgets.append(Button(Location.BOTTOM, 0.38, 0, 0.12, 0.08, RenderableString("\\.00FCE8AD\\00确认"), Description([RenderableString("按下确认就不能修改啦")]), textLocation=Location.CENTER))
-		
-		
+		self._selected: set[Pulling] = set()
+		self._widgets.append(Pulling(-0.25, -0.2, RenderableString("\\.00FCE8AD\\00美丽"), Description([RenderableString("1")])))
+		self._widgets.append(Pulling(-0.25, -0.2, RenderableString("\\.00FCE8AD\\00动人"), Description([RenderableString("1")])))
+		self._widgets.append(Pulling(-0.25, -0.2, RenderableString("\\.00FCE8AD\\00我也不知道"), Description([RenderableString("1")])))
+		self._widgets.append(Button(Location.RIGHT_BOTTOM, 0, 0, 0.3, 0.08, RenderableString("\\.00FCE8AD\\00确认"), Description([RenderableString("按下确认就不能修改啦")]), textLocation=Location.CENTER))
 	
-	def render(self, delta: float) -> None:
-		super().render(delta)
+	def __sortSelected(self):
+		y = -0.4
+		for i in self._selected:
+			if i.pull:
+				continue
+			i.x = 0.35
+			i.y = y
+			y += 0.08
+			i.onResize()
+		pass
+	
+	def renderBackground(self, delta: float, at: BlockVector = BlockVector()) -> None:
+		self._texture.renderAtInterface(BlockVector())
 		size: BlockVector = renderer.getSize()
 		renderer.renderString(RenderableString('\\.00FCE8AD\\00蛋蛋制造工厂'), int(size.x / 2), int(size.y / 4), 0xff000000, Location.CENTER)
-
-
+		sfc = Surface((size.x * 0.3, size.y))
+		sfc.set_alpha(0x88)
+		renderer.getCanvas().blit(sfc, (size.x * 0.7 + 1, 0))
 	
 	def tick(self) -> None:
 		super().tick()
-
+		self.__sortSelected()

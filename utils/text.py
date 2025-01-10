@@ -100,6 +100,11 @@ class InnerStringConfig:
 		ret.underline = self.underline
 		return ret
 	
+	def cloneWithText(self) -> 'InnerStringConfig':
+		ret = self.clone()
+		ret.string = self.string
+		return ret
+	
 	def appendString(self, string: str) -> None:
 		if self.string is None:
 			self.string = string
@@ -151,7 +156,7 @@ class RenderableString:
 		self._parseAppend(string)
 	
 	def _parseAppend(self, string: str) -> None:
-		config = InnerStringConfig()
+		config = InnerStringConfig() if len(self.set) == 0 else self.set[-1].clone()
 		subs = string.split('\\')
 		if len(subs) == 0:
 			return
@@ -258,13 +263,25 @@ class RenderableString:
 			x = i.renderGiant(screen, x, y, defaultColor, defaultBackground)
 		return x
 	
+	def clone(self) -> 'RenderableString':
+		ret: 'RenderableString' = RenderableString('')
+		ret.set = self.set.copy()
+		for i in range(len(ret.set)):
+			ret.set[i] = ret.set[i].cloneWithText()
+		return ret
+	
+	def append(self, string: str) -> 'RenderableString':
+		self._parseAppend(string)
+		return self
+	
 	def __add__(self, other: 'RenderableString') -> 'RenderableString':
-		r = RenderableString('')
-		r.set = self.set + other.set
-		return r
+		r = self.clone()
+		raise Exception()
+		return r.append(other)
 	
 	def __str__(self):
 		return '\n'.join([str(i) for i in self.set])
+	
 
 
 def toRomanNumeral(value: int) -> str:

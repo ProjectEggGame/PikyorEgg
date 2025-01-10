@@ -101,7 +101,7 @@ class StatusWindow(Window):
 			renderer.getCanvas().blit(sfc, (renderer.getSize().x * 0.85 - (sfc.get_width() >> 1), sfc.get_height()))
 			renderer.getCanvas().blit(sfc, (renderer.getSize().x * 0.85 - (sfc.get_width() >> 1), sfc.get_height()))
 
-			renderer.renderString(s[0].getName(), int(size.x * 0.85), y := int(size.y * 0.4), 0xffeeee55, Location.TOP, 1)
+			renderer.renderString(s[0].getName(), int(size.x * 0.85), y := int(size.y * 0.4), 0xffeeee55, Location.TOP, 0, 1)
 			y += font.realFontHeight
 			for d in s[0].description.d:
 				renderer.renderString(d, int(size.x * 0.85), y, 0xffeeee55, Location.TOP, 0, -1)
