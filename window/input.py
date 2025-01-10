@@ -16,10 +16,10 @@ from utils.text import font as _f
 aiHistory: list = []
 asyncAiTask = None
 asyncTasks = asyncio.get_event_loop()  # 必须必须在main中最后关闭
+asyncTasks.create_task(ai.getWords())
 
 
 def adaptText(text: str, width: int, font: Font) -> list[str]:
-
 	def isEmptyChar(c: chr) -> bool:
 		if c == ' ' or c == '\n' or c == '\t' or c == '\r' or c == '\b' or c == '\v' or c == '\f' or c == '\0':
 			return True

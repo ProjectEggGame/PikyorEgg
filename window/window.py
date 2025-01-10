@@ -1,9 +1,11 @@
 import os.path
+import random
 from typing import Union
 
 import pygame
 from pygame import Surface
 
+from LLA import chat_with_ai as ai
 from entity.manager import entityManager
 from interact.interacts import interact
 from render import font
@@ -11,6 +13,7 @@ from render.renderer import renderer
 from save.save import Archive
 from utils.game import game
 from utils.text import RenderableString, Description
+from utils.util import utils
 from utils.vector import Vector, BlockVector
 from render.renderable import Renderable
 from render.resource import Texture, resourceManager
@@ -512,50 +515,111 @@ class EggFactoryWindow(Window):
 		super().__init__("Babybirth")
 		self._texture = resourceManager.getOrNew('window/start')
 		
-		# self._texture.adaptsMap(False)
-		# self._texture.adaptsUI(False)
-		# self._texture.adaptsSystem(True)
-		
 		class Pulling(PullObject):
-			def __init__(this, x: float, y: float, name: RenderableString, description: Description):
-				super().__init__(Location.CENTER, x, y, 0.12, 0.08, name, description, textLocation=Location.CENTER, texture=None)
-				this.window = self
+			def __init__(this, x: float, y: float, name: str, description: Description):
+				this.kw = name
+				name = RenderableString('\\01' + name)
+				super().__init__(Location.CENTER, x, y, name.length() / renderer.getCanvas().get_width() + renderer.getSystemScale() / 2000, 0.08, name, description, textLocation=Location.CENTER, texture=None)
 				
 				def up(mx, my, buttons):
 					if not this.pull:
 						return True
 					this.pull = False
 					if mx > renderer.getCanvas().get_width() * 0.7:
-						self._selected.add(this)
-					elif this in self._selected:
-						self._selected.remove(this)
+						res = 10 * (my - (renderer.getCanvas().get_height() >> 2)) / renderer.getCanvas().get_height()
+						res = utils.frange(res, 0, 4.9)
+						if self._selected[0] is this:
+							self._selected[0] = None
+							self.sortPresent()
+						elif self._selected[1] is this:
+							self._selected[1] = None
+							self.sortPresent()
+						elif self._selected[2] is this:
+							self._selected[2] = None
+							self.sortPresent()
+						elif self._selected[3] is this:
+							self._selected[3] = None
+							self.sortPresent()
+						elif self._selected[4] is this:
+							self._selected[4] = None
+							self.sortPresent()
+						if 0 <= res < 5:
+							self._selected[int(res)] = this
+							self.sortPresent()
+							self.sortSelected()
+				
 				this.onMouseUp = up
 		
-		self._selected: set[Pulling] = set()
-		self._widgets.append(Pulling(-0.25, -0.2, RenderableString("\\.00FCE8AD\\00美丽"), Description([RenderableString("1")])))
-		self._widgets.append(Pulling(-0.25, -0.2, RenderableString("\\.00FCE8AD\\00动人"), Description([RenderableString("1")])))
-		self._widgets.append(Pulling(-0.25, -0.2, RenderableString("\\.00FCE8AD\\00我也不知道"), Description([RenderableString("1")])))
-		self._widgets.append(Button(Location.RIGHT_BOTTOM, 0, 0, 0.3, 0.08, RenderableString("\\.00FCE8AD\\00确认"), Description([RenderableString("按下确认就不能修改啦")]), textLocation=Location.CENTER))
+		self.Pulling = Pulling
+		self._selected: list[Pulling | None] = [None, None, None, None, None]
+		words = ai.words + ['starry', 'runic', 'demonic', 'angelic']
+		words = random.sample(words, 12)
+		ai.asyncWords()
+		xp = -0.4
+		yp = -0.4
+		for i in words:
+			p = Pulling(0, 0, i, Description([RenderableString("1")]))
+			xp += p.width
+			if xp > 0.2:
+				xp = -0.4 + p.width
+				yp += 0.1
+			p.x = xp - p.width / 2
+			p.y = yp
+			xp += 0.02
+			self._widgets.append(p)
+		self._widgets.append(confirmButton := Button(Location.RIGHT_BOTTOM, 0, 0, 0.3, 0.08, RenderableString("\\.00FCE8AD\\00确认"), Description([RenderableString("按下确认就不能修改啦")]), textLocation=Location.CENTER))
+		
+		def confirm(x, y, buttons):
+			if buttons[0] == 1:
+				from LLA import ai_decision
+				ai_decision.asyncProperties([j.kw for j in self._selected if j is not None])
+		
+		confirmButton.onMouseDown = confirm
 	
-	def __sortSelected(self):
-		y = -0.4
-		for i in self._selected:
-			if i.pull:
-				continue
-			i.x = 0.35
-			i.y = y
-			y += 0.08
-			i.onResize()
-		pass
+	def sortPresent(self):
+		xp = -0.4
+		yp = -0.4
+		for p in self._widgets:
+			if isinstance(p, self.Pulling) and p not in self._selected:
+				xp += p.width
+				if xp > 0.2:
+					xp = -0.4 + p.width
+					yp += 0.1
+				p.x = xp - p.width / 2
+				p.y = yp
+				xp += 0.02
+				p.onResize()
+	
+	def sortSelected(self):
+		if self._selected[0] and not self._selected[0].pull:
+			self._selected[0].x = 0.35
+			self._selected[0].y = -0.2
+			self._selected[0].onResize()
+		if self._selected[1] and not self._selected[1].pull:
+			self._selected[1].x = 0.35
+			self._selected[1].y = -0.1
+			self._selected[1].onResize()
+		if self._selected[2] and not self._selected[2].pull:
+			self._selected[2].x = 0.35
+			self._selected[2].y = 0
+			self._selected[2].onResize()
+		if self._selected[3] and not self._selected[3].pull:
+			self._selected[3].x = 0.35
+			self._selected[3].y = 0.1
+			self._selected[3].onResize()
+		if self._selected[4] and not self._selected[4].pull:
+			self._selected[4].x = 0.35
+			self._selected[4].y = 0.2
+			self._selected[4].onResize()
 	
 	def renderBackground(self, delta: float, at: BlockVector = BlockVector()) -> None:
 		self._texture.renderAtInterface(BlockVector())
 		size: BlockVector = renderer.getSize()
 		renderer.renderString(RenderableString('\\.00FCE8AD\\00蛋蛋制造工厂'), int(size.x / 2), int(size.y / 4), 0xff000000, Location.CENTER)
-		sfc = Surface((size.x * 0.3, size.y))
+		sfc = Surface((w := size.x * 0.3, size.y))
+		h = size.y * 0.1
+		sfc.fill((0xff, 0xff, 0xff), (0, size.y * 0.25, w, h))
+		sfc.fill((0xff, 0xff, 0xff), (0, size.y * 0.45, w, h))
+		sfc.fill((0xff, 0xff, 0xff), (0, size.y * 0.65, w, h))
 		sfc.set_alpha(0x88)
 		renderer.getCanvas().blit(sfc, (size.x * 0.7 + 1, 0))
-	
-	def tick(self) -> None:
-		super().tick()
-		self.__sortSelected()
