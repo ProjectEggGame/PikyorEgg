@@ -735,9 +735,11 @@ class RedEgg(Entity):
 		return Entity.load(d, e)
 
 
-class Witch(Entity):
+class Witch(MoveableEntity):
 	def __init__(self, position: Vector):
-		super().__init__('entity.witch', '老巫婆鸡', EntityDescription(self, [RenderableString('鸡长老')]), [resourceManager.getOrNew('entity/witch/witch')], position)
+		src = resourceManager.getOrNew('entity/witch/witch')
+		super().__init__('entity.witch', '老巫婆鸡', EntityDescription(self, [RenderableString('鸡长老')]), [src, src, src, src, src, src, src, src], position, 0.005)
+		self._randomVelocity = Vector()
 	
 	def tick(self) -> None:
 		player = game.getWorld().getPlayer()
@@ -746,6 +748,17 @@ class Witch(Entity):
 			game.setWorld(0)
 			player.position = Vector(0, 0)
 			player.nurture()
+
+		if self._randomVelocity.lengthManhattan() != 0:
+			if game.getWorld().getRandom().random() < 0.01:
+				self._randomVelocity.set(0, 0)
+		else:
+			if game.getWorld().getRandom().random() < 0.01:
+				vel = Vector(game.getWorld().getRandom().random() - 0.5, game.getWorld().getRandom().random() - 0.5)
+				if vel.lengthManhattan() != 0:
+					vel.normalize().multiply(self._maxSpeed)
+					self._randomVelocity = vel
+				self.setVelocity(self._randomVelocity)
 
 
 # 注册实体

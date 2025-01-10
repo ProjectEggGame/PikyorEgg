@@ -456,7 +456,10 @@ class SettingsWindow(Window):
 			return True
 		
 		self._widgets[4].onMouseDown = _4
-		self._widgets.append(Button(Location.CENTER, -0.1, 0, 0.2, 0.08, RenderableString('\\01 Music OFF' if Music_player.turnon_music else '\\01Music ON'), Description([RenderableString('关掉可爱的音乐' if Music_player.turnon_music else '打开可爱的音乐')]), Location.CENTER))
+		self._widgets.append(Button(Location.CENTER, -0.1, 0, 0.2, 0.08, RenderableString('\\01 Music: \\#ff66cceeON' if Music_player.turnon_music else '\\01Music: OFF'), Description([
+			RenderableString('\\#ff66ccee打开可爱的音乐 <' if Music_player.turnon_music else '打开可爱的音乐'),
+			RenderableString('关掉可爱的音乐' if Music_player.turnon_music else '\\#ff66ccee关掉可爱的音乐 <')
+		]), Location.CENTER))
 		
 		def _5(x, y, b):
 			if b[0] == 1:
@@ -464,34 +467,39 @@ class SettingsWindow(Window):
 					Music_player.background_volume_press(False)
 				else:
 					Music_player.background_volume_press(True)
-				Music_player.turnon_music = not Music_player.turnon_music 
+				Music_player.turnon_music = not Music_player.turnon_music
 				
-				self._widgets[5].description = Description([RenderableString('关掉可爱的音乐' if Music_player.turnon_music else '打开超级可爱的音乐')])
-				self._widgets[5].name = RenderableString('\\01Music OFF' if Music_player.turnon_music else '\\01Music ON')
+				self._widgets[5].description.d = [
+					RenderableString('\\#ff66ccee打开可爱的音乐 <' if Music_player.turnon_music else '打开可爱的音乐'),
+					RenderableString('关掉可爱的音乐' if Music_player.turnon_music else '\\#ff66ccee关掉可爱的音乐 <')
+				]
+				self._widgets[5].name = RenderableString('\\01 Music: \\#ff66cceeON' if Music_player.turnon_music else '\\01Music: OFF')
 			return True
 		
 		self._widgets[5].onMouseDown = _5
-		self._widgets.append(Button(Location.CENTER, 0.3, 0, 0.2, 0.08, 
-		RenderableString('\\01 Sound OFF' if Music_player.turnon_sound else '\\01Sound ON'), Description([RenderableString('关掉古怪的音效'if Music_player.turnon_sound else '打开超级古怪的音效')]), Location.CENTER))
+		self._widgets.append(Button(Location.CENTER, 0.1, 0, 0.2, 0.08, RenderableString('\\01 Sound: \\#ff66cceeON' if Music_player.turnon_sound else '\\01Sound: OFF'), Description([
+			RenderableString('\\#ff66ccee打开超级古怪的音效 <' if Music_player.turnon_sound else '打开超级古怪的音效'),
+			RenderableString('关掉超级古怪的音效' if Music_player.turnon_sound else '\\#ff66ccee关掉超级古怪的音效 <'),
+		]), Location.CENTER))
 		
-
 		def _6(x, y, b):
 			if b[0] == 1:
 				if Music_player.turnon_sound:
 					Music_player.sound_volume_press(False)
 				else:
 					Music_player.sound_volume_press(True)
-				Music_player.turnon_sound = not Music_player.turnon_sound 
+				Music_player.turnon_sound = not Music_player.turnon_sound
 				
-				self._widgets[6].description = Description([RenderableString('关掉古怪的音效' if Music_player.turnon_sound else '打开超级古怪的音效')])
-				self._widgets[6].name = RenderableString('\\01Sound OFF' if Music_player.turnon_sound else '\\01Sound ON')
+				self._widgets[6].description.d = [
+					RenderableString('\\#ff66ccee打开超级古怪的音效 <' if Music_player.turnon_sound else '打开超级古怪的音效'),
+					RenderableString('关掉超级古怪的音效' if Music_player.turnon_sound else '\\#ff66ccee关掉超级古怪的音效 <'),
+				]
+				self._widgets[6].name = RenderableString('\\01Sound: \\#ff66cceeON' if Music_player.turnon_sound else '\\01Sound: OFF')
 			return True
 		
 		self._widgets[6].onMouseDown = _6
-
 		
-		
-		self._widgets.append(Button(Location.CENTER, 0.1, 0, 0.2, 0.08, RenderableString('\\01ScrollLock' if renderer.lockScroll else '\\01ScrollRelease'), Description([RenderableString("地图缩放锁定" if renderer.lockScroll else '滚动滚轮以改变地图缩放')]), Location.CENTER))
+		self._widgets.append(Button(Location.CENTER, 0, 0.1, 0.4, 0.08, RenderableString('\\01ScrollLock' if renderer.lockScroll else '\\01ScrollRelease'), Description([RenderableString("地图缩放锁定" if renderer.lockScroll else '滚动滚轮以改变地图缩放')]), Location.CENTER))
 		
 		def _7(x, y, b):
 			if b[0] == 1:
@@ -501,7 +509,19 @@ class SettingsWindow(Window):
 			return True
 		
 		self._widgets[7].onMouseDown = _7
-	
+		
+		self._widgets.append(s8 := Slider(Location.CENTER, 0, 0.2, 0.4, 0.08, RenderableString('\\.00000000\\01Music Volume'), Description([RenderableString("音乐音量")]), Location.CENTER))
+		s8.value = Music_player.volume_music
+		s8.onDrag = Music_player.music_volume_drag
+		s8.barColor.active = 0x9966ccee
+		s8.barColor.hovering = 0xff66ccee
+
+		self._widgets.append(s9 := Slider(Location.CENTER, 0, 0.3, 0.4, 0.08, RenderableString('\\.00000000\\01Sound Volume'), Description([RenderableString("音效音量")]), Location.CENTER))
+		s9.value = Music_player.volume_sound
+		s9.onDrag = Music_player.sound_volume_drag
+		s9.barColor.active = 0x9966ccee
+		s9.barColor.hovering = 0xff66ccee
+
 	def setLastOpen(self, last: 'Window') -> 'Window':
 		self.lastOpen = last
 		if isinstance(last, StartWindow):

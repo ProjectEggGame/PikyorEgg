@@ -93,27 +93,31 @@ def basicDamage(bd: float) -> RenderableString:
 
 class EnemyDog(Enemy):
 	def __init__(self, position: Vector):
-		super().__init__("enemy.dog", "蠢蠢的狐狸", EntityDescription(self, [
-			RenderableString("\\#ffee0000蠢蠢的狐狸"),
-			RenderableString("\\#ffee55dd\\/    只会直线行走"),
-			enemyUnit(),
-			basicDamage(8),
-			searchRange(4),
-		]), [
-			resourceManager.getOrNew("entity/enemy/dog_1"),
-			resourceManager.getOrNew("entity/enemy/dog_2"),
-			resourceManager.getOrNew("entity/enemy/dog_b1"),
-			resourceManager.getOrNew("entity/enemy/dog_b2"),
-			resourceManager.getOrNew("entity/enemy/dog_l1"),
-			resourceManager.getOrNew("entity/enemy/dog_l2"),
-			resourceManager.getOrNew("entity/enemy/dog_r1"),
-			resourceManager.getOrNew("entity/enemy/dog_r2"),
-		], position)
-		
+		super().__init__(
+			"enemy.dog",
+			"蠢蠢的狐狸",
+			EntityDescription(
+				self, [
+					RenderableString("\\#ffee0000蠢蠢的狐狸"),
+					RenderableString("\\#ffee55dd\\/    只会直线行走"),
+					enemyUnit(),
+					basicDamage(8),
+					searchRange(4),
+				]), [
+				resourceManager.getOrNew("entity/enemy/dog_1"),
+				resourceManager.getOrNew("entity/enemy/dog_2"),
+				resourceManager.getOrNew("entity/enemy/dog_b1"),
+				resourceManager.getOrNew("entity/enemy/dog_b2"),
+				resourceManager.getOrNew("entity/enemy/dog_l1"),
+				resourceManager.getOrNew("entity/enemy/dog_l2"),
+				resourceManager.getOrNew("entity/enemy/dog_r1"),
+				resourceManager.getOrNew("entity/enemy/dog_r2"),
+			], position, 0.09)
+	
 	def tick(self) -> None:
 		if self._attackTimer:
 			self._attackTimer -= 1
-
+	
 	def ai(self) -> None:
 		if game.getWorld() is None:
 			return
@@ -148,28 +152,33 @@ class EnemyDog(Enemy):
 
 
 class EnemyChicken(Enemy):
-	def __init__(self, position: Vector):
-		super().__init__("enemy.oldchicken", "丰腴的情敌", EntityDescription(self, [
-			RenderableString("\\#ffee0000丰腴的情敌"),
-			RenderableString("\\#ffee55dd\\/    喜欢蹦蹦跳跳"),
-			enemyUnit(),
-			basicDamage(15),
-			searchRange(2),
-		]), [
-			resourceManager.getOrNew("entity/enemychicken/ENchicken_1"),
-			resourceManager.getOrNew("entity/enemychicken/ENchicken_2"),
-			resourceManager.getOrNew("entity/enemychickenENchicken_3"),
-			resourceManager.getOrNew("entity/enemychicken/ENchicken_4"),
-			resourceManager.getOrNew("entity/enemychicken/ENchicken_5"),
-			resourceManager.getOrNew("entity/enemychicken/ENchicken_6"),
-			resourceManager.getOrNew("entity/enemychicken/ENchicken_7"),
-			resourceManager.getOrNew("entity/enemychicken/ENchicken_8"),
-		], position)
-		
+	def __init__(self, position: Vector, centralPosition: Vector = None):
+		super().__init__(
+			"enemy.hen",
+			"丰腴的情敌",
+			EntityDescription(
+				self, [
+					RenderableString("\\#ffee0000丰腴的情敌"),
+					RenderableString("\\#ffee55dd\\/    喜欢蹦蹦跳跳"),
+					enemyUnit(),
+					basicDamage(15),
+					searchRange(2),
+				]), [
+				resourceManager.getOrNew("entity/enemy/hen_1"),
+				resourceManager.getOrNew("entity/enemy/hen_2"),
+				resourceManager.getOrNew("entity/enemy/hen_7"),
+				resourceManager.getOrNew("entity/enemy/hen_8"),
+				resourceManager.getOrNew("entity/enemy/hen_5"),
+				resourceManager.getOrNew("entity/enemy/hen_6"),
+				resourceManager.getOrNew("entity/enemy/hen_3"),
+				resourceManager.getOrNew("entity/enemy/hen_4"),
+			], position, 100, 0.3)
+		self.center = centralPosition.clone() if centralPosition else position.clone()
+	
 	def tick(self) -> None:
 		if self._attackTimer:
 			self._attackTimer -= 1
-
+	
 	def ai(self) -> None:
 		if game.getWorld() is None:
 			return
@@ -179,7 +188,7 @@ class EnemyChicken(Enemy):
 			self._aiVelocity.set(0, 0)
 			return
 		if self._lockOn is None or player is not self._lockOn:
-			if player.getPosition().distanceManhattan(self.getPosition()) <= 2:
+			if player.getPosition().distanceManhattan(self.getPosition()) <= 2 and player.progress > 1:
 				self._lockOn = game.getWorld().getPlayer()
 		else:
 			if player.getPosition().distanceManhattan(self.getPosition()) > 2:
@@ -195,15 +204,46 @@ class EnemyChicken(Enemy):
 			else:
 				self._aiVelocity = self._lockOn.getPosition().subtract(self.getPosition()).normalize().multiply(min(self._maxSpeed, self.getPosition().distance(self._lockOn.getPosition())))
 	
+	def passTick(self) -> None:
+		if self._hasAI:
+			self.ai()
+			self.setVelocity(self._aiVelocity)
+		elif self._aiVelocity.lengthManhattan() != 0:
+			self._aiVelocity.set(0, 0)
+			self.setVelocity(Vector())
+		if self._position.distanceManhattan(self.center) > 3:
+			if self._aiVelocity.lengthManhattan() == 0:
+				self._randomVelocity = (self.center - self._position + Vector(game.getWorld().getRandom().random() * 0.5, game.getWorld().getRandom().random() * 0.5)).normalize().multiply(self._maxSpeed * 0.2)
+				self.setVelocity(self._randomVelocity)
+		elif self._randomVelocity.lengthManhattan() != 0:
+			if self._aiVelocity.lengthManhattan() == 0:
+				self.setVelocity(self._randomVelocity)
+				if game.getWorld().getRandom().random() < 0.03:
+					self._randomVelocity.set(0, 0)
+			else:
+				self._randomVelocity.set(0, 0)
+		elif game.getWorld().getRandom().random() < 0.03:
+			vel = Vector(game.getWorld().getRandom().random() - 0.5, game.getWorld().getRandom().random() - 0.5)
+			if vel.lengthManhattan() != 0:
+				vel.normalize().multiply(self.modifiedMaxSpeed * 0.1)
+				self._randomVelocity = vel
+		MoveableEntity.passTick(self)
+	
 	@classmethod
 	def load(cls, d: dict, entity: Union['Entity', None] = None) -> Union['Entity', None]:
 		assert entity is None
-		e = EnemyChicken(Vector.load(d['position']))
+		e = EnemyChicken(Vector.load(d['position']), Vector.load(d['center']))
 		Enemy.load(d, e)
 		return e
+	
+	def save(self) -> dict:
+		d = Enemy.save(self)
+		d['center'] = self.center.save()
+		return d
+
 
 entityManager.register('enemy.dog', EnemyDog)
-
+entityManager.register('enemy.hen', EnemyChicken)
 
 for k in [
 	resourceManager.getOrNew("entity/enemy/dog_1"),
@@ -218,4 +258,17 @@ for k in [
 	k.getSurface().set_colorkey((0, 0, 0))
 	k.getMapScaledSurface().set_colorkey((0, 0, 0))
 	k.setOffset(Vector(0, -5))
+for k in [
+	resourceManager.getOrNew("entity/enemy/hen_1"),
+	resourceManager.getOrNew("entity/enemy/hen_2"),
+	resourceManager.getOrNew("entity/enemy/hen_3"),
+	resourceManager.getOrNew("entity/enemy/hen_4"),
+	resourceManager.getOrNew("entity/enemy/hen_5"),
+	resourceManager.getOrNew("entity/enemy/hen_6"),
+	resourceManager.getOrNew("entity/enemy/hen_7"),
+	resourceManager.getOrNew("entity/enemy/hen_8"),
+]:
+	k.getSurface().set_colorkey((0, 0, 0))
+	k.getMapScaledSurface().set_colorkey((0, 0, 0))
+	k.setOffset(Vector(0, -7))
 del k

@@ -189,31 +189,41 @@ class Slider(Widget):
 		self.offset = BlockVector()
 		self.pull: bool = False
 		self.value: float = 0
-		
-		def down(x, y, buttons):
-			if buttons[0] == 1:
-				self.pull = True
-		
-		def up(x, y, buttons):
-			if buttons[0] == 1:
-				self.pull = False
-		
-		self.onMouseDown = down
-		self.onMouseUp = up
-	
+		self.onDrag: Callable[[float], None] | None = None
+		self.barColor: ColorSet = ColorSet()
+		self.barColor.inactive = (~self.color.inactive & 0xffffff) | ((self.color.inactive >> 2) & 0xff000000)
+		self.barColor.hovering = (~self.color.hovering & 0xffffff) | ((self.color.hovering >> 2) & 0xff000000)
+		self.barColor.active = (~self.color.active & 0xffffff) | ((self.color.active >> 2) & 0xff000000)
+		self.barColor.click = (~self.color.click & 0xffffff) | ((self.color.click >> 2) & 0xff000000)
+
 	def isMouseIn(self, x: int, y: int):
 		if self.pull:
 			self.value = utils.frange((x - self._x) / self._w, 0, 1)
+			if self.onDrag:
+				self.onDrag(self.value)
 			return True
 		return super().isMouseIn(x, y)
+	
+	def passMouseDown(self, x: int, y: int, buttons: tuple[int, int, int]):
+		if buttons[0] == 1:
+			self.pull = True
+		if self.onMouseDown is not None:
+			return self.onMouseDown(x, y, buttons)
+	
+	def passMouseUp(self, x: int, y: int, buttons: tuple[int, int, int]):
+		if buttons[0] == 1:
+			self.pull = False
+		if self.onMouseUp is not None:
+			return self.onMouseUp(x, y, buttons)
 	
 	def render(self, delta: float) -> None:
 		if self._texture is not None:
 			self._texture.renderAtInterface(BlockVector(self._x, self._y))
 		else:
 			colorSelector = self.color.inactive if not self.active else self.color.active if not self._isMouseIn else self.color.hovering
-			colorReversed = ~colorSelector
+			colorReversed = self.barColor.inactive if not self.active else self.barColor.active if not self._isMouseIn else self.barColor.hovering
 			head = colorSelector & 0xff000000
+			head2 = colorReversed & 0xff000000
 			colorSelector -= head
 			colorSelector = ((colorSelector >> 16) & 0xff, (colorSelector >> 8) & 0xff, colorSelector & 0xff)
 			colorReversed = ((colorReversed >> 16) & 0xff, (colorReversed >> 8) & 0xff, colorReversed & 0xff)
@@ -224,11 +234,14 @@ class Slider(Widget):
 				s.fill(colorSelector)
 				s.set_alpha(head >> 24)
 				renderer.getCanvas().blit(s, (self._x, self._y))
-			s = Surface((self._w * self.value, self._h))
-			s.fill(colorReversed)
-			s.set_alpha(head >> 26)
-			renderer.getCanvas().blit(s, (self._x, self._y))
-		name = self.name.clone().append(f'\\01: {self.value:.2f}%')
+			if head2 == 0xff000000:
+				renderer.getCanvas().fill(colorReversed, (self._x, self._y, self._w * self.value, self._h))
+			elif head2 != 0:
+				s = Surface((self._w * self.value, self._h))
+				s.fill(colorReversed)
+				s.set_alpha(head2 >> 24)
+				renderer.getCanvas().blit(s, (self._x, self._y))
+		name = self.name.clone().append(f'\\01: {self.value * 100:.2f}%')
 		match self.textLocation:
 			case Location.LEFT_TOP:
 				renderer.renderString(name, self._x, self._y, self.textColor.inactive if not self.active else self.textColor.active if not self._isMouseIn else self.textColor.hovering, Location.LEFT_TOP, self.color.inactive if not self.active else self.color.active if not self._isMouseIn else self.color.hovering)
