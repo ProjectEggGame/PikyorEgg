@@ -217,6 +217,7 @@ class DynamicWorld(World):
 		self.generate_map()  # 初始化地图
 		player = entityManager.get('player')(Vector(0, 0))
 		self.setPlayer(player)
+		game.hud.sendMessage(RenderableString('第一个任务有啦！Tab查看任务吧'))
 		Music_player.background_play(1)
 		Music_player.background_set_volume(0.1)
 	
@@ -302,15 +303,15 @@ class WitchWorld(World):
 		Music_player.background_set_volume(0.1)
 	
 	def generate_map(self) -> None:
-		for i in range(-5, 5):
-			for j in range(-5, 5):
+		for i in range(0, 15):
+			for j in range(-4, 4):
 				v = BlockVector(i, j)
 				block = blockManager.dic.get('witch.blue')(v)
 				self._ground[hash(v)] = block
-		player = entityManager.get('player')(Vector(0, 0))
+		player = entityManager.get('player')(Vector(8, 0))
 		self.setPlayer(player)
 		for i in range(10):
-			self.addEntity(entityManager.get('enemy.dog')(Vector(self._seed.random() * 10 - 5, self._seed.random() * 10 - 5)))
-		self.addEntity(entityManager.get('entity.witch')(Vector(-4, 0)))
+			self.addEntity(entityManager.get('enemy.dog')(Vector(self._seed.random() * 15, self._seed.random() * 8-4)))
+		self.addEntity(entityManager.get('entity.witch')(Vector(14, -3)))
 
 # class BabybuiltWorld(World):

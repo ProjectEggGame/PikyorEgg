@@ -751,6 +751,7 @@ class Witch(Entity):
 		if player is not None and player.getPosition().distanceManhattan(self.getPosition()) <= 0.6:
 			game.getWorld(0).setPlayer(player)
 			game.setWorld(0)
+			player.position = Vector(0,0)
 			player.nurture()
 
 

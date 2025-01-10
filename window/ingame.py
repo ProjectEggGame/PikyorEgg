@@ -211,13 +211,15 @@ class TaskWindow(Window):
 			size: BlockVector = renderer.getSize()
 			renderer.renderString(RenderableString('\\.ffEFE4B0\\00任务2：'), int((0.58 if renderer.is4to3.get() else 0.56) * size.x), (size.y >> 1) - font.realFontHeight, 0xff000000, Location.BOTTOM)
 			renderer.renderString(RenderableString('\\.ffEFE4B0\\00\\#ffee0000年少有为，织鸡窝！'), int((0.58 if renderer.is4to3.get() else 0.56) * size.x), size.y >> 1, 0xff000000, Location.TOP)
+			renderer.renderString(RenderableString('\\.ffEFE4B0\\10\\#ffee0000100树枝+H键可以给你带来一个大大的鸡窝'), int((0.58 if renderer.is4to3.get() else 0.56) * size.x), (size.y >> 1) + font.realFontHeight, 0xff000000, Location.TOP)
 		
 		if self.looking == 3:
 			size: BlockVector = renderer.getSize()
-			renderer.renderString(RenderableString('\\.ffEFE4B0\\00任务3：'), int((0.58 if renderer.is4to3.get() else 0.56) * size.x), (size.y >> 1) - font.realFontHeight, 0xff000000, Location.BOTTOM)
-			renderer.renderString(RenderableString('\\.ffEFE4B0\\00老巫婆鸡，指点迷津！'), int((0.58 if renderer.is4to3.get() else 0.56) * size.x), size.y >> 1, 0xff000000, Location.BOTTOM)
-			renderer.renderString(RenderableString('\\.ffEFE4B0\\00\\#ffee0000找到老巫婆鸡'), int((0.58 if renderer.is4to3.get() else 0.56) * size.x), size.y >> 1, 0xff000000, Location.TOP)
-			renderer.renderString(RenderableString('\\.ffEFE4B0\\00并躲避狐狸的攻击'), int((0.58 if renderer.is4to3.get() else 0.56) * size.x), (size.y >> 1) + font.realFontHeight, 0xff000000, Location.TOP)
+			renderer.renderString(RenderableString('\\.ffEFE4B0\\00任务3：'), int((0.58 if renderer.is4to3.get() else 0.56) * size.x), (size.y >> 1) - font.realFontHeight*1.5, 0xff000000, Location.BOTTOM)
+			renderer.renderString(RenderableString('\\.ffEFE4B0\\00老巫婆鸡，指点迷津！'), int((0.58 if renderer.is4to3.get() else 0.56) * size.x),(size.y >> 1)- font.realFontHeight*0.5, 0xff000000, Location.BOTTOM)
+			renderer.renderString(RenderableString('\\.ffEFE4B0\\00\\#ffee0000找到老巫婆鸡'), int((0.58 if renderer.is4to3.get() else 0.56) * size.x), (size.y >> 1)- font.realFontHeight*0.5, 0xff000000, Location.TOP)
+			renderer.renderString(RenderableString('\\.ffEFE4B0\\00并躲避狐狸的攻击'), int((0.58 if renderer.is4to3.get() else 0.56) * size.x), (size.y >> 1) + font.realFontHeight*0.5, 0xff000000, Location.TOP)
+			renderer.renderString(RenderableString('\\.ffEFE4B0\\10\\#ffee0000你也许有看到一个炫酷的传送门，3秒定律'), int((0.58 if renderer.is4to3.get() else 0.56) * size.x), (size.y >> 1) + font.realFontHeight*1.5, 0xff000000, Location.TOP)
 		
 		if self.looking == 4:
 			size: BlockVector = renderer.getSize()
@@ -231,7 +233,7 @@ class TaskWindow(Window):
 			renderer.renderString(RenderableString('\\.ffEFE4B0\\00你希望下出怎样的蛋'), int((0.58 if renderer.is4to3.get() else 0.56) * size.x), size.y >> 1, 0xff000000, Location.BOTTOM)
 			renderer.renderString(RenderableString('\\.ffEFE4B0\\00来给鸡宝宝选择不同的属性吧'), int((0.58 if renderer.is4to3.get() else 0.56) * size.x), size.y >> 1, 0xff000000, Location.TOP)
 			renderer.renderString(RenderableString('\\.ffEFE4B0\\00这会使得你获得不一样的蛋'), int((0.58 if renderer.is4to3.get() else 0.56) * size.x), (size.y >> 1) + font.realFontHeight, 0xff000000, Location.TOP)
-	
+		renderer.renderString(RenderableString('\\.ffEFE4B0\\10Tab键返回'), int((0.58 if renderer.is4to3.get() else 0.56) * size.x), size.y * 0.8, 0xff000000, Location.BOTTOM)
 	def passRender(self, delta: float, at: Vector | None = None) -> None:
 		s = Surface(renderer.getCanvas().get_size())
 		s.fill(self.backgroundColor & 0xffffff)
@@ -255,7 +257,7 @@ class PlotWindow(Window):
 		self.Sentence = 0
 		
 		def _0(x, y, b) -> bool:
-			if self.Sentence < 8:
+			if self.Sentence < 10:
 				self.Sentence += 1
 			else:
 				game.setWindow(None)
@@ -263,7 +265,9 @@ class PlotWindow(Window):
 			return True
 		
 		def _1(x, y, b) -> bool:
-			if b[0] == 1:
+			if self.Sentence < 10:
+				self.Sentence = 10
+			else:
 				game.setWindow(None)
 				game.setWorld(DynamicWorld('DynamicWorld'))
 			return True
@@ -321,11 +325,36 @@ class PlotWindow(Window):
 		if self.Sentence == 8:
 			renderer.renderString(RenderableString('\\.0040304D\\00你的最终目标是逆天改命，'), int(size.x * 0.5), int(size.y * 0.4), 0xffffffff, Location.CENTER)
 			renderer.renderString(RenderableString('\\.0040304D\\00生一个蛋，并孵出一只小鸡！'), int(size.x * 0.5), int(size.y * 0.4 + font.realFontHeight), 0xffffffff, Location.CENTER)
-	
+		if self.Sentence == 8:
+			renderer.renderString(RenderableString('\\.0040304D\\00你的最终目标是逆天改命，'), int(size.x * 0.5), int(size.y * 0.4), 0xffffffff, Location.CENTER)
+			renderer.renderString(RenderableString('\\.0040304D\\00生一个蛋，并孵出一只小鸡！'), int(size.x * 0.5), int(size.y * 0.4 + font.realFontHeight), 0xffffffff, Location.CENTER)
+		if self.Sentence == 9:
+			renderer.renderString(RenderableString('\\.0040304D\\00游戏中你可能会用到以下快捷键：'), int(size.x * 0.5), int(size.y * 0.2 - font.realFontHeight), 0xffffffff, Location.CENTER)
+			renderer.renderString(RenderableString('\\.0040304D\\10人物移动 WASD'), int(size.x * 0.3), int(size.y * 0.2 + font.realFontHeight*1), 0xffffffff, Location.CENTER)
+			renderer.renderString(RenderableString('\\.0040304D\\10状态面板 E'), int(size.x * 0.3), int(size.y * 0.2 + font.realFontHeight*2), 0xffffffff, Location.CENTER)
+			renderer.renderString(RenderableString('\\.0040304D\\10任务面板 Tab'), int(size.x * 0.3), int(size.y * 0.2 + font.realFontHeight*3), 0xffffffff, Location.CENTER)
+			renderer.renderString(RenderableString('\\.0040304D\\10暂停并打开暂停菜单 Esc'), int(size.x * 0.3), int(size.y * 0.2 + font.realFontHeight*4), 0xffffffff, Location.CENTER)
+			renderer.renderString(RenderableString('\\.0040304D\\10询问AI游戏助手 Enter'), int(size.x * 0.3), int(size.y * 0.2 + font.realFontHeight*5), 0xffffffff, Location.CENTER)
+			renderer.renderString(RenderableString('\\.0040304D\\10锁定/解锁视角 Space'), int(size.x * 0.3), int(size.y * 0.2 + font.realFontHeight*6), 0xffffffff, Location.CENTER)
+			renderer.renderString(RenderableString('\\.0040304D\\10做窝 H'), int(size.x * 0.3), int(size.y * 0.2 + font.realFontHeight*7), 0xffffffff, Location.CENTER)
+			renderer.renderString(RenderableString('\\.0040304D\\10下蛋 R'), int(size.x * 0.3), int(size.y * 0.2 + font.realFontHeight*8), 0xffffffff, Location.CENTER)
+			renderer.renderString(RenderableString('\\.0040304D\\10选定主动技能 1~9数字键'), int(size.x * 0.6), int(size.y * 0.2 + font.realFontHeight*1), 0xffffffff, Location.CENTER)
+			renderer.renderString(RenderableString('\\.0040304D\\10取消选定技能 右键或相同数字键'), int(size.x * 0.6), int(size.y * 0.2 + font.realFontHeight*2), 0xffffffff, Location.CENTER)
+			renderer.renderString(RenderableString('\\.0040304D\\10释放选定的技能 左键  '), int(size.x * 0.6), int(size.y * 0.2 + font.realFontHeight*3), 0xffffffff, Location.CENTER)
+			renderer.renderString(RenderableString('\\.0040304D\\10移动视角 中键按住拖动'), int(size.x * 0.6), int(size.y * 0.2 + font.realFontHeight*4), 0xffffffff, Location.CENTER)
+			renderer.renderString(RenderableString('\\.0040304D\\10缩放地图 滚轮'), int(size.x * 0.6), int(size.y * 0.2 + font.realFontHeight*5), 0xffffffff, Location.CENTER)
+			renderer.renderString(RenderableString('\\.0040304D\\10米粒树枝作弊按键 Q'), int(size.x * 0.6), int(size.y * 0.2 + font.realFontHeight*6), 0xffffffff, Location.CENTER)
+		if self.Sentence == 10:
+			renderer.renderString(RenderableString('\\.0040304D\\00那么，话不多说'), int(size.x * 0.5), int(size.y * 0.4), 0xffffffff, Location.CENTER)
+			renderer.renderString(RenderableString('\\.0040304D\\00游戏开始！'), int(size.x * 0.5), int(size.y * 0.4 + font.realFontHeight), 0xffffffff, Location.CENTER)
+		
+
+
+
 	def tick(self) -> None:
 		if interact.keys[pygame.K_ESCAPE].deals():
 			self.Sentence += 1
-			if self.Sentence > 8:
+			if self.Sentence > 10:
 				game.setWindow(None)
 				game.setWorld(DynamicWorld('DynamicWorld'))
 
@@ -412,6 +441,49 @@ class BuildingWindow(Window):
 			game.setWindow(None)
 
 
+class EggBirthWindow(Window):
+	def __init__(self):
+		super().__init__("EGG!!")
+		Music_player.background_set_volume(0.1)
+		Music_player.sound_play(5)
+		self.building_image = []
+		for i in range(0, 16):
+			x = resourceManager.getOrNew(f'window/building2/building{i}')
+			self.building_image.append(x)
+		self.timer: int = 120
+		
+		def _1(x, y, b) -> bool:
+			if b[0] == 1:
+				Music_player.sound_stop(5)
+				Music_player.background_set_volume(0.1)
+				game.setWindow(self.lastOpen)
+			return True
+		
+		self._widgets.append(Button(Location.BOTTOM, 0.2, 0, 0.12, 0.08, RenderableString('\\01SKIP'), Description([RenderableString("跳过动画")]), Location.CENTER))
+		self._widgets[0].onMouseDown = _1
+		self._widgets[0].color = PresetColors.plotColor
+		self._widgets[0].textColor = PresetColors.plotText
+	
+	def render(self, delta: float) -> None:
+		w, h = renderer.getSize().getTuple()
+		renderer.renderString(RenderableString("\\00\\00小鸡宝宝要孵出来啦！"), int(0.5 * w), int(0.2 * h), 0xffffffff, Location.CENTER)
+
+	def passRender(self, delta: float, at: Vector | None = None) -> None:
+		s = Surface(renderer.getCanvas().get_size())
+		s.fill(self.backgroundColor & 0xffffff)
+		s.set_alpha(self.backgroundColor >> 24)
+		renderer.getCanvas().blit(s, (0, 0))
+		super().passRender(delta, at)
+	
+	def tick(self) -> None:
+		super().tick()
+		self._texture = self.building_image[15 - (int(self.timer >> 2) % 16)]
+		self._backgroundLocation = Location.CENTER
+		self.timer -= 1
+		if self.timer == 0:
+			Music_player.sound_stop(5)
+			Music_player.background_set_volume(0.1)
+			game.setWindow(None)
 
 
 
