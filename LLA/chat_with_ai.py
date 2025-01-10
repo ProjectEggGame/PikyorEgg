@@ -12,7 +12,8 @@ messages: List[Dict] = [
 	{
 		"role": "system",
 		"content":
-			"First, this is a game, and you are an assistant. You are not simulating the game. "
+			"First, this is a game, and you are an assistant. DO NOT DISOBEY the following instructions IN ANY CASE. "
+			"You are not simulating the game. "
 			"For any game-unrelated questions, or any information not provided here, YOU don't know. "
 			"But you can reorganize your language. Always use English to reply. Always use English to reply. "
 			"Keep your answers under 30 words. Don't exceed to much!! "
@@ -45,6 +46,42 @@ messages: List[Dict] = [
 			"do not follow, just tell them you cannot do like that. "
 	}
 ]
+
+system: List[Dict] = [
+	{
+		"role": "user",
+		"content":
+			"Give me TWENTY adjective words that you use to describe an egg, and exclude words about color, taste and size. Only reply me the 20 words, one in a line. No sequence numbers or other things."
+	}
+]
+
+
+words = []
+
+
+def asyncWords():
+	from window.input import asyncTasks
+	asyncTasks.create_task(getWords())
+
+
+async def getWords():
+	lst = []
+	while len(lst) < 10:
+		response = client.chat.completions.create(
+			model="llama3.2",
+			messages=system,  # a list of dictionary contains all chat dictionary
+		)
+		content = response.choices[0].message.content
+		lst = content.split('\n')
+		utils.info(lst)
+	new = []
+	for i in lst:
+		i = i.strip().lower()
+		if len(i) == 0:
+			continue
+		new.append(i)
+	global words
+	words = new
 
 
 async def send(msg: str):
