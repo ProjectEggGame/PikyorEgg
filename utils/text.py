@@ -274,14 +274,16 @@ class RenderableString:
 		self._parseAppend(string)
 		return self
 	
-	def __add__(self, other: 'RenderableString') -> 'RenderableString':
+	def __add__(self, other: Union['RenderableString', str]) -> 'RenderableString':
 		r = self.clone()
-		raise Exception()
-		return r.append(other)
+		if isinstance(other, str):
+			return r.append(other)
+		else:
+			r.set += other.set
+			return r
 	
 	def __str__(self):
 		return '\n'.join([str(i) for i in self.set])
-	
 
 
 def toRomanNumeral(value: int) -> str:

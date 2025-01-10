@@ -3,6 +3,7 @@ import random
 import pygame
 from typing import TYPE_CHECKING, Union, Callable
 
+import save.save
 from entity.active_skill import Active
 from entity.manager import entityManager, skillManager
 from entity.skill import Skill
@@ -527,6 +528,7 @@ class Player(MoveableEntity, Damageable):
 			sks.append(sk.save())
 		data['skills'] = sks
 		data['totalGrowth'] = self.totalGrowth
+		data['progress'] = self.progress
 		return data
 	
 	@classmethod
@@ -534,6 +536,7 @@ class Player(MoveableEntity, Damageable):
 		chicken = Player(Vector.load(d['position']))
 		chicken.growth_value = d['growth_value']
 		chicken.totalGrowth = d['totalGrowth']
+		chicken.progress = d['progress']
 		for sk in d['skills']:
 			s: Skill = skillManager.get(sk['id']).load(sk)
 			chicken.__allSkills.pop(sk['id'])
@@ -740,7 +743,7 @@ class Witch(Entity):
 		if player is not None and player.getPosition().distanceManhattan(self.getPosition()) <= 0.6:
 			game.getWorld(0).setPlayer(player)
 			game.setWorld(0)
-			player.position = Vector(0,0)
+			player.position = Vector(0, 0)
 			player.nurture()
 
 
@@ -780,7 +783,6 @@ t = resourceManager.getOrNew('entity/rice')
 t.setOffset(Vector(0, -3))
 t.getSurface().set_colorkey((0, 0, 0))
 t.getMapScaledSurface().set_colorkey((0, 0, 0))
-resourceManager.getOrNew('entity/coop').setOffset(Vector(0, -25))
 resourceManager.getOrNew('entity/witch/witch').setOffset(Vector(0, -7))
 for t in [
 	resourceManager.getOrNew('player/chick_1'),

@@ -142,7 +142,7 @@ class EnemyDog(Enemy):
 	@classmethod
 	def load(cls, d: dict, entity: Union['Entity', None] = None) -> Union['Entity', None]:
 		assert entity is None
-		e = EnemyDog(d['position'])
+		e = EnemyDog(Vector.load(d['position']))
 		Enemy.load(d, e)
 		return e
 
