@@ -448,12 +448,14 @@ class QuestionWindow(Window):
 		#题库
 		self.Question = ["Which module does not belong to Python?",
 				   "Which one is not the author of the game?",
-				   "In this game, what can't the chick do?"]
+				   "In this game, what can't the chick do?",
+				   "Last Question"]
 		self.Anwser = [["kivy","pygame","os","robot"],
 				 ["teasfrog","EmsiaetKadosh","NicolePotion","IcyOxygenXY"],
-				 ["Eat rice","Pick up sticks","Dig holes","Fight with hens"]]
-		self.clue = ["字","姐姐","茄子"]
-		self.clue_position = [3,0,2]
+				 ["Eat rice","Pick up sticks","Dig holes","Fight with hens"],
+				 ["Right","Wrong","Wrong","Wrong"]]
+		self.clue = ["字","姐姐","茄子","12"]
+		self.clue_position = [3,0,2,1]
 		self.printclue = "?"
 		self.choice = 5
 		self.flag = False
@@ -503,6 +505,7 @@ class QuestionWindow(Window):
 					PresetColors.plotColor.active = 0xff1BA803
 					self._widgets[self.choice].color = PresetColors.plotColor
 					self._widgets[self.choice].textColor = PresetColors.plotText
+					
 				else:
 					print("错误答案")
 					self.tip[1] = 1
@@ -510,13 +513,20 @@ class QuestionWindow(Window):
 					PresetColors.plotColor.active = 0xffD40004
 					self._widgets[self.choice].color = PresetColors.plotColor
 					self._widgets[self.choice].textColor = PresetColors.plotText
+				
 					
 				self._widgets[0].onMouseDown = _0
 				self._widgets[1].onMouseDown = _0
 				self._widgets[2].onMouseDown = _0
 				self._widgets[3].onMouseDown = _0
-
+		def _5(x,y,b) -> bool:
+			if b[0] == 1 :
+				game.setWindow(self.lastOpen)
+				PresetColors.plotColor.active = 0xff545454
+			return True
 		
+		
+
 		self._widgets.append(Button(Location.CENTER, 0.15, -0.1, 0.30, 0.08, RenderableString(f"\\.00FFFFFF\\01{self.Anwser[self.num][0]}"), Description([RenderableString("A")]), textLocation=Location.CENTER))
 		self._widgets.append(Button(Location.CENTER, 0.15, 0, 0.30, 0.08, RenderableString(f"\\.00FFFFFF\\01{self.Anwser[self.num][1]}"), Description([RenderableString("B")]), textLocation=Location.CENTER))
 		self._widgets.append(Button(Location.CENTER, 0.15, 0.1, 0.30, 0.08, RenderableString(f"\\.00FFFF\\01{self.Anwser[self.num][2]}"), Description([RenderableString("C")]), textLocation=Location.CENTER))
@@ -525,6 +535,10 @@ class QuestionWindow(Window):
 		self._widgets[1].onMouseDown = _2
 		self._widgets[2].onMouseDown = _3
 		self._widgets[3].onMouseDown = _4
+
+		self._widgets.append(Button(Location.LEFT_TOP, 0, 0, 0.09, 0.12, RenderableString('\\01Back'), Description([RenderableString("返回")]), Location.CENTER))
+		self._widgets[4].onMouseDown = _5
+		
 		
 
 	def render(self, delta: float) -> None:

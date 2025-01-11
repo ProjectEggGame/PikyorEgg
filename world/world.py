@@ -367,17 +367,40 @@ class WitchWorld(World):
 		super().__init__(1, '老巫鸡的密室', None)
 		self.generate_map()  # 初始化地图
 		Music_player.background_play(2)
+		game.hud.sendMessage(RenderableString('\\#ffeeee00\\.ffee6666欢迎来到异世界'))
+		game.hud.sendMessage(RenderableString('\\#ffeeee00\\.ffee6666每条路的尽头都有一个老巫鸡'))
+		game.hud.sendMessage(RenderableString('\\#ffeeee00\\.ffee6666希望你能找到线索，并找到真正的老巫鸡'))
 	
 	def generate_map(self) -> None:
-		for i in range(0, 15):
-			for j in range(-4, 4):
+		for i in range(-20, 20):
+			for j in range(-1, 1):
 				v = BlockVector(i, j)
 				block = blockManager.dic.get('witch.blue')(v)
 				self._ground[hash(v)] = block
-		player = entityManager.get('player')(Vector(8, 0))
+		for i in range(-1, 1):
+			for j in range(-20, 20):
+				v = BlockVector(i, j)
+				block = blockManager.dic.get('witch.blue')(v)
+				self._ground[hash(v)] = block
+
+		player = entityManager.get('player')(Vector(1, 1))
 		self.setPlayer(player)
-		for i in range(10):
-			self.addEntity(entityManager.get('enemy.dog')(Vector(self._seed.random() * 15, self._seed.random() * 8 - 4)))
-		self.addEntity(entityManager.get('entity.witch')(Vector(14, -3)))
+		dog_position = [Vector(-4, 0),Vector(0, 4),Vector(0, -4),Vector(4, 0),Vector(1,1),Vector(-1,-1)]
+
+		for i in range(6):
+			self.addEntity(entityManager.get('enemy.dog')(dog_position[i]))
+		
+		
+		
+		self.addEntity(entityManager.get('entity.witch')(Vector(16, 0)))
+		
+		witch_position = [Vector(-16, 0),Vector(0, 16),Vector(0, -16)]
+		for j in range(1,4):
+			self.addEntity(entityManager.get(f'entity.fakewitch{j}')(witch_position[j-1],i = j))
+
+		clue_position = [Vector(-19, 0),Vector(0, 19),Vector(0, -19),Vector(19, 0)]
+		for j in range(0,4):
+			self.addEntity(entityManager.get(f'entity.clue{j}')(clue_position[j],i = j))
+		
 
 # class BabybuiltWorld(World):
