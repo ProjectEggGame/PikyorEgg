@@ -150,12 +150,12 @@ class music_player:
         ))
         self.background_volume_press(save.configs.readElseDefault(
             data, 'BGM', True,
-            lambda x: x,
+            {True: True, False: False},
             'BGM must be true or false'
         ))
         self.sound_volume_press(save.configs.readElseDefault(
             data, 'SE', True,
-            lambda x: x,
+            {True: True, False: False},
             'SE must be true or false'
         ))
 
