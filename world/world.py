@@ -382,25 +382,22 @@ class WitchWorld(World):
 				v = BlockVector(i, j)
 				block = blockManager.dic.get('witch.blue')(v)
 				self._ground[hash(v)] = block
-
+		
 		player = entityManager.get('player')(Vector(1, 1))
 		self.setPlayer(player)
-		dog_position = [Vector(-4, 0),Vector(0, 4),Vector(0, -4),Vector(4, 0),Vector(1,1),Vector(-1,-1)]
-
+		dog_position = [Vector(-4, 0), Vector(0, 4), Vector(0, -4), Vector(4, 0), Vector(1, 1), Vector(-1, -1)]
+		
 		for i in range(6):
 			self.addEntity(entityManager.get('enemy.dog')(dog_position[i]))
 		
-		
-		
 		self.addEntity(entityManager.get('entity.witch')(Vector(16, 0)))
 		
-		witch_position = [Vector(-16, 0),Vector(0, 16),Vector(0, -16)]
-		for j in range(1,4):
-			self.addEntity(entityManager.get(f'entity.fakewitch{j}')(witch_position[j-1],i = j))
-
-		clue_position = [Vector(-19, 0),Vector(0, 19),Vector(0, -19),Vector(19, 0)]
-		for j in range(0,4):
-			self.addEntity(entityManager.get(f'entity.clue{j}')(clue_position[j],i = j))
+		witch_position = [Vector(-16, 0), Vector(0, 16), Vector(0, -16)]
+		for j in range(1, 4):
+			self.addEntity(entityManager.get(f'entity.fakewitch{j}')(witch_position[j - 1], i=j))
 		
+		clue_position = [Vector(-19, 0), Vector(0, 19), Vector(0, -19), Vector(19, 0)]
+		for j in range(0, 4):
+			self.addEntity(entityManager.get(f'entity.clue{j}')(clue_position[j], i=j))
 
 # class BabybuiltWorld(World):

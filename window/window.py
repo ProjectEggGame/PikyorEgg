@@ -540,6 +540,9 @@ class DeathWindow(Window):
 		w, h = renderer.getSize().getTuple()
 		renderer.fill(0xffee0000, int(0.3 * w), int(0.3 * h), int(0.4 * w), int(0.2 * h))
 		renderer.renderString(RenderableString("\\01\\#ff000000You are dead"), int(0.5 * w), int(0.4 * h), 0xff000000, Location.CENTER, 0xffee0000)
+	
+	def tick(self) -> None:
+		interact.keys[pygame.K_ESCAPE].deals()
 
 
 class EggFactoryWindow(Window):

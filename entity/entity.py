@@ -461,12 +461,12 @@ class Stick(Entity):
 		e = Stick(Vector.load(d['position']))
 		return Entity.load(d, e)
 
+
 class Clue(Entity):
 	def __init__(self, position: Vector, i):
 		super().__init__(f'entity.clue{i}', '线索', EntityDescription(self, [RenderableString("\\#FFFFD700通往真理的线索")]), [resourceManager.getOrNew('entity/clue')], position)
 		self.num = i
-
-
+	
 	def tick(self) -> None:
 		player = game.getWorld().getPlayer()
 		if player is not None and player.getPosition().distanceManhattan(self.getPosition()) <= 0.6:
@@ -474,12 +474,12 @@ class Clue(Entity):
 			from window.ingame import QuestionWindow
 			game.setWindow(QuestionWindow(self.num))
 			game.getWorld().removeEntity(self)
-			
 	
 	@classmethod
 	def load(cls, d: dict, entity: Union['Entity', None] = None) -> Union['Entity', None]:
 		e = Stick(Vector.load(d['position']))
 		return Entity.load(d, e)
+
 
 skillGet: list[int] = [10, 22, 36, 52, 70, 90, 112, 136, 162, 190, 220, 252, 286, 322, 360, 400, 442, 486, 532, 580]
 
@@ -495,7 +495,7 @@ class Player(MoveableEntity, Damageable):
 			resourceManager.getOrNew('player/chick_l1'),
 			resourceManager.getOrNew('player/chick_r1'),
 			resourceManager.getOrNew('player/chick_r1'),
-		], position, 0.16)
+		], position, 0.12)
 		Damageable.__init__(self, 100)
 		self.totalGrowth: float = 0
 		self.growth_value: float = 0  # 成长值初始化为0
@@ -623,7 +623,7 @@ class Player(MoveableEntity, Damageable):
 		return ret
 	
 	def nurture(self):
-		self.setPosition(Vector(0,0))
+		self.setPosition(Vector(0, 0))
 		if self.progress == 3:
 			from window.ingame import NurturingWindow
 			game.hud.sendMessage(RenderableString('\\#ffeeee00\\.ffee6666恭喜你，解锁了新的任务'))
@@ -757,7 +757,7 @@ class RedEgg(Entity):
 class Witch(MoveableEntity):
 	def __init__(self, position: Vector):
 		src = resourceManager.getOrNew('entity/witch/witch')
-		super().__init__('entity.witch', '老巫婆鸡', EntityDescription(self, [RenderableString('鸡长老')]), [src, src, src, src, src, src, src, src], position, 0.005)
+		super().__init__('entity.witch', '老巫婆鸡', EntityDescription(self, [RenderableString('鸡长老'), RenderableString('    \\#ffbb0000确定真假之前，避开为妙')]), [src, src, src, src, src, src, src, src], position, 0.005)
 		self._randomVelocity = Vector()
 	
 	def tick(self) -> None:
@@ -768,7 +768,7 @@ class Witch(MoveableEntity):
 			player.position = Vector(0, 0)
 			
 			player.nurture()
-
+		
 		if self._randomVelocity.lengthManhattan() != 0:
 			if game.getWorld().getRandom().random() < 0.01:
 				self._randomVelocity.set(0, 0)
@@ -780,10 +780,11 @@ class Witch(MoveableEntity):
 					self._randomVelocity = vel
 				self.setVelocity(self._randomVelocity)
 
+
 class FakeWitch(MoveableEntity):
-	def __init__(self,position:Vector,i):
+	def __init__(self, position: Vector, i):
 		src = resourceManager.getOrNew(f'entity/witch/witch{i}')
-		super().__init__(f'entity.fakewitch{i}', '老巫婆鸡', EntityDescription(self, [RenderableString('鸡长老')]), [src, src, src, src, src, src, src, src], position, 0.005)
+		super().__init__(f'entity.fakewitch{i}', '老巫婆鸡', EntityDescription(self, [RenderableString('鸡长老'), RenderableString('    \\#ffbb0000确定真假之前，避开为妙')]), [src, src, src, src, src, src, src, src], position, 0.005)
 		self._randomVelocity = Vector()
 		self.flag = True
 	
@@ -792,9 +793,9 @@ class FakeWitch(MoveableEntity):
 		if player is not None and player.getPosition().distanceManhattan(self.getPosition()) <= 0.3 and self.flag:
 			game.hud.sendMessage(RenderableString('\\#ffeeee00\\.ffee6666你被骗了，这不是真正的老巫婆鸡'))
 			game.hud.sendMessage(RenderableString('\\#ffeeee00\\.ffee6666你还被它重伤了！'))
-			player.damage(8, self)
+			player.damage(30, self)
 			self.flag = False
-
+		
 		if self._randomVelocity.lengthManhattan() != 0:
 			if game.getWorld().getRandom().random() < 0.01:
 				self._randomVelocity.set(0, 0)
@@ -805,6 +806,7 @@ class FakeWitch(MoveableEntity):
 					vel.normalize().multiply(self._maxSpeed)
 					self._randomVelocity = vel
 				self.setVelocity(self._randomVelocity)
+
 
 # 注册实体
 entityManager.register('entity.rice', Rice)
@@ -817,10 +819,10 @@ entityManager.register('entity.egg.gold', GoldEgg)
 entityManager.register('deprecated', DeprecatedPlayer)
 entityManager.register('entity.witch', Witch)
 
-for i in range(1,4):
+for i in range(1, 4):
 	entityManager.register(f'entity.fakewitch{i}', FakeWitch)
 
-for i in range(0,4):
+for i in range(0, 4):
 	entityManager.register(f'entity.clue{i}', Clue)
 
 for t in [
@@ -839,7 +841,6 @@ for t in [
 for t in [
 	resourceManager.getOrNew('entity/stick'),
 	resourceManager.getOrNew('entity/coop'),
-	resourceManager.getOrNew('entity/clue') ,
 	resourceManager.getOrNew('entity/witch/witch')
 ]:
 	t.getSurface().set_colorkey((0, 0, 0))
@@ -871,14 +872,11 @@ for t in [
 	t.getSurface().set_colorkey((0xff, 0xff, 0xff))
 	t.getMapScaledSurface().set_colorkey((0xff, 0xff, 0xff))
 	t.setOffset(Vector(0, -7))
-
-
 for t in [
-	resourceManager.getOrNew(f'entity/witch/witch{i}') for i in range(1,4)
-]:
+	resourceManager.getOrNew(f'entity/witch/witch{i}') for i in range(1, 4)
+] + [resourceManager.getOrNew('entity/clue')]:
 	t.getSurface().set_colorkey((0, 0, 0))
 	t.getMapScaledSurface().set_colorkey((0, 0, 0))
-	t.setOffset(Vector(0, -9))
-
+	t.setOffset(Vector(0, -8))
 
 del t

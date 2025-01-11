@@ -284,7 +284,7 @@ class GateBlock(Ground):
 				from world.world import WitchWorld
 				world = WitchWorld()
 				world.setPlayer(player)
-				player.position = Vector(1, 1)
+				player.setPosition(Vector())
 				game.setWorld(world)
 
 

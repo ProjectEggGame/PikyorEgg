@@ -112,7 +112,7 @@ class EnemyDog(Enemy):
 				resourceManager.getOrNew("entity/enemy/dog_l2"),
 				resourceManager.getOrNew("entity/enemy/dog_r1"),
 				resourceManager.getOrNew("entity/enemy/dog_r2"),
-			], position, 0.09)
+			], position, 100, 0.09)
 	
 	def tick(self) -> None:
 		if self._attackTimer:
@@ -173,7 +173,8 @@ class EnemyChicken(Enemy):
 				resourceManager.getOrNew("entity/enemy/hen_3"),
 				resourceManager.getOrNew("entity/enemy/hen_4"),
 			], position, 100, 0.3)
-		self.center = centralPosition.clone() if centralPosition else position.clone()
+		self.center: Vector = centralPosition.clone() if centralPosition is not None else position.clone()
+		self._attacked: bool = False
 	
 	def tick(self) -> None:
 		if self._attackTimer:
@@ -188,7 +189,7 @@ class EnemyChicken(Enemy):
 			self._aiVelocity.set(0, 0)
 			return
 		if self._lockOn is None or player is not self._lockOn:
-			if player.getPosition().distanceManhattan(self.getPosition()) <= 2 and player.progress > 1:
+			if player.getPosition().distanceManhattan(self.getPosition()) <= 2 and (player.progress > 1 or self._attacked):
 				self._lockOn = game.getWorld().getPlayer()
 		else:
 			if player.getPosition().distanceManhattan(self.getPosition()) > 2:
@@ -229,16 +230,23 @@ class EnemyChicken(Enemy):
 				self._randomVelocity = vel
 		MoveableEntity.passTick(self)
 	
+	def onDamage(self, amount: float, src: Entity) -> float:
+		if src is game.getWorld().getPlayer():
+			self._attacked = True
+		return super().onDamage(amount, src)
+	
 	@classmethod
 	def load(cls, d: dict, entity: Union['Entity', None] = None) -> Union['Entity', None]:
 		assert entity is None
 		e = EnemyChicken(Vector.load(d['position']), Vector.load(d['center']))
 		Enemy.load(d, e)
+		e._attacked = d['attacked'] if 'attacked' in d else False
 		return e
 	
 	def save(self) -> dict:
 		d = Enemy.save(self)
 		d['center'] = self.center.save()
+		d['attacked'] = self._attacked
 		return d
 
 

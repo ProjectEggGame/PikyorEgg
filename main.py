@@ -234,3 +234,4 @@ if __name__ == '__main__':
 	mainThread()
 	pygame.quit()
 	asyncTasks.close()
+	utils.info(f"主环境退出")
