@@ -253,6 +253,7 @@ class StartWindow(Window):
 		self._widgets[1].onMouseDown = lambda x, y, b: b[0] == 1 and game.setWindow(LoadWindow().setLastOpen(self)) or True
 		self._widgets.append(Button(Location.CENTER, 0, 0.25, 0.4, 0.08, RenderableString("\\.00FCE8AD\\01OPTIONS"), Description([RenderableString("设置")]), textLocation=Location.CENTER))
 		self._widgets[2].onMouseDown = lambda x, y, b: b[0] == 1 and game.setWindow(SettingsWindow().setLastOpen(self)) or True
+		
 		self._widgets.append(Button(Location.CENTER, 0, 0.35, 0.4, 0.08, RenderableString("\\.00FCE8AD\\01SHUT DOWN"), Description([RenderableString("结束游戏")]), textLocation=Location.CENTER))
 		self._widgets[3].onMouseDown = lambda x, y, b: b[0] == 1 and game.quit() or True
 		self._widgets[0].color = PresetColors.color
@@ -268,8 +269,8 @@ class StartWindow(Window):
 		Music_player.background_play(0)
 
 		from window.ingame import GuidanceWindow
-		self._widgets.append(Button(Location.CENTER, 0, 0.45, 0.4, 0.08, RenderableString("\\.00FCE8AD\\01DEBUG"), Description([RenderableString("设置")]), textLocation=Location.CENTER))
-		self._widgets[4].onMouseDown = lambda x, y, b: b[0] == 1 and game.setWindow(GuidanceWindow().setLastOpen(self)) or True
+		#self._widgets.append(Button(Location.CENTER, 0, 0.45, 0.4, 0.08, RenderableString("\\.00FCE8AD\\01DEBUG"), Description([RenderableString("设置")]), textLocation=Location.CENTER))
+		#self._widgets[4].onMouseDown = lambda x, y, b: b[0] == 1 and game.setWindow(GuidanceWindow().setLastOpen(self)) or True
 	
 	def render(self, delta: float) -> None:
 		super().render(delta)
