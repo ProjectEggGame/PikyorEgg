@@ -5,6 +5,7 @@ import pygame
 from threading import Thread
 
 from interact.interacts import interact
+from music.music import Music_player
 from render import font
 
 from render.renderer import renderer
@@ -108,6 +109,7 @@ def mainThread():
 		config: dict[str, any] = configs.readConfig()
 		renderer.readConfig(config)
 		utils.readConfig(config)
+		Music_player.readConfig(config)
 	except Exception as e:
 		utils.printException(e)
 		game.running = False
@@ -211,6 +213,7 @@ def mainThread():
 		config: dict[str, any] = {}
 		config.update(renderer.writeConfig())
 		config.update(utils.writeConfig())
+		config.update(Music_player.writeConfig())
 		configs.writeConfig(config)
 	except Exception as e:
 		utils.printException(e)

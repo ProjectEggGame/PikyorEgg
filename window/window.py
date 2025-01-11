@@ -463,11 +463,7 @@ class SettingsWindow(Window):
 		
 		def _5(x, y, b):
 			if b[0] == 1:
-				if Music_player.turnon_music:
-					Music_player.background_volume_press(False)
-				else:
-					Music_player.background_volume_press(True)
-				Music_player.turnon_music = not Music_player.turnon_music
+				Music_player.background_volume_press(not Music_player.turnon_music)
 				
 				self._widgets[5].description.d = [
 					RenderableString('\\#ff66ccee打开可爱的音乐 <' if Music_player.turnon_music else '打开可爱的音乐'),
@@ -484,11 +480,7 @@ class SettingsWindow(Window):
 		
 		def _6(x, y, b):
 			if b[0] == 1:
-				if Music_player.turnon_sound:
-					Music_player.sound_volume_press(False)
-				else:
-					Music_player.sound_volume_press(True)
-				Music_player.turnon_sound = not Music_player.turnon_sound
+				Music_player.sound_volume_press(not Music_player.turnon_sound)
 				
 				self._widgets[6].description.d = [
 					RenderableString('\\#ff66ccee打开超级古怪的音效 <' if Music_player.turnon_sound else '打开超级古怪的音效'),
@@ -511,13 +503,13 @@ class SettingsWindow(Window):
 		self._widgets[7].onMouseDown = _7
 		
 		self._widgets.append(s8 := Slider(Location.CENTER, 0, 0.2, 0.4, 0.08, RenderableString('\\.00000000\\01Music Volume'), Description([RenderableString("音乐音量")]), Location.CENTER))
-		s8.value = Music_player.volume_music
+		s8.value = Music_player.volume_music if Music_player.turnon_music else Music_player.volume_music_before
 		s8.onDrag = Music_player.music_volume_drag
 		s8.barColor.active = 0x9966ccee
 		s8.barColor.hovering = 0xff66ccee
 
 		self._widgets.append(s9 := Slider(Location.CENTER, 0, 0.3, 0.4, 0.08, RenderableString('\\.00000000\\01Sound Volume'), Description([RenderableString("音效音量")]), Location.CENTER))
-		s9.value = Music_player.volume_sound
+		s9.value = Music_player.volume_sound if Music_player.turnon_sound else Music_player.volume_sound_before
 		s9.onDrag = Music_player.sound_volume_drag
 		s9.barColor.active = 0x9966ccee
 		s9.barColor.hovering = 0xff66ccee

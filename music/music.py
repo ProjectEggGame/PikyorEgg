@@ -1,6 +1,10 @@
 #音乐管理器
 import pygame
 
+import save.configs
+from utils.util import utils
+
+
 class music:  #所有的音频都放在两个列表里 music_list放世界的背景音乐 sound_list放特效音
     music_list = [r'.\assets\sound\startwindow.mp3',
                   r'.\assets\sound\background.ogg',
@@ -87,6 +91,7 @@ class music_player:
         else:
             pygame.mixer.music.set_volume(0.0)
             self.volume_music = 0.0
+        self.turnon_music = openorclose
 
         
     def sound_volume_press(self, openorclose):
@@ -96,6 +101,7 @@ class music_player:
             self.volume_sound = self.volume_sound_before
         else:
             self.volume_sound = 0.0
+        self.turnon_sound = openorclose
 
     def music_volume_drag(self, percentage):
         #将拖拽输入的结果立刻告诉按钮
@@ -115,13 +121,43 @@ class music_player:
         else:
             self.turnon_sound = True
         self.volume_sound = percentage
-        self.volume_before = percentage
+        self.volume_sound_before = percentage
         #音效暂时做不到实时变化 改完之后 下一次播放会有变化
 
 
     def stop(self):
         if self.turnon :
             pygame.mixer.music.stop()
+
+    def writeConfig(self) -> dict:
+        return {
+            'BGM': self.turnon_music,
+            'SE': self.turnon_sound,
+            'BGM volume': self.volume_music if self.turnon_music else self.volume_music_before,
+            'SE volume': self.volume_sound if self.turnon_sound else self.volume_sound_before,
+        }
+    
+    def readConfig(self, data):
+        self.music_volume_drag(save.configs.readElseDefault(
+            data, 'BGM volume', 0.4,
+            lambda x: utils.frange(x, 0, 1),
+            'BGM volume must be in [0, 1]'
+        ))
+        self.sound_volume_drag(save.configs.readElseDefault(
+            data, 'SE volume', 0.3,
+            lambda x: utils.frange(x, 0, 1),
+            'SE volume must be in [0, 1]'
+        ))
+        self.background_volume_press(save.configs.readElseDefault(
+            data, 'BGM', True,
+            lambda x: x,
+            'BGM must be true or false'
+        ))
+        self.sound_volume_press(save.configs.readElseDefault(
+            data, 'SE', True,
+            lambda x: x,
+            'SE must be true or false'
+        ))
 
 Music_player = music_player()
         
