@@ -21,8 +21,8 @@ class Texture:
 		self._systemObject: bool = False
 		self._file = open(f'assets/texture/{file}.bmp', 'rb')
 		self._surface: Surface = pygame.image.load_basic(self._file)
-		self.systemScaleOffset: float = 0.025
-		self.uiScaleOffset: float = 0.025
+		self.systemScaleOffset: float = 0.0252
+		self.uiScaleOffset: float = 0.0252
 		self._mapScaled: Surface | None = renderer.mapScaleSurface(self._surface) if self._mapObject else None
 		self._uiScaled: Surface | None = None
 		self._systemScaled: Surface | None = None
