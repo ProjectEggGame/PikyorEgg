@@ -8,7 +8,7 @@ from pygame import Surface
 from LLA import chat_with_ai as ai
 from entity.manager import entityManager
 from interact.interacts import interact
-from render import font
+from render import font, egg_generate
 from render.renderer import renderer
 from save.save import Archive
 from utils.game import game
@@ -330,7 +330,7 @@ class PauseWindow(Window):
 		self._widgets[2].onMouseDown = lambda x, y, b: b[0] == 1 and game.setWindow(LoadWindow().setLastOpen(self)) or True
 		self._widgets.append(Button(Location.CENTER, 0, 0, 0.4, 0.08, RenderableString('测试按钮'), Description([]), Location.CENTER))
 		from window.ingame import TaskWindow
-		self._widgets[3].onMouseDown = lambda x, y, b: b[0] == 1 and game.setWindow(TaskWindow().setLastOpen(self)) or True
+		self._widgets[3].onMouseDown = lambda x, y, b: b[0] == 1 and game.setWindow(EggFactoryWindow().setLastOpen(self)) or True
 		self._widgets.append(Button(Location.CENTER, 0, 0.1, 0.4, 0.08, RenderableString('\\01Save'), Description([RenderableString("保存游戏")]), Location.CENTER))
 		
 		def _4(x, y, b) -> bool:
@@ -584,8 +584,9 @@ class EggFactoryWindow(Window):
 		
 		self.Pulling = Pulling
 		self._selected: list[Pulling | None] = [None, None, None, None, None]
-		words = ai.words + ['starry', 'runic', 'demonic', 'angelic']
-		words = random.sample(words, 12)
+		self._product: Surface | int | None = None
+		words = ai.words + ['butterfly-bow', 'runic', 'demonic', 'angelic', 'music', 'C', 'champion', 'second-best', 'hearty', 'grassy', 'rabit', 'flowery']
+		words = random.sample(words, 19) + ['pythonic']
 		ai.asyncWords()
 		xp = -0.4
 		yp = -0.4
@@ -602,11 +603,22 @@ class EggFactoryWindow(Window):
 		self._widgets.append(confirmButton := Button(Location.RIGHT_BOTTOM, 0, 0, 0.3, 0.08, RenderableString("\\.00FCE8AD\\00确认"), Description([RenderableString("按下确认就不能修改啦")]), textLocation=Location.CENTER))
 		
 		def confirm(x, y, buttons):
-			if buttons[0] == 1:
+			if buttons[0] == 1 and confirmButton.active:
 				from LLA import ai_decision
-				ai_decision.asyncProperties([j.kw for j in self._selected if j is not None])
+				self._product = 1
+				ai_decision.asyncEgg([j.kw for j in self._selected if j is not None], game.getWorld().getRandom())
+				game.setWindow(EggProductWindow().setLastOpen(self.lastOpen))
+				confirmButton.active = False
+			return True
 		
 		confirmButton.onMouseDown = confirm
+	
+	def tick(self) -> None:
+		if egg_generate.eggGenerated:
+			self._product = egg_generate.eggGenerated
+			egg_generate.eggGenerated = None
+		if interact.keys[pygame.K_ESCAPE].deals():
+			game.setWindow(self.lastOpen)
 	
 	def sortPresent(self):
 		xp = -0.4
@@ -655,3 +667,29 @@ class EggFactoryWindow(Window):
 		sfc.fill((0xff, 0xff, 0xff), (0, size.y * 0.65, w, h))
 		sfc.set_alpha(0x88)
 		renderer.getCanvas().blit(sfc, (size.x * 0.7 + 1, 0))
+
+
+class EggProductWindow(Window):
+	def __init__(self):
+		super().__init__("Egg Product")
+		self._texture = resourceManager.getOrNew('window/start')
+		self._product = None
+		self._renderable = None
+		
+	def tick(self) -> None:
+		if egg_generate.eggGenerated:
+			self._product = egg_generate.eggGenerated
+			self._renderable = pygame.transform.scale_by(self._product, renderer.getSystemScale() * 0.1)
+			egg_generate.eggGenerated = None
+		if self._product:
+			if interact.keys[pygame.K_ESCAPE].deals():
+				game.setWindow(self.lastOpen)
+	
+	def onResize(self) -> None:
+		super().onResize()
+		if self._product:
+			self._renderable = pygame.transform.scale_by(self._product, renderer.getSystemScale() * 0.1)
+	
+	def render(self, delta: float) -> None:
+		if isinstance(self._renderable, Surface):
+			renderer.getCanvas().blit(self._renderable, (renderer.getCanvas().get_width() - self._renderable.get_width() >> 1, renderer.getCanvas().get_height() - self._renderable.get_height() >> 1))
