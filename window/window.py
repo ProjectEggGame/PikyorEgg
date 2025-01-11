@@ -266,6 +266,10 @@ class StartWindow(Window):
 		self._widgets[3].textColor = PresetColors.textColor.clone()
 		self._widgets[3].textColor.hovering = 0xffeeeeee
 		Music_player.background_play(0)
+
+		from window.ingame import GuidanceWindow
+		self._widgets.append(Button(Location.CENTER, 0, 0.45, 0.4, 0.08, RenderableString("\\.00FCE8AD\\01DEBUG"), Description([RenderableString("设置")]), textLocation=Location.CENTER))
+		self._widgets[4].onMouseDown = lambda x, y, b: b[0] == 1 and game.setWindow(GuidanceWindow().setLastOpen(self)) or True
 	
 	def render(self, delta: float) -> None:
 		super().render(delta)

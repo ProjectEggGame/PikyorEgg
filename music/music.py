@@ -9,6 +9,7 @@ class music:  #所有的音频都放在两个列表里 music_list放世界的背
     music_list = [r'.\assets\sound\startwindow.mp3',
                   r'.\assets\sound\background.ogg',
                   r'.\assets\sound\witchworld.mp3']
+    
     sound_list = [r'.\assets\sound\sound_eatrice.mp3',
                   r'.\assets\sound\sound_pickstick.mp3',
                   r'.\assets\sound\sound_magic.mp3',
