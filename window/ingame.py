@@ -574,11 +574,15 @@ class GuidanceWindow(Window):
 		self._texture = [[resourceManager.getOrNew('window/Guidance/page0/show')],
 		                 [resourceManager.getOrNew('window/Guidance/page0/show'),
 		                  resourceManager.getOrNew('window/Guidance/page0/rice')],
+						 [resourceManager.getOrNew('window/Guidance/page0.8/show')],
 		                 [resourceManager.getOrNew('window/Guidance/page1/skill1'),
 		                  resourceManager.getOrNew('window/Guidance/page1/skill2'),
 		                  resourceManager.getOrNew('window/Guidance/page1/skill3'),
 		                  resourceManager.getOrNew('window/Guidance/page1/skill4'),
-		                  resourceManager.getOrNew('window/Guidance/page1/skill5')],
+		                  resourceManager.getOrNew('window/Guidance/page1/skill5'),
+						  resourceManager.getOrNew('window/Guidance/page1/skill6')],
+						  [resourceManager.getOrNew('window/Guidance/page1.5/show'),
+		                  resourceManager.getOrNew('window/Guidance/page1.5/skill')],
 		                 [resourceManager.getOrNew('window/Guidance/page2/show'),
 		                  resourceManager.getOrNew('window/Guidance/page2/skill')],
 		                 [resourceManager.getOrNew('window/Guidance/page3/show'),
@@ -594,9 +598,12 @@ class GuidanceWindow(Window):
 		                  resourceManager.getOrNew('window/Guidance/page6/4'),
 		                  resourceManager.getOrNew('window/Guidance/page6/5')]]
 		
-		self._texture_position = [[[0.05, 0.22]], [[0.05, 0.22], [0.77, 0.6]],
-		                          [[0.05, 0.3], [0.23, 0.3], [0.41, 0.3], [0.59, 0.3], [0.77, 0.3]],
+		self._texture_position = [[[0.05, 0.22]], 
+								  [[0.05, 0.22], [0.77, 0.6]],
+								  [[0.19,0.1]],
+		                          [[0.54, 0.1], [0.08, 0.5], [0.31, 0.5], [0.54, 0.5], [0.77, 0.5],[0.31,0.1]],
 		                          [[0.55, 0.3], [0.2, 0.1]],
+								  [[0.55, 0.3], [0.2, 0.1]],
 		                          [[0.55, 0.3], [0.2, 0.1]],
 		                          [[0.55, 0.3], [0.2, 0.1]],
 		                          [[0.55, 0.3], [0.23, 0.08], [0.23, 0.55]],
@@ -604,19 +611,23 @@ class GuidanceWindow(Window):
 		
 		self._text = [["按E调出任务面板", "可以升级技能", "面板有技能信息", "这里将教学使用方法"],
 		              ["如果你发现无法升级", "那就是成长值不足", "先去吃点米粒吧"],
-		              ["主动技能：", "闪现           啄米             头槌         肾上腺素         疾跑  "],
+					  ["1    2    3    4    5    6","键入1-6可进入准备状态","技能获得顺序随机","数字编号由玩家获得的技能顺序决定","再按相同数字键或鼠标右键退出准备模式"],
+		              ["主动技能：", "   猛啄                  头槌             肾上腺素               疾跑  ","回复               闪现 "],
+					  ["主动技能——回复", "原地回血", "左键键入即可", "冷却时间：40s", "准备时图像："],
 		              ["主动技能——闪现", "可以帮助你跨越一些墙", "对准后点击鼠标左键即可", "冷却时间：40s", "准备时图像："],
-		              ["主动技能——啄米", "用于近战攻击", "将目标放进黄色箭头内左键入", "可连续使用", "准备时图像："],
+		              ["主动技能——猛啄", "用于近战攻击", "将目标放进黄色箭头内左键入", "可连续使用", "准备时图像："],
 		              ["主动技能——头槌", "远距离攻击", "将目标放进黄圈内左键入", "冷却时间：40s", "准备时图像："],
 		              ["主动技能——肾上腺素", "短暂的免死金牌", "主动技能——疾跑", "顾名思义，跑得更快", "直接左键入", "准备时图像："],
 		              ["至于被动技能：", "爱米        屹立不倒         坚毅            迅捷            揠苗   ", "去面板升级就好啦", "（）不升级容易死"]]
 		
 		self._text_position = [[[0.8, 0.3], [0.8, 0.4], [0.8, 0.5], [0.8, 0.6]],
 		                       [[0.8, 0.3], [0.8, 0.4], [0.8, 0.5]],
-		                       [[0.2, 0.2], [0.5, 0.65]],
+							   [[0.36,0.45],[0.5,0.55],[0.5,0.65],[0.5,0.75],[0.5,0.85]],
+		                       [[0.2, 0.2], [0.5, 0.85],[0.5,0.45]],
 		                       [[0.27, 0.5], [0.27, 0.6], [0.27, 0.7], [0.27, 0.8], [0.65, 0.2]],
 		                       [[0.27, 0.5], [0.27, 0.6], [0.27, 0.7], [0.27, 0.8], [0.65, 0.2]],
 		                       [[0.27, 0.5], [0.27, 0.6], [0.27, 0.7], [0.27, 0.8], [0.65, 0.2]],
+							   [[0.27, 0.5], [0.27, 0.6], [0.27, 0.7], [0.27, 0.8], [0.65, 0.2]],
 		                       [[0.27, 0.35], [0.27, 0.45], [0.27, 0.82], [0.27, 0.92], [0.65, 0.85], [0.65, 0.2]],
 		                       [[0.2, 0.2], [0.5, 0.65], [0.5, 0.75], [0.5, 0.85]]]
 		"""
@@ -633,7 +644,7 @@ class GuidanceWindow(Window):
 		"""
 		
 		def _0(x, y, b) -> bool:
-			if self.page < 7:
+			if self.page < 9:
 				self.page += 1
 			else:
 				game.setWindow(self.lastOpen)
