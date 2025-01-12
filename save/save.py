@@ -19,8 +19,13 @@ class Archive:
 	def read(self) -> None:
 		self.dic.clear()
 		self.dic = json.loads(self._file.read())
+		self.dic['world']
 	
 	def write(self) -> None:
+		self.dic = {
+			"123": 123,
+			"flag": True,
+		}
 		s = json.dumps(self.dic)
 		self._file.close()
 		self._file = open(f"user/archive/{self._name}.json", "w")

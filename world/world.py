@@ -71,7 +71,7 @@ class World(Renderable):
 	
 	def render(self, delta: float) -> None:
 		ct = renderer.getCenter().getVector().divide(renderer.getMapScale())
-		block2 = ct.clone().add(renderer.getCamera().get()).getBlockVector().add(0, 1)
+		block2 = ct.clone().add(renderer.getCamera().get()).getBlockVector().add(1, 1)
 		block1 = ct.reverse().add(renderer.getCamera().get()).getBlockVector()
 		newList = []
 		y2 = block2.y + 2
@@ -218,7 +218,6 @@ class DynamicWorld(World):
 		player = entityManager.get('player')(Vector(0, 0))
 		self.setPlayer(player)
 		game.hud.sendMessage(RenderableString('第一个任务有啦！Tab查看任务吧'))
-		Music_player.background_play(1)
 	
 	def generate_map(self) -> None:
 		GrassBlock = blockManager.get('nature.grass')
@@ -231,14 +230,14 @@ class DynamicWorld(World):
 			direction = Vector(self._seed.random() - 0.5, self._seed.random() - 0.5)
 		direction.normalize()
 		direction2 = Vector(self._seed.random() - 0.5, self._seed.random() - 0.5)
-		while direction2.length() < 0.001 or direction2.normalize().dot(direction) < -0.4:
+		while direction2.length() < 0.001 or abs(direction2.normalize().dot(direction)) > 0.4:
 			direction2 = Vector(self._seed.random() - 0.5, self._seed.random() - 0.5)
 		direction2.normalize()
 		# 第一段生成
-		length1 = self._seed.random() * 10 + 20
-		length2 = self._seed.random() * 10 + 10
+		length1 = self._seed.random() * 10 + 30
+		length2 = self._seed.random() * 10 + 15
 		ref = direction * length1
-		ref2 = ref + direction2 * length2
+		ref2 = ref * 0.75 + direction2 * length2
 		center2 = (ref2 + direction2 * (length2 * 0.4)).getBlockVector()
 		for i in range(-4, 4):
 			flag = (i == 3 or i == -4)
@@ -256,7 +255,7 @@ class DynamicWorld(World):
 				if flag or j == -7 or j == 7:
 					block.holdAppend(Fence(pos) if (center2 - pos).normalizeClone().subtract(direction2).length() > 0.4 else SafetyLine(pos))
 		blocks = self.rayTraceBlock(Vector(0, 0), direction, length1)
-		blocks2 = self.rayTraceBlock(ref, direction2, length2)
+		blocks2 = self.rayTraceBlock(ref * 0.75, direction2, length2)
 		for i in blocks:
 			if isinstance(i[0], BlockVector):
 				self.setBlockAt(i[0], (PathBlock if self._seed.random() < 0.8 else GrassBlock)(i[0]))
@@ -326,16 +325,33 @@ class DynamicWorld(World):
 					elif blk is None:
 						self.setBlockAt(vec, BrickWallBlock(vec))
 				if blk is not None and blk._blockID.startswith('nature'):
-					if self.getBlockAt(p).tryHold(fence := SafetyLine(p)):
-						self.getBlockAt(p).holdAppend(fence)
+					if self._seed.random() < rate:
+						self.setBlockAt(vec, BrickGroundBlock(vec))
+						generateTower(vec, rate - 0.07)
 		
-		self.setBlockAt(pos := ref.clone().multiply(1.5).getBlockVector(), BrickGroundBlock(pos))
+		self.setBlockAt(pos := ref.clone().multiply(1.2).getBlockVector(), BrickGroundBlock(pos))
 		generateTower(pos, 1)
 		
 		# 第一段实体
 		for i, j in self._ground.items():
 			if j is None:
 				continue
+			if isinstance(j, BrickGroundBlock):
+				p = j.getBlockPosition()
+				for vec in [
+					BlockVector(p.x - 1, p.y - 1),
+					BlockVector(p.x - 1, p.y),
+					BlockVector(p.x - 1, p.y + 1),
+					BlockVector(p.x, p.y - 1),
+					BlockVector(p.x, p.y + 1),
+					BlockVector(p.x + 1, p.y - 1),
+					BlockVector(p.x + 1, p.y),
+					BlockVector(p.x + 1, p.y + 1),
+				]:
+					blk = self._ground.get(hash(vec))
+					if blk is not None and blk._blockID.startswith('nature'):
+						if self.getBlockAt(p).tryHold(fence := SafetyLine(p)):
+							self.getBlockAt(p).holdAppend(fence)
 			if not j.canPass():
 				continue
 			if abs(j.getBlockPosition().x) < 5 and abs(j.getBlockPosition().y) < 5:
@@ -348,25 +364,19 @@ class DynamicWorld(World):
 			else:
 				if self._seed.random() < 0.05:
 					self.addEntity(entityManager.get('entity.rice')(Vector(self._seed.random() + j.getBlockPosition().x, self._seed.random() + j.getBlockPosition().y)))
-			if self._seed.random() < 0.05:
-				self.addEntity(entityManager.get('entity.rice')(Vector(self._seed.random() + j.getBlockPosition().x, self._seed.random() + j.getBlockPosition().y)))
+				if self._seed.random() < 0.05:
+					self.addEntity(entityManager.get('entity.stick')(Vector(self._seed.random() + j.getBlockPosition().x, self._seed.random() + j.getBlockPosition().y)))
 		
 		# 第二段实体
 		for i in range(12):
 			self.addEntity(entityManager.get('enemy.hen')(pos := Vector(center2.x + self._seed.random() * 18 - 9, center2.y + self._seed.random() * 13 - 6)))
 			self.addEntity(entityManager.get('entity.coop')(pos))
-	
-	def tick(self):
-		super().tick()
-		if game.getWorld().getID() == 0 and game.getWindow() is None and Music_player.musicplaying != 1:
-			Music_player.background_play(1)
 
 
 class WitchWorld(World):
 	def __init__(self):
 		super().__init__(1, '老巫鸡的密室', None)
 		self.generate_map()  # 初始化地图
-		Music_player.background_play(2)
 		game.hud.sendMessage(RenderableString('\\#ffeeee00\\.ffee6666欢迎来到异世界'))
 		game.hud.sendMessage(RenderableString('\\#ffeeee00\\.ffee6666每条路的尽头都有一个老巫鸡'))
 		game.hud.sendMessage(RenderableString('\\#ffeeee00\\.ffee6666希望你能找到线索，并找到真正的老巫鸡'))

@@ -9,7 +9,8 @@ from render.resource import Texture, resourceManager
 from utils.game import game
 from utils.text import RenderableString, Description
 from utils.vector import Vector, BlockVector
-from window.widget import Button , PullObject
+from window.input import SeedWindow
+from window.widget import Button, PullObject
 from window.window import Window, PresetColors
 from world.world import DynamicWorld
 
@@ -100,13 +101,13 @@ class StatusWindow(Window):
 			sfc = s[0].texture.getSystemScaledSurface()
 			renderer.getCanvas().blit(sfc, (renderer.getSize().x * 0.85 - (sfc.get_width() >> 1), sfc.get_height()))
 			renderer.getCanvas().blit(sfc, (renderer.getSize().x * 0.85 - (sfc.get_width() >> 1), sfc.get_height()))
-
+			
 			renderer.renderString(s[0].getName(), int(size.x * 0.85), y := int(size.y * 0.4), 0xffeeee55, Location.TOP, 0, 1)
 			y += font.realFontHeight
 			for d in s[0].description.d:
 				renderer.renderString(d, int(size.x * 0.85), y, 0xffeeee55, Location.TOP, 0, -1)
 				y += font.realHalfHeight
-
+	
 	def tick(self) -> None:
 		if interact.keys[pygame.K_ESCAPE].deals() or interact.keys[pygame.K_e].deals():
 			game.setWindow(self.lastOpen)
@@ -133,9 +134,9 @@ class TaskWindow(Window):
 		self._widgets.append(Button(Location.CENTER, -0.2, 0.15, 0.12, 0.08, RenderableString("\\.00FCE8AD\\01TASK 4"), Description([RenderableString(X[3])]), textLocation=Location.CENTER))
 		self._widgets.append(Button(Location.CENTER, -0.2, 0.24, 0.12, 0.08, RenderableString("\\.00FCE8AD\\01TASK 5"), Description([RenderableString(X[4])]), textLocation=Location.CENTER))
 		self._widgets.append(Button(Location.CENTER, -0.24, -0.21, 0.12, 0.08, RenderableString("\\.00FCE8AD\\01Tutorial"), Description([RenderableString("技能的教程，来学不亏")]), textLocation=Location.CENTER))
-
+		
 		self._widgets[5].onMouseDown = lambda x, y, b: b[0] == 1 and game.setWindow(GuidanceWindow().setLastOpen(self)) or True
-
+		
 		for i in range(self.progress, 5):
 			self._widgets[i].active = False
 		
@@ -220,11 +221,11 @@ class TaskWindow(Window):
 		
 		if self.looking == 3:
 			size: BlockVector = renderer.getSize()
-			renderer.renderString(RenderableString('\\.ffEFE4B0\\00任务3：'), int((0.58 if renderer.is4to3.get() else 0.56) * size.x), (size.y >> 1) - font.realFontHeight*1.5, 0xff000000, Location.BOTTOM)
-			renderer.renderString(RenderableString('\\.ffEFE4B0\\00老巫婆鸡，指点迷津！'), int((0.58 if renderer.is4to3.get() else 0.56) * size.x),(size.y >> 1)- font.realFontHeight*0.5, 0xff000000, Location.BOTTOM)
-			renderer.renderString(RenderableString('\\.ffEFE4B0\\00\\#ffee0000找到老巫婆鸡'), int((0.58 if renderer.is4to3.get() else 0.56) * size.x), (size.y >> 1)- font.realFontHeight*0.5, 0xff000000, Location.TOP)
-			renderer.renderString(RenderableString('\\.ffEFE4B0\\00并躲避狐狸的攻击'), int((0.58 if renderer.is4to3.get() else 0.56) * size.x), (size.y >> 1) + font.realFontHeight*0.5, 0xff000000, Location.TOP)
-			renderer.renderString(RenderableString('\\.ffEFE4B0\\10\\#ffee0000你也许有看到一个炫酷的传送门，3秒定律'), int((0.58 if renderer.is4to3.get() else 0.56) * size.x), (size.y >> 1) + font.realFontHeight*1.5, 0xff000000, Location.TOP)
+			renderer.renderString(RenderableString('\\.ffEFE4B0\\00任务3：'), int((0.58 if renderer.is4to3.get() else 0.56) * size.x), int((size.y >> 1) - font.realFontHeight * 1.5), 0xff000000, Location.BOTTOM)
+			renderer.renderString(RenderableString('\\.ffEFE4B0\\00老巫婆鸡，指点迷津！'), int((0.58 if renderer.is4to3.get() else 0.56) * size.x), int((size.y >> 1) - font.realFontHeight * 0.5), 0xff000000, Location.BOTTOM)
+			renderer.renderString(RenderableString('\\.ffEFE4B0\\00\\#ffee0000找到老巫婆鸡'), int((0.58 if renderer.is4to3.get() else 0.56) * size.x), int((size.y >> 1) - font.realFontHeight * 0.5), 0xff000000, Location.TOP)
+			renderer.renderString(RenderableString('\\.ffEFE4B0\\00并躲避狐狸的攻击'), int((0.58 if renderer.is4to3.get() else 0.56) * size.x), int((size.y >> 1) + font.realFontHeight * 0.5), 0xff000000, Location.TOP)
+			renderer.renderString(RenderableString('\\.ffEFE4B0\\10\\#ffee0000你也许有看到一个炫酷的传送门，3秒定律'), int((0.58 if renderer.is4to3.get() else 0.56) * size.x), int((size.y >> 1) + font.realFontHeight * 1.5), 0xff000000, Location.TOP)
 		
 		if self.looking == 4:
 			size: BlockVector = renderer.getSize()
@@ -239,6 +240,7 @@ class TaskWindow(Window):
 			renderer.renderString(RenderableString('\\.ffEFE4B0\\00来给鸡宝宝选择不同的属性吧'), int((0.58 if renderer.is4to3.get() else 0.56) * size.x), size.y >> 1, 0xff000000, Location.TOP)
 			renderer.renderString(RenderableString('\\.ffEFE4B0\\00这会使得你获得不一样的蛋'), int((0.58 if renderer.is4to3.get() else 0.56) * size.x), (size.y >> 1) + font.realFontHeight, 0xff000000, Location.TOP)
 		renderer.renderString(RenderableString('\\.ffEFE4B0\\10Tab键返回'), int((0.58 if renderer.is4to3.get() else 0.56) * size.x), size.y * 0.8, 0xff000000, Location.BOTTOM)
+	
 	def passRender(self, delta: float, at: Vector | None = None) -> None:
 		s = Surface(renderer.getCanvas().get_size())
 		s.fill(self.backgroundColor & 0xffffff)
@@ -265,16 +267,18 @@ class PlotWindow(Window):
 			if self.Sentence < 10:
 				self.Sentence += 1
 			else:
-				game.setWindow(None)
-				game.setWorld(DynamicWorld('DynamicWorld'))
+				game.setWindow(SeedWindow().setLastOpen(self))
+			# game.setWindow(None)
+			# game.setWorld(DynamicWorld('DynamicWorld'))
 			return True
 		
 		def _1(x, y, b) -> bool:
 			if self.Sentence < 10:
 				self.Sentence = 10
 			else:
-				game.setWindow(None)
-				game.setWorld(DynamicWorld('DynamicWorld'))
+				game.setWindow(SeedWindow().setLastOpen(self))
+			# game.setWindow(None)
+			# game.setWorld(DynamicWorld('DynamicWorld'))
 			return True
 		
 		def _2(x, y, b) -> bool:
@@ -335,39 +339,38 @@ class PlotWindow(Window):
 			renderer.renderString(RenderableString('\\.0040304D\\00生一个蛋，并孵出一只小鸡！'), int(size.x * 0.5), int(size.y * 0.4 + font.realFontHeight), 0xffffffff, Location.CENTER)
 		if self.Sentence == 9:
 			renderer.renderString(RenderableString('\\.0040304D\\00游戏中你可能会用到以下快捷键：'), int(size.x * 0.5), int(size.y * 0.2 - font.realFontHeight), 0xffffffff, Location.CENTER)
-			renderer.renderString(RenderableString('\\.0040304D\\10人物移动 WASD'), int(size.x * 0.3), int(size.y * 0.2 + font.realFontHeight*1), 0xffffffff, Location.CENTER)
-			renderer.renderString(RenderableString('\\.0040304D\\10状态面板 E'), int(size.x * 0.3), int(size.y * 0.2 + font.realFontHeight*2), 0xffffffff, Location.CENTER)
-			renderer.renderString(RenderableString('\\.0040304D\\10任务面板 Tab'), int(size.x * 0.3), int(size.y * 0.2 + font.realFontHeight*3), 0xffffffff, Location.CENTER)
-			renderer.renderString(RenderableString('\\.0040304D\\10暂停并打开暂停菜单 Esc'), int(size.x * 0.3), int(size.y * 0.2 + font.realFontHeight*4), 0xffffffff, Location.CENTER)
-			renderer.renderString(RenderableString('\\.0040304D\\10询问AI游戏助手 Enter'), int(size.x * 0.3), int(size.y * 0.2 + font.realFontHeight*5), 0xffffffff, Location.CENTER)
-			renderer.renderString(RenderableString('\\.0040304D\\10锁定/解锁视角 Space'), int(size.x * 0.3), int(size.y * 0.2 + font.realFontHeight*6), 0xffffffff, Location.CENTER)
-			renderer.renderString(RenderableString('\\.0040304D\\10做窝 H'), int(size.x * 0.3), int(size.y * 0.2 + font.realFontHeight*7), 0xffffffff, Location.CENTER)
-			renderer.renderString(RenderableString('\\.0040304D\\10下蛋 R'), int(size.x * 0.3), int(size.y * 0.2 + font.realFontHeight*8), 0xffffffff, Location.CENTER)
-			renderer.renderString(RenderableString('\\.0040304D\\10选定主动技能 1~9数字键'), int(size.x * 0.6), int(size.y * 0.2 + font.realFontHeight*1), 0xffffffff, Location.CENTER)
-			renderer.renderString(RenderableString('\\.0040304D\\10取消选定技能 右键或相同数字键'), int(size.x * 0.6), int(size.y * 0.2 + font.realFontHeight*2), 0xffffffff, Location.CENTER)
-			renderer.renderString(RenderableString('\\.0040304D\\10释放选定的技能 左键  '), int(size.x * 0.6), int(size.y * 0.2 + font.realFontHeight*3), 0xffffffff, Location.CENTER)
-			renderer.renderString(RenderableString('\\.0040304D\\10移动视角 中键按住拖动'), int(size.x * 0.6), int(size.y * 0.2 + font.realFontHeight*4), 0xffffffff, Location.CENTER)
-			renderer.renderString(RenderableString('\\.0040304D\\10缩放地图 滚轮'), int(size.x * 0.6), int(size.y * 0.2 + font.realFontHeight*5), 0xffffffff, Location.CENTER)
-			renderer.renderString(RenderableString('\\.0040304D\\10米粒树枝作弊按键 Q'), int(size.x * 0.6), int(size.y * 0.2 + font.realFontHeight*6), 0xffffffff, Location.CENTER)
+			renderer.renderString(RenderableString('\\.0040304D\\10人物移动 WASD'), int(size.x * 0.3), int(size.y * 0.2 + font.realFontHeight * 1), 0xffffffff, Location.CENTER)
+			renderer.renderString(RenderableString('\\.0040304D\\10状态面板 E'), int(size.x * 0.3), int(size.y * 0.2 + font.realFontHeight * 2), 0xffffffff, Location.CENTER)
+			renderer.renderString(RenderableString('\\.0040304D\\10任务面板 Tab'), int(size.x * 0.3), int(size.y * 0.2 + font.realFontHeight * 3), 0xffffffff, Location.CENTER)
+			renderer.renderString(RenderableString('\\.0040304D\\10暂停并打开暂停菜单 Esc'), int(size.x * 0.3), int(size.y * 0.2 + font.realFontHeight * 4), 0xffffffff, Location.CENTER)
+			renderer.renderString(RenderableString('\\.0040304D\\10询问AI游戏助手 Enter'), int(size.x * 0.3), int(size.y * 0.2 + font.realFontHeight * 5), 0xffffffff, Location.CENTER)
+			renderer.renderString(RenderableString('\\.0040304D\\10锁定/解锁视角 Space'), int(size.x * 0.3), int(size.y * 0.2 + font.realFontHeight * 6), 0xffffffff, Location.CENTER)
+			renderer.renderString(RenderableString('\\.0040304D\\10做窝 H'), int(size.x * 0.3), int(size.y * 0.2 + font.realFontHeight * 7), 0xffffffff, Location.CENTER)
+			renderer.renderString(RenderableString('\\.0040304D\\10下蛋 R'), int(size.x * 0.3), int(size.y * 0.2 + font.realFontHeight * 8), 0xffffffff, Location.CENTER)
+			renderer.renderString(RenderableString('\\.0040304D\\10选定主动技能 1~9数字键'), int(size.x * 0.6), int(size.y * 0.2 + font.realFontHeight * 1), 0xffffffff, Location.CENTER)
+			renderer.renderString(RenderableString('\\.0040304D\\10取消选定技能 右键或相同数字键'), int(size.x * 0.6), int(size.y * 0.2 + font.realFontHeight * 2), 0xffffffff, Location.CENTER)
+			renderer.renderString(RenderableString('\\.0040304D\\10释放选定的技能 左键  '), int(size.x * 0.6), int(size.y * 0.2 + font.realFontHeight * 3), 0xffffffff, Location.CENTER)
+			renderer.renderString(RenderableString('\\.0040304D\\10移动视角 中键按住拖动'), int(size.x * 0.6), int(size.y * 0.2 + font.realFontHeight * 4), 0xffffffff, Location.CENTER)
+			renderer.renderString(RenderableString('\\.0040304D\\10缩放地图 滚轮'), int(size.x * 0.6), int(size.y * 0.2 + font.realFontHeight * 5), 0xffffffff, Location.CENTER)
+			renderer.renderString(RenderableString('\\.0040304D\\10米粒树枝作弊按键 Q'), int(size.x * 0.6), int(size.y * 0.2 + font.realFontHeight * 6), 0xffffffff, Location.CENTER)
 		if self.Sentence == 10:
 			renderer.renderString(RenderableString('\\.0040304D\\00那么，话不多说'), int(size.x * 0.5), int(size.y * 0.4), 0xffffffff, Location.CENTER)
 			renderer.renderString(RenderableString('\\.0040304D\\00游戏开始！'), int(size.x * 0.5), int(size.y * 0.4 + font.realFontHeight), 0xffffffff, Location.CENTER)
-		
-
-
-
+	
 	def tick(self) -> None:
 		if interact.keys[pygame.K_ESCAPE].deals():
 			self.Sentence += 1
 			if self.Sentence > 10:
-				game.setWindow(None)
-				game.setWorld(DynamicWorld('DynamicWorld'))
+				self.Sentence = 10
+				game.setWindow(SeedWindow().setLastOpen(self))
+# game.setWindow(None)
+# game.setWorld(DynamicWorld('DynamicWorld'))
 
 
 class NurturingWindow(Window):
 	def __init__(self):
 		super().__init__("Nurturing......")
-		Music_player.background_weaken_volume
+		Music_player.background_weaken_volume()
 		Music_player.sound_play(6)
 		self.nurturing_image = []
 		for i in range(1, 7):
@@ -378,7 +381,7 @@ class NurturingWindow(Window):
 		def _1(x, y, b) -> bool:
 			if b[0] == 1:
 				Music_player.sound_stop(6)
-				Music_player.background_restore_volume
+				Music_player.background_restore_volume()
 				game.setWindow(self.lastOpen)
 			return True
 		
@@ -397,9 +400,9 @@ class NurturingWindow(Window):
 		self.timer -= 1
 		if self.timer == 0:
 			Music_player.sound_stop(6)
-			Music_player.background_weaken_volume
-			game.setWindow(None) # 这里回去还有问题
-			
+			Music_player.background_weaken_volume()
+			game.setWindow(None)  # 这里回去还有问题
+
 
 class BuildingWindow(Window):
 	def __init__(self):
@@ -442,64 +445,66 @@ class BuildingWindow(Window):
 		self.timer -= 1
 		if self.timer == 0:
 			Music_player.sound_stop(5)
-			Music_player.background_weaken_volume
+			Music_player.background_weaken_volume()
 			game.setWindow(None)
 
+
 class QuestionWindow(Window):
-	def __init__(self,num):
+	def __init__(self, num):
 		super().__init__("Question")
 		self.num = num
-
-		#题库
+		
+		# 题库
 		self.Question = ["Which module does not belong to Python?",
-				   "Which one is not the author of the game?",
-				   "In this game, what can't the chick do?",
-				   "Last Question"]
-		self.Anwser = [["kivy","pygame","os","robot"],
-				 ["teasfrog","EmsiaetKadosh","NicolePotion","IcyOxygenXY"],
-				 ["Eat rice","Pick up sticks","Dig holes","Fight with hens"],
-				 ["Right","Wrong","Wrong","Wrong"]]
-		self.clue = ["字","姐姐","茄子","12"]
-		self.clue_position = [3,0,2,1]
+		                 "Which one is not the author of the game?",
+		                 "In this game, what can't the chick do?",
+		                 "Last Question"]
+		self.Anwser = [["kivy", "pygame", "os", "robot"],
+		               ["teasfrog", "EmsiaetKadosh", "NicolePotion", "IcyOxygenXY"],
+		               ["Eat rice", "Pick up sticks", "Dig holes", "Fight with hens"],
+		               ["Right", "Wrong", "Wrong", "Wrong"]]
+		self.clue = ["字", "姐姐", "茄子", "12"]
+		self.clue_position = [3, 0, 2, 1]
 		self.printclue = "?"
 		self.choice = 5
 		self.flag = False
-		self.tip = [False,0]		
+		self.tip = [False, 0]
 		
-		def _0(x,y,b) -> bool:
+		def _0(x, y, b) -> bool:
 			self.tip[0] = True
 			
 			return True
 		
-		def _1(x,y,b) -> bool:
+		def _1(x, y, b) -> bool:
 			self.choice = 0
 			self.flag = True
-			print(self.flag,self.choice)
+			print(self.flag, self.choice)
 			_w()
 			return True
 		
-		def _2(x,y,b) -> bool:
+		def _2(x, y, b) -> bool:
 			self.choice = 1
 			self.flag = True
-			print(self.flag,self.choice)
+			print(self.flag, self.choice)
 			_w()
 			return True
 		
-		def _3(x,y,b) -> bool:
+		def _3(x, y, b) -> bool:
 			self.choice = 2
 			self.flag = True
-			print(self.flag,self.choice)
+			print(self.flag, self.choice)
 			_w()
 			return True
 		
-		def _4(x,y,b) -> bool:
+		def _4(x, y, b) -> bool:
 			self.choice = 3
 			self.flag = True
-			print(self.flag,self.choice)
+			print(self.flag, self.choice)
 			_w()
 			return True
+		
 		print()
-
+		
 		def _w():
 			if self.flag == True:
 				print("1")
@@ -510,7 +515,7 @@ class QuestionWindow(Window):
 					PresetColors.plotColor.active = 0xff1BA803
 					self._widgets[self.choice].color = PresetColors.plotColor
 					self._widgets[self.choice].textColor = PresetColors.plotText
-					
+				
 				else:
 					print("错误答案")
 					self.tip[1] = 1
@@ -519,19 +524,17 @@ class QuestionWindow(Window):
 					self._widgets[self.choice].color = PresetColors.plotColor
 					self._widgets[self.choice].textColor = PresetColors.plotText
 				
-					
 				self._widgets[0].onMouseDown = _0
 				self._widgets[1].onMouseDown = _0
 				self._widgets[2].onMouseDown = _0
 				self._widgets[3].onMouseDown = _0
-		def _5(x,y,b) -> bool:
-			if b[0] == 1 :
+		
+		def _5(x, y, b) -> bool:
+			if b[0] == 1:
 				game.setWindow(self.lastOpen)
 				PresetColors.plotColor.active = 0xff545454
 			return True
 		
-		
-
 		self._widgets.append(Button(Location.CENTER, 0.15, -0.1, 0.30, 0.08, RenderableString(f"\\.00FFFFFF\\01{self.Anwser[self.num][0]}"), Description([RenderableString("A")]), textLocation=Location.CENTER))
 		self._widgets.append(Button(Location.CENTER, 0.15, 0, 0.30, 0.08, RenderableString(f"\\.00FFFFFF\\01{self.Anwser[self.num][1]}"), Description([RenderableString("B")]), textLocation=Location.CENTER))
 		self._widgets.append(Button(Location.CENTER, 0.15, 0.1, 0.30, 0.08, RenderableString(f"\\.00FFFF\\01{self.Anwser[self.num][2]}"), Description([RenderableString("C")]), textLocation=Location.CENTER))
@@ -540,17 +543,15 @@ class QuestionWindow(Window):
 		self._widgets[1].onMouseDown = _2
 		self._widgets[2].onMouseDown = _3
 		self._widgets[3].onMouseDown = _4
-
+		
 		self._widgets.append(Button(Location.LEFT_TOP, 0, 0, 0.09, 0.12, RenderableString('\\01Back'), Description([RenderableString("返回")]), Location.CENTER))
 		self._widgets[4].onMouseDown = _5
-		
-		
-
+	
 	def render(self, delta: float) -> None:
 		super().render(delta)
 		size: BlockVector = renderer.getSize()
 		renderer.renderString(RenderableString(f'\\.0040304D\\00{self.Question[self.num]}'), int(size.x * 0.65), int(size.y * 0.2), 0xffffffff, Location.CENTER)
-		#线索
+		# 线索
 		renderer.renderString(RenderableString('\\.0040304D\\00线索：'), int(size.x * 0.1), int(size.y * 0.2), 0xffffffff, Location.CENTER)
 		renderer.renderString(RenderableString(f'\\.0040304D\\00{self.printclue}'), int(size.x * 0.2), int(size.y * 0.4), 0xffffffff, Location.CENTER)
 		if self.tip[1] == 1 and self.tip[0] == True:
@@ -560,70 +561,68 @@ class QuestionWindow(Window):
 		if self.tip[1] == 2 and self.tip[0] == True:
 			renderer.renderString(RenderableString('\\.0040304D\\10你已经答对了'), int(size.x * 0.2), int(size.y * 0.55), 0xff1BA803, Location.CENTER)
 			renderer.renderString(RenderableString('\\.0040304D\\10还有2个线索等着你'), int(size.x * 0.2), int(size.y * 0.6), 0xff1BA803, Location.CENTER)
-		
-
+	
 	def tick(self) -> None:
 		pass
+
 
 class GuidanceWindow(Window):
 	def __init__(self):
 		super().__init__("Guidance")
 		self.page = 0
-
+		
 		self._texture = [[resourceManager.getOrNew('window/Guidance/page0/show')],
-				   	[resourceManager.getOrNew('window/Guidance/page0/show'),
-		 			resourceManager.getOrNew('window/Guidance/page0/rice')],
-				   	[resourceManager.getOrNew('window/Guidance/page1/skill1'),
-					resourceManager.getOrNew('window/Guidance/page1/skill2'),
-					resourceManager.getOrNew('window/Guidance/page1/skill3'),
-					resourceManager.getOrNew('window/Guidance/page1/skill4'),
-					resourceManager.getOrNew('window/Guidance/page1/skill5')],
-				    [resourceManager.getOrNew('window/Guidance/page2/show'),
-					resourceManager.getOrNew('window/Guidance/page2/skill')],
-					[resourceManager.getOrNew('window/Guidance/page3/show'),
-					resourceManager.getOrNew('window/Guidance/page3/skill')],
-					[resourceManager.getOrNew('window/Guidance/page4/show'),
-					resourceManager.getOrNew('window/Guidance/page4/skill')],
-					[resourceManager.getOrNew('window/Guidance/page5/show'),
-					resourceManager.getOrNew('window/Guidance/page5/skill1'),
-					resourceManager.getOrNew('window/Guidance/page5/skill2')],
-					[resourceManager.getOrNew('window/Guidance/page6/1'),
-					resourceManager.getOrNew('window/Guidance/page6/2'),
-					resourceManager.getOrNew('window/Guidance/page6/3'),
-					resourceManager.getOrNew('window/Guidance/page6/4'),
-					resourceManager.getOrNew('window/Guidance/page6/5')]]
-
+		                 [resourceManager.getOrNew('window/Guidance/page0/show'),
+		                  resourceManager.getOrNew('window/Guidance/page0/rice')],
+		                 [resourceManager.getOrNew('window/Guidance/page1/skill1'),
+		                  resourceManager.getOrNew('window/Guidance/page1/skill2'),
+		                  resourceManager.getOrNew('window/Guidance/page1/skill3'),
+		                  resourceManager.getOrNew('window/Guidance/page1/skill4'),
+		                  resourceManager.getOrNew('window/Guidance/page1/skill5')],
+		                 [resourceManager.getOrNew('window/Guidance/page2/show'),
+		                  resourceManager.getOrNew('window/Guidance/page2/skill')],
+		                 [resourceManager.getOrNew('window/Guidance/page3/show'),
+		                  resourceManager.getOrNew('window/Guidance/page3/skill')],
+		                 [resourceManager.getOrNew('window/Guidance/page4/show'),
+		                  resourceManager.getOrNew('window/Guidance/page4/skill')],
+		                 [resourceManager.getOrNew('window/Guidance/page5/show'),
+		                  resourceManager.getOrNew('window/Guidance/page5/skill1'),
+		                  resourceManager.getOrNew('window/Guidance/page5/skill2')],
+		                 [resourceManager.getOrNew('window/Guidance/page6/1'),
+		                  resourceManager.getOrNew('window/Guidance/page6/2'),
+		                  resourceManager.getOrNew('window/Guidance/page6/3'),
+		                  resourceManager.getOrNew('window/Guidance/page6/4'),
+		                  resourceManager.getOrNew('window/Guidance/page6/5')]]
 		
-		self._texture_position = [[[0.05,0.22]],[[0.05,0.22],[0.77,0.6]],
-							[[0.05,0.3],[0.23,0.3],[0.41,0.3],[0.59,0.3],[0.77,0.3]],
-							[[0.55,0.3],[0.2,0.1]],
-							[[0.55,0.3],[0.2,0.1]],
-							[[0.55,0.3],[0.2,0.1]],
-							[[0.55,0.3],[0.23,0.08],[0.23,0.55]],
-							[[0.05,0.3],[0.23,0.3],[0.41,0.3],[0.59,0.3],[0.77,0.3]]]
+		self._texture_position = [[[0.05, 0.22]], [[0.05, 0.22], [0.77, 0.6]],
+		                          [[0.05, 0.3], [0.23, 0.3], [0.41, 0.3], [0.59, 0.3], [0.77, 0.3]],
+		                          [[0.55, 0.3], [0.2, 0.1]],
+		                          [[0.55, 0.3], [0.2, 0.1]],
+		                          [[0.55, 0.3], [0.2, 0.1]],
+		                          [[0.55, 0.3], [0.23, 0.08], [0.23, 0.55]],
+		                          [[0.05, 0.3], [0.23, 0.3], [0.41, 0.3], [0.59, 0.3], [0.77, 0.3]]]
 		
+		self._text = [["按E调出任务面板", "可以升级技能", "面板有技能信息", "这里将教学使用方法"],
+		              ["如果你发现无法升级", "那就是成长值不足", "先去吃点米粒吧"],
+		              ["主动技能：", "闪现           啄米             头槌         肾上腺素         疾跑  "],
+		              ["主动技能——闪现", "可以帮助你跨越一些墙", "对准后点击鼠标左键即可", "冷却时间：40s", "准备时图像："],
+		              ["主动技能——啄米", "用于近战攻击", "将目标放进黄色箭头内左键入", "可连续使用", "准备时图像："],
+		              ["主动技能——头槌", "远距离攻击", "将目标放进黄圈内左键入", "冷却时间：40s", "准备时图像："],
+		              ["主动技能——肾上腺素", "短暂的免死金牌", "主动技能——疾跑", "顾名思义，跑得更快", "直接左键入", "准备时图像："],
+		              ["至于被动技能：", "爱米        屹立不倒         坚毅            迅捷            揠苗   ", "去面板升级就好啦", "（）不升级容易死"]]
 		
-		self._text = [["按E调出任务面板","可以升级技能","面板有技能信息","这里将教学使用方法"],
-				["如果你发现无法升级","那就是成长值不足","先去吃点米粒吧"],
-				["主动技能：","闪现           啄米             头槌         肾上腺素         疾跑  "],
-				["主动技能——闪现", "可以帮助你跨越一些墙","对准后点击鼠标左键即可","冷却时间：40s", "准备时图像："],
-				["主动技能——啄米", "用于近战攻击", "将目标放进黄色箭头内左键入","可连续使用","准备时图像："],
-				["主动技能——头槌","远距离攻击","将目标放进黄圈内左键入","冷却时间：40s","准备时图像："],
-				["主动技能——肾上腺素","短暂的免死金牌","主动技能——疾跑","顾名思义，跑得更快","直接左键入","准备时图像："],
-				["至于被动技能：","爱米        屹立不倒         坚毅            迅捷            揠苗   ","去面板升级就好啦","（）不升级容易死"]]
-
-		self._text_position = [[[0.8,0.3],[0.8,0.4],[0.8,0.5],[0.8,0.6]],
-						 [[0.8,0.3],[0.8,0.4],[0.8,0.5]],
-						 [[0.2,0.2],[0.5,0.65]],
-						 [[0.27,0.5],[0.27,0.6],[0.27,0.7],[0.27,0.8],[0.65,0.2]],
-						 [[0.27,0.5],[0.27,0.6],[0.27,0.7],[0.27,0.8],[0.65,0.2]],
-						 [[0.27,0.5],[0.27,0.6],[0.27,0.7],[0.27,0.8],[0.65,0.2]],
-						 [[0.27,0.35],[0.27,0.45],[0.27,0.82],[0.27,0.92],[0.65,0.85],[0.65,0.2]],
-						 [[0.2,0.2],[0.5,0.65],[0.5,0.75],[0.5,0.85]]]
+		self._text_position = [[[0.8, 0.3], [0.8, 0.4], [0.8, 0.5], [0.8, 0.6]],
+		                       [[0.8, 0.3], [0.8, 0.4], [0.8, 0.5]],
+		                       [[0.2, 0.2], [0.5, 0.65]],
+		                       [[0.27, 0.5], [0.27, 0.6], [0.27, 0.7], [0.27, 0.8], [0.65, 0.2]],
+		                       [[0.27, 0.5], [0.27, 0.6], [0.27, 0.7], [0.27, 0.8], [0.65, 0.2]],
+		                       [[0.27, 0.5], [0.27, 0.6], [0.27, 0.7], [0.27, 0.8], [0.65, 0.2]],
+		                       [[0.27, 0.35], [0.27, 0.45], [0.27, 0.82], [0.27, 0.92], [0.65, 0.85], [0.65, 0.2]],
+		                       [[0.2, 0.2], [0.5, 0.65], [0.5, 0.75], [0.5, 0.85]]]
 		"""
 		你未来会碰到敌人，怎么办？
 		大开杀戒
-		吃了米，生命值会升高 完成任务 
+		吃了米，生命值会升高 完成任务
 		生命值是技能升级的“货币”
 		小鸡共有10个技能 5项主动技 5项被动技 每捡拾一定米粒你会随机得到技能
 		技能介绍
@@ -632,56 +631,53 @@ class GuidanceWindow(Window):
 		键入e打开状态面板
 
 		"""
-
-
-
+		
 		def _0(x, y, b) -> bool:
 			if self.page < 7:
 				self.page += 1
 			else:
 				game.setWindow(self.lastOpen)
-				
+			
 			return True
-
 		
 		def _1(x, y, b) -> bool:
-			if self.page > 7:
+			if self.page > 0:
 				self.page -= 1
 			else:
 				game.setWindow(self.lastOpen)
 			return True
 		
-		def _2(x,y,b) -> bool:
-			if b[0] == 1 :
+		def _2(x, y, b) -> bool:
+			if b[0] == 1:
 				game.setWindow(self.lastOpen)
-				
+			
 			return True
 		
-		self._widgets.append(Button(Location.BOTTOM, 0.36, 0, 0.12, 0.08, RenderableString("\\.00FFFFFF\\01NEXT"), Description([RenderableString("继续")]), textLocation=Location.CENTER))
+		self._widgets.append(Button(Location.BOTTOM, 0.36, 0, 0.12, 0.08, RenderableString("\\.00FFFFFF\\01Next"), Description([RenderableString("继续")]), textLocation=Location.CENTER))
 		self._widgets[0].onMouseDown = _0
-		self._widgets.append(Button(Location.BOTTOM, 0.20, 0, 0.12, 0.08, RenderableString("\\.00FFFF\\01Last"), Description([RenderableString("上一页")]), textLocation=Location.CENTER))
+		self._widgets.append(Button(Location.BOTTOM, 0.20, 0, 0.12, 0.08, RenderableString("\\.00FFFFFF\\01Previous"), Description([RenderableString("上一页")]), textLocation=Location.CENTER))
 		self._widgets[1].onMouseDown = _1
 		
 		self._widgets[0].color = PresetColors.plotColor
 		self._widgets[1].color = PresetColors.plotColor
-			
+		
 		self._widgets[0].textColor = PresetColors.plotText
 		self._widgets[1].textColor = PresetColors.plotText
-				
+		
 		self._widgets.append(Button(Location.LEFT_TOP, 0, 0, 0.09, 0.12, RenderableString('\\01Back'), Description([RenderableString("返回")]), Location.CENTER))
 		self._widgets[2].onMouseDown = _2
-		
+	
 	def renderBackground(self, delta: float, at: BlockVector = BlockVector()) -> None:
 		if self._texture[self.page] is not None:
 			w, h = renderer.getCanvas().get_size()
 			texture_num = len(self._texture[self.page])
 			for i in range(texture_num):
 				size: BlockVector = renderer.getSize()
-				pos = Vector(size.x * self._texture_position[self.page][i][0],size.y * self._texture_position[self.page][i][1])
+				pos = Vector(size.x * self._texture_position[self.page][i][0], size.y * self._texture_position[self.page][i][1])
 				pic = self._texture[self.page][i]
 				pic.adaptsUI(True)
 				pic.renderAtInterface(pos)
-			
+		
 		else:
 			head = self.backgroundColor & 0xff000000
 			if head == 0:
@@ -692,32 +688,25 @@ class GuidanceWindow(Window):
 				s.fill(color)
 				s.set_alpha(head >> 24)
 				renderer.getCanvas().blit(s, (0, 0))
-
+	
 	def render(self, delta: float) -> None:
 		super().render(delta)
 		size: BlockVector = renderer.getSize()
 		text_num = len(self._text[self.page])
-
+		
 		for i in range(text_num):
-			renderer.renderString(RenderableString(f'\\.0040304D\\00{self._text[self.page][i]}'), 
-						 int(size.x * self._text_position[self.page][i][0]), 
-						 int(size.y * self._text_position[self.page][i][1]), 0xffffffff, Location.CENTER)
+			renderer.renderString(RenderableString(f'\\.0040304D\\00{self._text[self.page][i]}'), int(size.x * self._text_position[self.page][i][0]), int(size.y * self._text_position[self.page][i][1]), 0xffffffff, Location.CENTER)
 	
 	def passRender(self, delta: float, at: Vector | None = None) -> None:
 		s = Surface(renderer.getCanvas().get_size())
 		s.fill(self.backgroundColor & 0x000000)
-
+		
 		renderer.getCanvas().blit(s, (0, 0))
 		super().passRender(delta, at)
 
 
-anim1 = []
-anim2 = []
-for t in range(1, 7):
-	anim1.append(resourceManager.getOrNew(f'window/nurturing/nurturing{t}'))
-
-for t in range(0, 16):
-	anim2.append(resourceManager.getOrNew(f'window/building2/building{t}'))
+anim1 = [resourceManager.getOrNew(f'window/nurturing/nurturing{t}') for t in range(1, 7)]
+anim2 = [resourceManager.getOrNew(f'window/building2/building{t}') for t in range(0, 16)]
 
 for t in anim1:
 	t.adaptsMap(False)

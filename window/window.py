@@ -267,18 +267,17 @@ class StartWindow(Window):
 		self._widgets[3].textColor = PresetColors.textColor.clone()
 		self._widgets[3].textColor.hovering = 0xffeeeeee
 		Music_player.background_play(0)
-
+		
 		from window.ingame import GuidanceWindow
-		#self._widgets.append(Button(Location.CENTER, 0, 0.45, 0.4, 0.08, RenderableString("\\.00FCE8AD\\01DEBUG"), Description([RenderableString("设置")]), textLocation=Location.CENTER))
-		#self._widgets[4].onMouseDown = lambda x, y, b: b[0] == 1 and game.setWindow(GuidanceWindow().setLastOpen(self)) or True
+	
+	# self._widgets.append(Button(Location.CENTER, 0, 0.45, 0.4, 0.08, RenderableString("\\.00FCE8AD\\01DEBUG"), Description([RenderableString("设置")]), textLocation=Location.CENTER))
+	# self._widgets[4].onMouseDown = lambda x, y, b: b[0] == 1 and game.setWindow(GuidanceWindow().setLastOpen(self)) or True
 	
 	def render(self, delta: float) -> None:
 		super().render(delta)
 		size: BlockVector = renderer.getSize()
 		renderer.renderString(RenderableString('\\.00FCE8AD\\00捡 蛋'), int(size.x / 2), int(size.y / 4), 0xff000000, Location.CENTER)
 		renderer.renderString(RenderableString('\\.00FCE8AD\\02Pikyor Egg!'), int(size.x / 2), int(size.y / 4) + font.realFontHeight + 2, 0xff000000, Location.CENTER)
-	
-	# renderer.renderString(RenderableString('\\.00FCE8AD\\02卵を拾って'), int(size.x / 2), int(size.y / 4) + font.realFontHeight + font.realFontHeight + 4, 0xff000000, Location.CENTER)
 	
 	def tick(self) -> None:
 		interact.keys[pygame.K_ESCAPE].deals()  # 舍弃ESC消息
@@ -305,14 +304,29 @@ class LoadWindow(Window):
 				return _func
 			
 			dl = os.listdir('user/archive')
-			for i in range(len(dl)):
+			self.count = len(dl)
+			for i in range(self.count):
 				button = Button(Location.CENTER, 0, -0.4 + i * 0.1, 0.4, 0.08, RenderableString('\\10' + dl[i][:-5]), Description([RenderableString("加载此存档")]), Location.CENTER)
 				button.onMouseDown = packer(dl[i][:-5])
 				self._widgets.append(button)
+		else:
+			self.count = 0
+		self.scroll = 0
 	
 	def tick(self) -> None:
 		if interact.keys[pygame.K_ESCAPE].deals():
 			game.setWindow(self.lastOpen or StartWindow())
+		scr = interact.scroll.dealScroll()
+		if scr != 0:
+			self.scroll += scr
+			if self.count > 9:
+				self.scroll = utils.frange(self.scroll, 0, self.count - 9)
+				utils.info(self.scroll)
+				for i in range(1, self.count + 1):
+					self._widgets[i].y = -0.4 + 0.1 * (i - self.scroll - 1)
+				self.onResize()
+			else:
+				self.scroll = 0
 	
 	def setLastOpen(self, last: 'Window') -> 'Window':
 		self.lastOpen = last
@@ -334,7 +348,6 @@ class PauseWindow(Window):
 		self._widgets.append(Button(Location.CENTER, 0, -0.1, 0.4, 0.08, RenderableString('\\01Load'), Description([RenderableString("\\#ffee0000放弃保存\\r并读取存档")]), Location.CENTER))
 		self._widgets[2].onMouseDown = lambda x, y, b: b[0] == 1 and game.setWindow(LoadWindow().setLastOpen(self)) or True
 		self._widgets.append(Button(Location.CENTER, 0, 0, 0.4, 0.08, RenderableString('测试按钮'), Description([]), Location.CENTER))
-		from window.ingame import TaskWindow
 		self._widgets[3].onMouseDown = lambda x, y, b: b[0] == 1 and game.setWindow(EggFactoryWindow().setLastOpen(self)) or True
 		self._widgets.append(Button(Location.CENTER, 0, 0.1, 0.4, 0.08, RenderableString('\\01Save'), Description([RenderableString("保存游戏")]), Location.CENTER))
 		
@@ -512,13 +525,13 @@ class SettingsWindow(Window):
 		s8.onDrag = Music_player.music_volume_drag
 		s8.barColor.active = 0x9966ccee
 		s8.barColor.hovering = 0xff66ccee
-
+		
 		self._widgets.append(s9 := Slider(Location.CENTER, 0, 0.3, 0.4, 0.08, RenderableString('\\.00000000\\01Sound Volume'), Description([RenderableString("音效音量")]), Location.CENTER))
 		s9.value = Music_player.volume_sound if Music_player.turnon_sound else Music_player.volume_sound_before
 		s9.onDrag = Music_player.sound_volume_drag
 		s9.barColor.active = 0x9966ccee
 		s9.barColor.hovering = 0xff66ccee
-
+	
 	def setLastOpen(self, last: 'Window') -> 'Window':
 		self.lastOpen = last
 		if isinstance(last, StartWindow):
@@ -683,7 +696,7 @@ class EggProductWindow(Window):
 		self._texture = resourceManager.getOrNew('window/start')
 		self._product = None
 		self._renderable = None
-		
+	
 	def tick(self) -> None:
 		if egg_generate.eggGenerated:
 			self._product = egg_generate.eggGenerated

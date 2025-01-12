@@ -4,6 +4,7 @@
 import pygame
 
 from interact.interacts import interact
+from music.music import Music_player
 from render.renderer import renderer
 from typing import TYPE_CHECKING, Union
 
@@ -12,7 +13,7 @@ from utils.vector import Vector
 
 if TYPE_CHECKING:
 	from world.world import World
-	from window.window import Window, FloatWindow 
+	from window.window import Window, FloatWindow
 	from window.hud import Hud
 
 
@@ -26,7 +27,7 @@ class Game:
 		self.hud: Union['Hud', None] = None
 		self.world: dict[int, 'World'] = {}
 		self.mouseAtMap: Vector = Vector()
-
+	
 	def tick(self) -> None:
 		notPause: bool = True
 		if self._window.get() is not None:
@@ -79,6 +80,7 @@ class Game:
 			renderer.cameraAt(None)
 		else:
 			renderer.cameraAt(self._mainWorld.getPlayer())
+			Music_player.background_play(self._mainWorld.getID() + 1)
 	
 	def getWorld(self, worldID: int | None = None) -> Union['World', None]:
 		if worldID is not None:

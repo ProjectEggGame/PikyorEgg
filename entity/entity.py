@@ -3,7 +3,6 @@ import random
 import pygame
 from typing import TYPE_CHECKING, Union, Callable
 
-import save.save
 from entity.active_skill import Active
 from entity.manager import entityManager, skillManager
 from entity.skill import Skill
@@ -12,6 +11,7 @@ from window.window import DeathWindow
 
 if TYPE_CHECKING:
 	from block.block import Block
+	from entity.enemy import EnemyChicken
 
 from interact.interacts import interact
 from utils.vector import Vector, BlockVector, Matrices
@@ -555,7 +555,7 @@ class Player(MoveableEntity, Damageable):
 		chicken = Player(Vector.load(d['position']))
 		chicken.growth_value = d['growth_value']
 		chicken.totalGrowth = d['totalGrowth']
-		chicken.progress = d['progress']
+		chicken.progress = d['progress'] if 'progress' in d else 1
 		for sk in d['skills']:
 			s: Skill = skillManager.get(sk['id']).load(sk)
 			chicken.__allSkills.pop(sk['id'])
@@ -806,6 +806,40 @@ class FakeWitch(MoveableEntity):
 					vel.normalize().multiply(self._maxSpeed)
 					self._randomVelocity = vel
 				self.setVelocity(self._randomVelocity)
+
+
+class Rooster(MoveableEntity):
+	def __init__(self, position: Vector, couple):
+		super().__init__('entity.rooster', '鸡', EntityDescription(self, [RenderableString("\\#ff4488ee高傲\\r的\\#ff4488ee公鸡")]), [
+		
+		], position, 0.2)
+		self.couple: 'EnemyChicken' = couple
+		self.center: Vector = self.couple.center
+		self._randomVelocity: Vector = Vector()
+		self.selected: bool = False
+	
+	def tick(self) -> None:
+		if not self.couple._isAlive:
+			self.center = None
+		if self.center is None:
+			if self.selected:
+				self.setVelocity(game.getWorld().getPlayer().getPosition().subtract(self.getPosition()).normalize().multiply(self._maxSpeed))
+			
+		else:
+			if self._position.distanceManhattan(self.center) > 4:
+				self._randomVelocity = (self.center - self._position + Vector(game.getWorld().getRandom().random() * 0.5, game.getWorld().getRandom().random() * 0.5)).normalize().multiply(self._maxSpeed * 0.2)
+				self.setVelocity(self._randomVelocity)
+			elif self._randomVelocity.lengthManhattan() != 0:
+				self.setVelocity(self._randomVelocity)
+				if game.getWorld().getRandom().random() < 0.03:
+					self._randomVelocity.set(0, 0)
+			elif game.getWorld().getRandom().random() < 0.03:
+				vel = Vector(game.getWorld().getRandom().random() - 0.5, game.getWorld().getRandom().random() - 0.5)
+				if vel.lengthManhattan() != 0:
+					vel.normalize().multiply(self.modifiedMaxSpeed * 0.1)
+					self._randomVelocity = vel
+			
+			
 
 
 # 注册实体

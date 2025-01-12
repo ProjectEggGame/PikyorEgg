@@ -96,8 +96,8 @@ class Active(Skill):
 
 class ActiveFlash(Active):
 	def __init__(self):
-		super().__init__(101, SkillDescription(self, [RenderableString('\\10\\#ff44aaee闪现'), RenderableString('    \\#ffaa4499向前方闪现一段距离')]))
-		self.maxCoolDown = 1200
+		super().__init__(101, SkillDescription(self, [RenderableString('\\10\\#ff44aaee闪现'), RenderableString('    \\#ffaa4499向前方闪现一段距离'), RenderableString('    \\#ff4488ee冷却时间无穷秒')]))
+		self.maxCoolDown = 600
 		self.shouldSetPosition: Vector | None | tuple[Vector, float] = None
 	
 	def init(self, player) -> None:
@@ -116,7 +116,8 @@ class ActiveFlash(Active):
 	def upgrade(self) -> bool:
 		if self._level < 5 and super().upgrade():
 			self.description.d[0] = self.getName()
-			self.maxCoolDown = 1300 - self._level * 100
+			self.description.d[2] = RenderableString(f'    \\#ff4488ee冷却时间{(650 - self._level * 50) / 20:.2f}秒')
+			self.maxCoolDown = 650 - self._level * 50
 			return True
 		return False
 	
@@ -145,7 +146,7 @@ class ActiveFlash(Active):
 				renderer.renderString(RenderableString(f'\\11{int(self.coolDown / 20)}'), at.x + (s.get_width() >> 1), at.y + (s.get_height() >> 1), 0xffffffff, Location.CENTER)
 			return ret
 		elif chosen:
-			renderSkill(3, 0.2, at - self.player.updatePosition(), 0x554499ee if self.coolDown <= 0 else 0x55ee4444)
+			renderSkill(3, 0.2, at - self.player.updatePosition(), 0x554499ee if self.coolDown <= 0 else 0x55ee4444, withLine=False)
 	
 	def onUse(self, mouseAtMap: Vector) -> None:
 		if self.coolDown > 0:
@@ -208,7 +209,7 @@ class ActiveAdrenalin(Active):
 				renderer.renderString(RenderableString(f'\\11{int(self.coolDown / 20)}'), at.x + (s.get_width() >> 1), at.y + (s.get_height() >> 1), 0xffffffff, Location.CENTER)
 			return ret
 		elif chosen:
-			renderSkillRange(2, 0x554499ee if self.coolDown <= 0 else 0x55ee4444)
+			renderSkillRange(2, 0x554499ee if self.coolDown <= 0 else 0x55ee4444, withLine=False)
 	
 	def onTick(self) -> None:
 		if self.coolDown > 0:
@@ -255,7 +256,7 @@ class ActiveAttack(Active):
 			ret = super().render(delta, mouseAtMap)
 			return ret
 		elif chosen:
-			renderSkill(1.5, 1, mouseAtMap - self.player.updatePosition(), 0x55eeee00 if self.coolDown <= 0 else 0x55ee4444)
+			renderSkill(1.5, 1, mouseAtMap - self.player.updatePosition(), 0x55eeee00 if self.coolDown <= 0 else 0x55ee4444, withLine=False)
 	
 	def onUse(self, mouseAtMap: Vector) -> None:
 		if self.coolDown > 0:
@@ -308,7 +309,7 @@ class ActiveSwift(Active):
 	def onUse(self, mouseAtMap: Vector) -> None:
 		if self.coolDown > 0:
 			return
-		self.timeCount = 40 + self._level * 5
+		self.timeCount = 60 + self._level * 10
 		self.coolDown = self.maxCoolDown
 		self.player.modifiedMaxSpeed += 0.1
 	
@@ -328,13 +329,13 @@ class ActiveSwift(Active):
 				renderer.renderString(RenderableString(f'\\11{int(self.coolDown / 20)}'), mouseAtMap.x + (s.get_width() >> 1), mouseAtMap.y + (s.get_height() >> 1), 0xffffffff, Location.CENTER)
 			return ret
 		elif chosen:
-			renderSkillRange(1.5, 0x550088cc if self.coolDown <= 0 else 0x550088cc)
+			renderSkillRange(1.5, 0x550088cc if self.coolDown <= 0 else 0x550088cc, withLine=False)
 
 
 class ActiveBreak(Active):
 	def __init__(self):
 		super().__init__(105, SkillDescription(self, [RenderableString('\\10\\#ffaa0000头槌'), RenderableString(f'    \\#ffaa4499对范围内狐狸造成0点伤害'), RenderableString(f"    \\#ffaa4499吃得越饱，伤害越高"), RenderableString(f'    \\#ffee0000会消耗已有的40%的成长值')]))
-		self.maxCoolDown = 600
+		self.maxCoolDown = 100
 		self.shouldResetMoveable = False
 	
 	def init(self, player) -> None:
@@ -350,7 +351,7 @@ class ActiveBreak(Active):
 	def upgrade(self) -> bool:
 		if self._level < 10 and super().upgrade():
 			self.description.d[0] = self.getName()
-			self.description.d[2] = RenderableString(f'    \\#ffaa4499对范围内狐狸造成{7 + self.player.growth_value * 0.01 * (self._level + 10)}点伤害')
+			self.description.d[1] = RenderableString(f'    \\#ffaa4499对范围内狐狸造成{7 + self.player.growth_value * 0.01 * (self._level + 10):.2f}点伤害')
 			return True
 		return False
 	
@@ -364,6 +365,7 @@ class ActiveBreak(Active):
 			for e in game.getWorld().getEntities():
 				if isinstance(e, Enemy):
 					e.damage(7 + self.player.growth_value * 0.01 * (self._level + 10), self.player)
+			self.player.growth_value *= 0.6
 	
 	def onTick(self) -> None:
 		super().onTick()
@@ -406,8 +408,56 @@ class ActiveBreak(Active):
 		return position
 
 
+class ActiveRegeneration(Active):
+	def __init__(self):
+		super().__init__(106, SkillDescription(self, [RenderableString('\\10\\#ff00ff00回复'), RenderableString(f'    \\#ff00ff00立即治疗自身0生命值')]))
+		self.maxCoolDown = 300
+		self.shouldResetMoveable = False
+	
+	def init(self, player) -> None:
+		super().init(player)
+		self.player.preTick.append(self.onTick)
+	
+	def upgrade(self) -> bool:
+		if self._level < 10 and super().upgrade():
+			self.description.d[0] = self.getName()
+			self.description.d[1] = RenderableString(f'    \\#ff00ff00立即治疗自身{self._level * 5 + 30:.2f}生命值')
+			return True
+		return False
+	
+	def getName(self=None) -> RenderableString:
+		if self is None or self._level == 0:
+			return RenderableString('\\10\\#ff00ff00回复')
+		else:
+			return RenderableString('\\10\\#ff00ff00回复' + (toRomanNumeral(self._level) if self._level < 10 else "(MAX)"))
+	
+	def onTick(self) -> None:
+		super().onTick()
+	
+	def onUse(self, mouseAtMap: Vector) -> None:
+		if self.coolDown > 0:
+			return
+		player = game.getWorld().getPlayer()
+		if player:
+			self.coolDown = self.maxCoolDown
+			player.heal(self._level * 5 + 30)
+	
+	def render(self, delta: float, mouseAtMap: Vector | BlockVector, chosen: bool = False, isRenderIcon: bool = False) -> int | None:
+		if isRenderIcon:
+			ret = super().render(delta, mouseAtMap)
+			if self.coolDown > 0:
+				s = Surface(self.texture.getUiScaledSurface().get_size())
+				s.set_alpha(0xaa)
+				renderer.getCanvas().blit(s, mouseAtMap.getTuple())
+				renderer.renderString(RenderableString(f'\\11{int(self.coolDown / 20)}'), mouseAtMap.x + (s.get_width() >> 1), mouseAtMap.y + (s.get_height() >> 1), 0xffffffff, Location.CENTER)
+			return ret
+		else:
+			if chosen:
+				renderSkillRange(1.5, 0x44eeee00 if self.coolDown <= 0 else 0x44ee4444, position := self.player.updatePosition(), withLine=False)
+
 skillManager.register(101, ActiveFlash)
 skillManager.register(102, ActiveAdrenalin)
 skillManager.register(103, ActiveAttack)
 skillManager.register(104, ActiveSwift)
 skillManager.register(105, ActiveBreak)
+skillManager.register(106, ActiveRegeneration)

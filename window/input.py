@@ -1,14 +1,18 @@
 import asyncio
+import os
+import time
 
 import pygame.event
 from pygame import Surface
 
 from interact.interacts import interact
+from render import font
 from render.font import Font
 from render.renderer import Location, renderer
 from utils.game import game
 from utils.text import RenderableString, Description
-from window.widget import Widget
+from utils.util import utils
+from window.widget import Widget, Button
 from window.window import Window
 from LLA import chat_with_ai as ai
 from utils.text import font as _f
@@ -138,12 +142,13 @@ class InputWidget(Widget):
 		if not self._inputting:
 			self._dealTimeLimit = 8
 			self.caretBlinkTime = -10
-			interact.keys[pygame.K_BACKSPACE].deals()
-			interact.keys[pygame.K_DELETE].deals()
-			interact.specialKeys[pygame.K_UP & interact.KEY_COUNT].deals()
-			interact.specialKeys[pygame.K_DOWN & interact.KEY_COUNT].deals()
-			interact.specialKeys[pygame.K_LEFT & interact.KEY_COUNT].deals()
-			interact.specialKeys[pygame.K_RIGHT & interact.KEY_COUNT].deals()
+			if False:
+				interact.keys[pygame.K_BACKSPACE].deals()
+				interact.keys[pygame.K_DELETE].deals()
+				interact.specialKeys[pygame.K_UP & interact.KEY_COUNT].deals()
+				interact.specialKeys[pygame.K_DOWN & interact.KEY_COUNT].deals()
+				interact.specialKeys[pygame.K_LEFT & interact.KEY_COUNT].deals()
+				interact.specialKeys[pygame.K_RIGHT & interact.KEY_COUNT].deals()
 			self._displayText = None
 			self.caret = len(self._realText)
 			return
@@ -324,11 +329,14 @@ class InputWidget(Widget):
 		self._realText = ''
 		self._displayText = ''
 		return text
+	
+	def getText(self) -> str:
+		return self._realText
 
 
 class InputWindow(Window):
-	def __init__(self):
-		super().__init__('name')
+	def __init__(self, name):
+		super().__init__(name)
 		self._inputer: InputWidget = InputWidget(Location.BOTTOM, 0, -0.05, 0.8, 0.2, RenderableString(""), Description())
 		self._widgets.append(self._inputer)
 		self._catches: Widget | None = self._inputer
@@ -373,7 +381,7 @@ class InputWindow(Window):
 class AiWindow(InputWindow):
 	
 	def __init__(self):
-		super().__init__()
+		super().__init__('ai')
 		self.rendering: int = len(aiHistory)
 		self.canRender: int = 0
 	
@@ -422,3 +430,129 @@ class AiWindow(InputWindow):
 				sfc = font.allFonts[10].get(False, False, False, False).render(text, True, 0xffffffff, 0)
 				sfc.set_colorkey((0, 0, 0))
 				renderer.getCanvas().blit(sfc, (x1, y0))
+
+
+class _SeedWindow:
+	nameExist = RenderableString("\\#ffee0044世界名称已存在")
+	seedIllegal = RenderableString("\\#ffee4400种子必须是数字")
+	both = nameExist + seedIllegal
+	none = RenderableString("决定你的世界种子和世界名！")
+
+
+class SeedWindow(InputWindow):
+	def __init__(self):
+		super().__init__("Seed")
+		self._inputer.location = Location.CENTER
+		self._inputer.x = 0
+		self._inputer.y = -0.1
+		self._inputer.width = 0.6
+		self._inputer.height = font.realHalfHeight / renderer.getScreen().get_height()
+		name = InputWidget(Location.CENTER, 0, 0, 0.6, self._inputer.height, RenderableString(""), Description())
+		self._inputer = [self._inputer, name]
+		self._widgets.append(name)
+		self._info: RenderableString = _SeedWindow.none
+		self._existNames: list[str] = []
+		
+		if os.path.exists('user') and os.path.exists('user/archive'):
+			dl = os.listdir('user/archive')
+			self._existNames = [i[:-5] for i in dl]
+		
+		def confirm(x, y, buttons):
+			if buttons[0] == 1 and self._widgets[-1].active:
+				worldName = self._inputer[1].getText()
+				seed = self._inputer[0].getText()
+				if len(seed) != 0:
+					try:
+						seed = int(self._inputer[0].getText())
+					except Exception:
+						return True
+				else:
+					seed = time.perf_counter_ns()
+				if worldName in self._existNames:
+					return True
+				if len(worldName) == 0:
+					worldName = f'{seed}序列世界'
+					i = 0
+					while worldName in self._existNames:
+						i += 1
+						worldName = f'{seed}序列世界（{i}）'
+				from world.world import DynamicWorld
+				world = DynamicWorld(worldName, seed)
+				game.setWorld(world)
+				game.setWindow(None)
+			return True
+		
+		self._widgets.append(Button(Location.CENTER, 0, 0.1, 0.6, 0.08, RenderableString("\\01OK"), Description([RenderableString('创建世界')]), Location.CENTER))
+		self._widgets[-1].onMouseDown = confirm
+	
+	def onResize(self) -> None:
+		h = font.realHalfHeight / renderer.getScreen().get_height()
+		self._inputer[0].height = h
+		self._inputer[1].height = h
+		super().onResize()
+
+	def render(self, delta: float) -> None:
+		super().render(delta)
+		w, h = renderer.getCanvas().get_size()
+		renderer.renderString(self._info, w >> 1, h >> 3, 0xffffffff, Location.TOP)
+		renderer.renderString(RenderableString("Seed "), int(w * 0.2), int(h * 0.4), 0xffffffff, Location.RIGHT)
+		renderer.renderString(RenderableString("Name "), int(w * 0.2), int(h * 0.5), 0xffffffff, Location.RIGHT)
+
+	def tick(self) -> None:
+		if interact.keys[pygame.K_ESCAPE].dealPressTimes():
+			game.setWindow(self.lastOpen)
+		flag1 = False
+		try:
+			if len(self._inputer[0].getText()) != 0:
+				int(self._inputer[0].getText())
+		except Exception:
+			flag1 = True
+		flag2 = self._inputer[1].getText() in self._existNames
+		if flag1 and flag2:
+			self._info = _SeedWindow.both
+			self._widgets[-1].active = False
+		elif flag1:
+			self._info = _SeedWindow.seedIllegal
+			self._widgets[-1].active = False
+		elif flag2:
+			self._info = _SeedWindow.nameExist
+			self._widgets[-1].active = False
+		else:
+			self._info = _SeedWindow.none
+			self._widgets[-1].active = True
+
+	def onInput(self, event) -> None:
+		utils.info(self._catches is self._inputer[0])
+		if self._catches is not None and self._catches in self._inputer:
+			utils.info("123")
+			assert isinstance(self._catches, InputWidget)
+			self._catches.onInput(event)
+	
+	def onEdit(self, event) -> None:
+		if self._catches is not None and self._catches in self._inputer:
+			assert isinstance(self._catches, InputWidget)
+			self._catches.onEdit(event)
+	
+	def passMouseDown(self, x: int, y: int, buttons: tuple[int, int, int]) -> None:
+		catch = None
+		for widget in self._widgets:
+			if widget.isMouseIn(x, y):
+				catch = widget
+				widget.passMouseDown(x, y, buttons)
+		self._catches = catch
+		self._inputer[0].catch(catch is self._inputer[0])
+		self._inputer[1].catch(catch is self._inputer[1])
+		if catch is self._inputer[0]:
+			pygame.key.start_text_input()
+	
+	def passMouseUp(self, x: int, y: int, buttons: tuple[int, int, int]) -> None:
+		catch = None
+		for widget in self._widgets:
+			if widget.isMouseIn(x, y):
+				catch = widget
+				widget.passMouseUp(x, y, buttons)
+		self._catches = catch
+		self._inputer[0].catch(catch is self._inputer[0])
+		self._inputer[1].catch(catch is self._inputer[1])
+		if catch is self._inputer[0]:
+			pygame.key.start_text_input()

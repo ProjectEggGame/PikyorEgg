@@ -218,8 +218,8 @@ class SafetyLine(Wall):
 		super().__init__('hold.safety_line', '栅栏', BlockDescription(self, [RenderableString('栅栏'), RenderableString('  \\/    关门，关狗！')]), position, resourceManager.getOrNew('block/safety_line'))
 	
 	def canPass(self, entity: Union['Entity', None] = None) -> bool:
-		from entity.entity import Player
-		if isinstance(entity, Player):
+		from entity.entity import Player, Rooster
+		if isinstance(entity, Player) or isinstance(entity, Rooster):
 			return True
 		return False
 	
