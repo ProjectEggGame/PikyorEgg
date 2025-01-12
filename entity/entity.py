@@ -203,6 +203,7 @@ class MoveableEntity(Entity):
 		self.basicMaxSpeed: float = speed
 		self.modifiedMaxSpeed: float = speed
 		self.moveable: int = 0  # 防止多个源同时禁用移动，而其中一个较先解锁导致问题
+		self.lastDelta: float = 0
 	
 	def setVelocity(self, v: Vector) -> None:
 		"""
@@ -311,9 +312,9 @@ class MoveableEntity(Entity):
 		return
 	
 	def passTick(self) -> None:
-		velocity = self.__velocity.clone()
+		self._position.add(self.__velocity)
+		self.lastDelta = 0
 		self.processMove()
-		self._position.add(velocity)
 		if abs(self.__velocity.x) >= abs(self.__velocity.y):
 			if self.__velocity.x < 0:
 				self.__renderInterval -= 1
@@ -369,6 +370,9 @@ class MoveableEntity(Entity):
 	def updatePosition(self, delta: float | None = None) -> Vector:
 		if delta is None:
 			return self._renderPosition.clone()
+		ld = self.lastDelta
+		if ld > delta:
+			delta = ld
 		self._renderPosition = self._position + self.__velocity * delta
 		return self._renderPosition.clone()
 	

@@ -91,10 +91,10 @@ class World(Renderable):
 				e.updatePosition(delta)
 			newList.append(e)
 		p = self._player.getPosition()
+		if renderer.getCameraAt() is not self._player:
+			self._player.updatePosition(delta)
 		if block1.x <= p.x <= block2.x and block1.y <= p.y <= y2:
 			newList.append(self._player)
-			if renderer.getCameraAt() is not self._player:
-				self._player.updatePosition(delta)
 		newList.sort(key=lambda k: k.updatePosition().y)
 		newListLength = len(newList)
 		e = 0
