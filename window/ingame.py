@@ -735,3 +735,71 @@ for t in anim2:
 	t.setOffset(Vector(-5, 0))
 
 del t
+
+class EndPlotWindow(Window):
+    def __init__(self):
+        super().__init__("Plot")
+        self._texture = resourceManager.getOrNew('window/plot_1')
+        self._texture.systemScaleOffset = 0.0625
+        self._texture.adaptsMap(False)
+        self._texture.adaptsSystem(True)
+        self.Sentence = 0
+        
+        def _0(x, y, b) -> bool:
+            if self.Sentence < 10:
+                self.Sentence += 1
+            else:
+                game.setWindow(StartWindow().setLastOpen(self))
+            # game.setWindow(None)
+            # game.setWorld(DynamicWorld('DynamicWorld'))
+            return True
+        
+        def _1(x, y, b) -> bool:
+            if self.Sentence < 10:
+                self.Sentence = 10
+            else:
+                game.setWindow(StartWindow().setLastOpen(self))
+            # game.setWindow(None)
+            # game.setWorld(DynamicWorld('DynamicWorld'))
+            return True
+        
+
+        def _2(x, y, b) -> bool:
+            if self.Sentence > 0:
+                self.Sentence -= 1
+            else:
+                game.setwindow(EggFactoryWindow().setLastopen(self))
+            
+            return True
+        
+        self._widgets.append(Button(Location.BOTTOM, 0.22, 0, 0.12, 0.08, RenderableString("\\.00FFFFFF\\01NEXT"), Description([RenderableString("继续")]), textLocation=Location.CENTER))
+        self._widgets[0].onMouseDown = _0
+        self._widgets.append(Button(Location.BOTTOM, 0.38, 0, 0.12, 0.08, RenderableString("\\.00FFFFFF\\01SKIP"), Description([RenderableString("跳过剧情")]), textLocation=Location.CENTER))
+        self._widgets[1].onMouseDown = _1
+        self._widgets.append(Button(Location.BOTTOM, 0.06, 0, 0.12, 0.08, RenderableString("\\.00FFFF\\01BACK"), Description([RenderableString("上一页")]), textLocation=Location.CENTER))
+        self._widgets[2].onMouseDown = _2
+        
+        self._widgets[0].color = PresetColors.plotColor
+        self._widgets[1].color = PresetColors.plotColor
+        self._widgets[2].color = PresetColors.plotColor
+        
+        self._widgets[0].textColor = PresetColors.plotText
+        self._widgets[1].textColor = PresetColors.plotText
+        self._widgets[2].textColor = PresetColors.plotText
+    
+    def render(self, delta: float) -> None:
+        super().render(delta)
+        size: BlockVector = renderer.getSize()
+        if self.Sentence == 0:
+            # 之前是0.62和0.28
+            renderer.renderString(RenderableString('\\.0040304D\\00恭喜你！'), int(size.x * 0.5), int(size.y * 0.4), 0xffffffff, Location.CENTER)
+            renderer.renderString(RenderableString('\\.0040304D\\00你已成功完成所有任务，并顺利产出你的蛋'), int(size.x * 0.5), int(size.y * 0.4 + font.realFontHeight), 0xffffffff, Location.CENTER)
+        if self.Sentence == 1:
+            renderer.renderString(RenderableString('\\.0040304D\\00你用事实证明'), int(size.x * 0.5), int(size.y * 0.4), 0xffffffff, Location.CENTER)
+            renderer.renderString(RenderableString('\\.0040304D\\00你并不是一只一无是处的小鸡'), int(size.x * 0.5), int(size.y * 0.4 + font.realFontHeight), 0xffffffff, Location.CENTER)
+        if self.Sentence == 2:
+            renderer.renderString(RenderableString('\\.0040304D\\00你聪明、睿智、敏捷，'), int(size.x * 0.5), int(size.y * 0.4), 0xffffffff, Location.CENTER)
+            renderer.renderString(RenderableString('\\.0040304D\\00是一个负责任的妈妈'), int(size.x * 0.5), int(size.y * 0.4 + font.realFontHeight), 0xffffffff, Location.CENTER)
+        if self.Sentence == 3:
+            renderer.renderString(RenderableString('\\.0040304D\\00游戏到此告一段落'), int(size.x * 0.5), int(size.y * 0.4), 0xffffffff, Location.CENTER)
+            renderer.renderString(RenderableString('\\.0040304D\\00我们未来见。'), int(size.x * 0.5), int(size.y * 0.4 + font.realFontHeight), 0xffffffff, Location.CENTER)
