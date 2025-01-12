@@ -471,9 +471,9 @@ class WitchWorld(World):
 		for i in range(6):
 			self.addEntity(entityManager.get('enemy.dog')(dog_position[i]))
 		
-		self.addEntity(entityManager.get('entity.witch')(Vector(16, 0)))
+		self.addEntity(entityManager.get('entity.witch')(Vector(0, 16)))
 		
-		witch_position = [Vector(-16, 0), Vector(0, 16), Vector(0, -16)]
+		witch_position = [Vector(-16, 0), Vector(16, 0), Vector(0, -16)]
 		for j in range(1, 4):
 			self.addEntity(entityManager.get(f'entity.fakewitch{j}')(witch_position[j - 1], i=j))
 		

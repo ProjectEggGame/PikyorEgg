@@ -833,15 +833,16 @@ class FakeWitch(MoveableEntity):
 		src = resourceManager.getOrNew(f'entity/witch/witch{i}')
 		super().__init__(f'entity.fakewitch{i}', '老巫婆鸡', EntityDescription(self, [RenderableString('鸡长老'), RenderableString('    \\#ffbb0000确定真假之前，避开为妙')]), [src, src, src, src, src, src, src, src], position, 0.005)
 		self._randomVelocity = Vector()
-		self.flag = True
+		self.i = i
+		self.flag = [True] * 3
 	
 	def tick(self) -> None:
 		player = game.getWorld().getPlayer()
-		if player is not None and player.getPosition().distanceManhattan(self.getPosition()) <= 0.3 and self.flag:
+		if player is not None and player.getPosition().distanceManhattan(self.getPosition()) <= 0.3 and self.flag[self.i-1]:
 			game.hud.sendMessage(RenderableString('\\#ffeeee00\\.ffee6666你被骗了，这不是真正的老巫婆鸡'))
 			game.hud.sendMessage(RenderableString('\\#ffeeee00\\.ffee6666你还被它重伤了！'))
-			player.damage(30, self)
-			self.flag = False
+			player.damage(300, self)
+			self.flag[self.i-1] = False
 		
 		if self._randomVelocity.lengthManhattan() != 0:
 			if game.getWorld().getRandom().random() < 0.01:
