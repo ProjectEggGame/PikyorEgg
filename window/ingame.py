@@ -219,26 +219,26 @@ class TaskWindow(Window):
 		if self.looking == 2:
 			size: BlockVector = renderer.getSize()
 			renderer.renderString(RenderableString('\\.ffEFE4B0\\00任务2：'), int((0.58 if renderer.is4to3.get() else 0.56) * size.x), (size.y >> 1) - font.realFontHeight, 0xff000000, Location.BOTTOM)
-			renderer.renderString(RenderableString('\\.ffEFE4B0\\00年少有为，织鸡窝！'), int((0.58 if renderer.is4to3.get() else 0.56) * size.x),int((size.y >> 1) + font.realFontHeight * 0.5), 0xff000000, Location.TOP)
-			renderer.renderString(RenderableString('\\.ffEFE4B0\\10\\#ffee0000100树枝+H键可以给你带来一个大大的鸡窝'), int((0.58 if renderer.is4to3.get() else 0.56) * size.x), int((size.y >> 1) + font.realFontHeight * 0.5), 0xff000000, Location.TOP)
+			renderer.renderString(RenderableString('\\.ffEFE4B0\\00年少有为，织鸡窝！'), int((0.58 if renderer.is4to3.get() else 0.56) * size.x),size.y >> 1, 0xff000000, Location.TOP)
+			renderer.renderString(RenderableString('\\.ffEFE4B0\\10\\#ffee0000100树枝+H键可以给你带来一个大大的鸡窝'), int((0.58 if renderer.is4to3.get() else 0.56) * size.x),  (size.y >> 1) + font.realFontHeight, 0xff000000, Location.TOP)
 		
 		if self.looking == 3:
 			size: BlockVector = renderer.getSize()
 			renderer.renderString(RenderableString('\\.ffEFE4B0\\00任务3：'), int((0.58 if renderer.is4to3.get() else 0.56) * size.x), (size.y >> 1) - font.realFontHeight, 0xff000000, Location.BOTTOM)
-			renderer.renderString(RenderableString('\\.ffEFE4B0\\00老巫婆鸡，指点迷津！'), int((0.58 if renderer.is4to3.get() else 0.56) * size.x), int((size.y >> 1) + font.realFontHeight * 0.5), 0xff000000, Location.TOP)
-			renderer.renderString(RenderableString('\\.ffEFE4B0\\10\\#ffee0000你也许有看到一个炫酷的传送门，3秒定律'), int((0.58 if renderer.is4to3.get() else 0.56) * size.x), int((size.y >> 1) + font.realFontHeight * 0.5), 0xff000000, Location.TOP)
+			renderer.renderString(RenderableString('\\.ffEFE4B0\\00老巫婆鸡，指点迷津！'), int((0.58 if renderer.is4to3.get() else 0.56) * size.x), size.y >> 1, 0xff000000, Location.TOP)
+			renderer.renderString(RenderableString('\\.ffEFE4B0\\10\\#ffee0000你也许有看到一个炫酷的传送门，3秒定律'), int((0.58 if renderer.is4to3.get() else 0.56) * size.x), (size.y >> 1) + font.realFontHeight, 0xff000000, Location.TOP)
 		
 		if self.looking == 4:
 			size: BlockVector = renderer.getSize()
 			renderer.renderString(RenderableString('\\.ffEFE4B0\\00任务4：'), int((0.58 if renderer.is4to3.get() else 0.56) * size.x), (size.y >> 1) - font.realFontHeight, 0xff000000, Location.BOTTOM)
-			renderer.renderString(RenderableString('\\.ffEFE4B0\\00你需要获得公鸡的受精！'), int((0.58 if renderer.is4to3.get() else 0.56) * size.x), int((size.y >> 1) + font.realFontHeight * 0.5), 0xff000000, Location.BOTTOM)
-			renderer.renderString(RenderableString('\\.ffEFE4B0\\10\\#ffee0000杀死一只母鸡可以让公鸡恢复单身狗'), int((0.58 if renderer.is4to3.get() else 0.56) * size.x),int((size.y >> 1) + font.realFontHeight * 0.5), 0xff000000, Location.TOP)
+			renderer.renderString(RenderableString('\\.ffEFE4B0\\00你需要获得公鸡的受精！'), int((0.58 if renderer.is4to3.get() else 0.56) * size.x), size.y >> 1, 0xff000000, Location.BOTTOM)
+			renderer.renderString(RenderableString('\\.ffEFE4B0\\10\\#ffee0000杀死一只母鸡可以让公鸡恢复单身狗'), int((0.58 if renderer.is4to3.get() else 0.56) * size.x), (size.y >> 1) + font.realFontHeight, 0xff000000, Location.TOP)
 		
 		if self.looking == 5:
 			size: BlockVector = renderer.getSize()
 			renderer.renderString(RenderableString('\\.ffEFE4B0\\00任务5：'), int((0.58 if renderer.is4to3.get() else 0.56) * size.x), (size.y >> 1) - font.realFontHeight, 0xff000000, Location.BOTTOM)
-			renderer.renderString(RenderableString('\\.ffEFE4B0\\00快带公鸡回家下蛋'), int((0.58 if renderer.is4to3.get() else 0.56) * size.x), int((size.y >> 1) + font.realFontHeight * 0.5), 0xff000000, Location.BOTTOM)
-			renderer.renderString(RenderableString('\\.ffEFE4B0\\10\\#ffee0000你可以给鸡宝宝选择不同的属性'), int((0.58 if renderer.is4to3.get() else 0.56) * size.x), int((size.y >> 1) + font.realFontHeight * 0.5), 0xff000000, Location.TOP)
+			renderer.renderString(RenderableString('\\.ffEFE4B0\\00快带公鸡回家下蛋'), int((0.58 if renderer.is4to3.get() else 0.56) * size.x), size.y >> 1,  0xff000000, Location.BOTTOM)
+			renderer.renderString(RenderableString('\\.ffEFE4B0\\10\\#ffee0000你可以给鸡宝宝选择不同的属性'), int((0.58 if renderer.is4to3.get() else 0.56) * size.x), (size.y >> 1) + font.realFontHeight, 0xff000000, Location.TOP)
 		
 		renderer.renderString(RenderableString('\\.ffEFE4B0\\10Tab键返回'), int((0.58 if renderer.is4to3.get() else 0.56) * size.x), size.y * 0.8, 0xff000000, Location.BOTTOM)
 	
