@@ -729,15 +729,14 @@ class Player(MoveableEntity, Damageable):
 					game.hud.sendMessage(RenderableString('\\#ffee0000你还没有解锁这个任务~'))
 				elif self.backpack_stick < 100:
 					game.hud.sendMessage(RenderableString('\\#ffee0000你还没有足够的木棒来搭窝~'))
+				elif self.progress == 2 and -3 < self._position.x < 3 and -3 < self._position.y < 3:
+					game.hud.sendMessage(RenderableString('\\#ffeeee00\\.ffee6666恭喜你，解锁了新的任务'))
+					self.backpack_stick = 0
+					self.progress = 3
+					from window.ingame import BuildingWindow
+					game.setWindow(BuildingWindow())
+					game.getWorld().addEntity(entityManager.get('entity.coop')(self._position.clone()))
 				else:
-					if self.progress == 2:
-						game.hud.sendMessage(RenderableString('\\#ffeeee00\\.ffee6666恭喜你，解锁了新的任务'))
-						self.progress = 3
-					if -3 < self._position.x < 3 and -3 < self._position.y < 3:
-						from window.ingame import BuildingWindow
-						game.setWindow(BuildingWindow())
-						game.getWorld().addEntity(entityManager.get('entity.coop')(self._position.clone()))
-					else:
 						game.hud.sendMessage(RenderableString('\\#ffee0000请在家里搭窝，不然蛋会被捣蛋的狐狸偷走~'))
 		if self.moveable == 0:
 			self.setVelocity(v.normalize().multiply(self._maxSpeed))

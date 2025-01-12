@@ -462,11 +462,11 @@ class QuestionWindow(Window):
 		self.Question = ["Which module does not belong to Python?",
 		                 "Which one is not the author of the game?",
 		                 "In this game, what can't the chick do?",
-		                 "Last Question"]
+		                 "What is the answer of this question?"]
 		self.Anwser = [["kivy", "pygame", "os", "robot"],
 		               ["teasfrog", "EmsiaetKadosh", "NicolePotion", "IcyOxygenXY"],
 		               ["Eat rice", "Pick up sticks", "Dig holes", "Fight with hens"],
-		               ["Right", "Wrong", "Wrong", "Wrong"]]
+		               ["C", "B", "A", "C"]]
 		self.clue = ["字", "姐姐", "茄子", "12"]
 		self.clue_position = [3, 0, 2, 1]
 		self.printclue = "?"
