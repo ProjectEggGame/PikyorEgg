@@ -40,8 +40,9 @@
   - enemy.py 所有敌对生物类
   - entity.py 实体基类，及玩家、蛋等末端实体类
   - manager.py 实体资源管理器，将实体类和实体ID一一对应，减少循环import、局部import
-  - skill.py 技能基类及所有被动技能类- interact/ 交互相关逻辑
-  - __init__.py 所有玩家交互信息（因为久远的原因放在了__init__.py）
+  - skill.py 技能基类及所有被动技能类
+- interact/ 玩家交互逻辑
+  - interacts.py 所有玩家交互信息
   - status.py 状态类，用于保存和简化处理玩家交互信息
 - item/ 道具，已弃用
 - LLA/ AI交互逻辑
@@ -49,17 +50,17 @@
   - music.py 音像资源管理器
 - render/ 渲染逻辑
   - font.py 管理所有字体资源
-  - renderable.py 渲染基类，及所有可渲染对象（因为久远实际可弃用）
+  - renderable.py 渲染基类，及所有可渲染对象
   - renderer.py 渲染器
   - resource.py 管理纹理图片资源
 - save/ 存档逻辑
   - configs.py 处理游戏配置文件，保存玩家设置
   - save.py 处理游戏存档数据
 - user/ 玩家信息。由游戏自动生成，首次运行前不存在
-  - archive/ 所有存档文件
+  - archive/ 所有存档文件和鸡蛋位图
   - config.json 游戏配置文件
 - utils/ 所有工具模块和类工具模块
-  - __init__.py 日志、报错信息优化（因为久远的原因放在了__init__.py）
+  - util.py 日志、报错信息优化
   - element.py 游戏元素基类。与Item协作，现可弃用
   - error.py 游戏内定义的错误类
   - game.py 游戏框架逻辑，游戏管理器
@@ -75,4 +76,3 @@
 - world/ 游戏世界（即场景）相关逻辑
   - world.py 所有世界（场景）类
 - main.py 游戏入口点
-- test_code.py 用于临时测试、单元测试
