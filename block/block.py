@@ -160,7 +160,7 @@ class GrassBlock(Ground):
 	def tick(self) -> None:
 		if self.canPass():
 			rd = game.getWorld().getRandom()
-			if len(game.getWorld().getEntities()) <= 40 and rd.random() < 0.00001 * (40 - len(game.getWorld().getEntities())):
+			if len(game.getWorld().getEntities()) <= 300 and rd.random() < 0.00001 * (300 - len(game.getWorld().getEntities())):
 				game.getWorld().addEntity(entityManager.get(rd.choice(['entity.stick', 'entity.rice']))(Vector(rd.random() + self._position.x, rd.random() + self._position.y)))
 	
 	@classmethod
@@ -291,6 +291,16 @@ class GateBlock(Ground):
 class BrickGroundBlock(Ground):
 	def __init__(self, position: BlockVector):
 		super().__init__('struct.brick', "砖块", BlockDescription(self, [RenderableString("\\#FFBABABA砖块")]), position, resourceManager.getOrNew('block/brick'))
+	
+	def tick(self) -> None:
+		if self.canPass():
+			rd = game.getWorld().getRandom()
+			if len(game.getWorld().getEntities()) > 300:
+				return
+			if rd.random() < 0.00001 * (300 - len(game.getWorld().getEntities())):
+				game.getWorld().addEntity(entityManager.get('enemy.dog')(Vector(rd.random() + self._position.x, rd.random() + self._position.y)))
+			if rd.random() < 0.0001 * (300 - len(game.getWorld().getEntities())):
+				game.getWorld().addEntity(entityManager.get('entity.rice')(Vector(rd.random() + self._position.x, rd.random() + self._position.y)))
 	
 	@classmethod
 	def load(cls, d: dict, block=None) -> 'BrickGroundBlock':

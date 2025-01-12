@@ -17,7 +17,7 @@ if TYPE_CHECKING:
 
 from render.renderable import Renderable
 from utils.vector import Vector, BlockVector
-from block.block import Block, BrickWallBlock, BrickGroundBlock
+from block.block import Block, BrickWallBlock, BrickGroundBlock, GateBlock
 
 
 class World(Renderable):
@@ -95,7 +95,7 @@ class World(Renderable):
 			newList.append(self._player)
 			if renderer.getCameraAt() is not self._player:
 				self._player.updatePosition(delta)
-		newList.sort(key=lambda k: k.getPosition().y)
+		newList.sort(key=lambda k: k.updatePosition().y)
 		newListLength = len(newList)
 		e = 0
 		j = block1.y
@@ -294,7 +294,6 @@ class DynamicWorld(World):
 				self._ground[hash(pos)] = (block := GrassBlock(pos))
 				if flag or j == -4 or j == 3:
 					block.holdAppend(Fence(pos) if pos.normalizeClone().subtract(direction).length() > 0.4 else SafetyLine(pos))
-		self.getBlockAt(BlockVector(1, 1)).holdAppend(blockManager.get('hold.door')(BlockVector(1, 1)))
 		for i in range(-10, 10):
 			flag = (i == -10 or i == 9)
 			for j in range(-7, 8):
@@ -302,6 +301,9 @@ class DynamicWorld(World):
 				self._ground[hash(pos)] = (block := GrassBlock(pos))
 				if flag or j == -7 or j == 7:
 					block.holdAppend(Fence(pos) if (center2 - pos).normalizeClone().subtract(direction2).length() > 0.4 else SafetyLine(pos))
+				else:
+					while self._seed.random() < 0.15:
+						self.addEntity(entityManager.get('entity.stick')(pos.getVector().add(self._seed.random(), self._seed.random())))
 		blocks = self.rayTraceBlock(Vector(0, 0), direction, length1)
 		blocks2 = self.rayTraceBlock(ref * 0.75, direction2, length2)
 		for i in blocks:
@@ -381,7 +383,7 @@ class DynamicWorld(World):
 		generateTower(pos, 1)
 		
 		# 第一段实体
-		for i, j in self._ground.items():
+		for j in self._ground.values():
 			if j is None:
 				continue
 			if isinstance(j, BrickGroundBlock):
@@ -405,9 +407,9 @@ class DynamicWorld(World):
 			if abs(j.getBlockPosition().x) < 5 and abs(j.getBlockPosition().y) < 5:
 				continue
 			if isinstance(j, BrickGroundBlock):
-				while self._seed.random() < 0.5:
+				while self._seed.random() < 0.4:
 					self.addEntity(entityManager.get('entity.rice')(Vector(self._seed.random() + j.getBlockPosition().x, self._seed.random() + j.getBlockPosition().y)))
-				while self._seed.random() < 0.2:
+				while self._seed.random() < 0.15:
 					self.addEntity(entityManager.get('enemy.dog')(Vector(self._seed.random() + j.getBlockPosition().x, self._seed.random() + j.getBlockPosition().y)))
 			else:
 				if self._seed.random() < 0.05:
@@ -420,6 +422,21 @@ class DynamicWorld(World):
 			self.addEntity(hen := entityManager.get('enemy.hen')(pos := Vector(center2.x + self._seed.random() * 18 - 9, center2.y + self._seed.random() * 13 - 6)))
 			self.addEntity(entityManager.get('entity.coop')(pos))
 			self.addEntity(entityManager.get('entity.rooster')(pos, hen))
+		
+		while True:
+			for j in self._ground.values():
+				if j is None:
+					continue
+				if not isinstance(j, BrickGroundBlock):
+					continue
+				if self._seed.random() < 0.01:
+					gate: GateBlock = blockManager.get('hold.door')(j.getBlockPosition())
+					if j.tryHold(gate):
+						j.holdAppend(gate)
+						break
+			else:
+				continue
+			break
 
 
 class WitchWorld(World):

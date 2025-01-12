@@ -10,6 +10,7 @@ from typing import TYPE_CHECKING, Union
 
 from utils.sync import SynchronizedStorage
 from utils.text import RenderableString
+from utils.util import utils
 from utils.vector import Vector
 
 if TYPE_CHECKING:

@@ -311,8 +311,9 @@ class MoveableEntity(Entity):
 		return
 	
 	def passTick(self) -> None:
-		self._position.add(self.__velocity)
+		velocity = self.__velocity.clone()
 		self.processMove()
+		self._position.add(velocity)
 		if abs(self.__velocity.x) >= abs(self.__velocity.y):
 			if self.__velocity.x < 0:
 				self.__renderInterval -= 1
@@ -720,7 +721,11 @@ class Player(MoveableEntity, Damageable):
 				from window.input import AiWindow
 				game.setWindow(AiWindow())
 			if interact.keys[pygame.K_h].deals():
-				if self.progress >= 2:
+				if self.progress < 2:
+					game.hud.sendMessage(RenderableString('\\#ffee0000你还没有解锁这个任务~'))
+				elif self.backpack_stick < 100:
+					game.hud.sendMessage(RenderableString('\\#ffee0000你还没有足够的木棒来搭窝~'))
+				else:
 					if self.progress == 2:
 						game.hud.sendMessage(RenderableString('\\#ffeeee00\\.ffee6666恭喜你，解锁了新的任务'))
 						self.progress = 3
@@ -730,8 +735,6 @@ class Player(MoveableEntity, Damageable):
 						game.getWorld().addEntity(entityManager.get('entity.coop')(self._position.clone()))
 					else:
 						game.hud.sendMessage(RenderableString('\\#ffee0000请在家里搭窝，不然蛋会被捣蛋的狐狸偷走~'))
-				else:
-					game.hud.sendMessage(RenderableString('\\#ffee0000你还没有解锁这个任务~'))
 		if self.moveable == 0:
 			self.setVelocity(v.normalize().multiply(self._maxSpeed))
 		else:
