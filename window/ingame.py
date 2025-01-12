@@ -341,7 +341,7 @@ class PlotWindow(Window):
 			renderer.renderString(RenderableString('\\.0040304D\\00生一个蛋，并孵出一只小鸡！'), int(size.x * 0.5), int(size.y * 0.4 + font.realFontHeight), 0xffffffff, Location.CENTER)
 		if self.Sentence == 9:
 			renderer.renderString(RenderableString('\\.0040304D\\00游戏中你可能会用到以下快捷键：'), int(size.x * 0.5), int(size.y * 0.2 - font.realFontHeight*1.3), 0xffffffff, Location.CENTER)
-			renderer.renderString(RenderableString('\\.0040304D\\00人物移动 WASD'), int(size.x * 0.5), int(size.y * 0.23 + font.realFontHeight * 0), 0xffffffff, Location.CENTER)
+			renderer.renderString(RenderableString('\\.0040304D\\00人物移动 WASD 同时按Crtl可加速'), int(size.x * 0.5), int(size.y * 0.23 + font.realFontHeight * 0), 0xffffffff, Location.CENTER)
 			renderer.renderString(RenderableString('\\.0040304D\\00状态面板 E'), int(size.x * 0.5), int(size.y * 0.23 + font.realFontHeight * 1), 0xffffffff, Location.CENTER)
 			renderer.renderString(RenderableString('\\.0040304D\\00任务面板 Tab'), int(size.x * 0.5), int(size.y * 0.23 + font.realFontHeight * 2), 0xffffffff, Location.CENTER)
 			renderer.renderString(RenderableString('\\.0040304D\\00暂停并打开暂停菜单 Esc'), int(size.x * 0.5), int(size.y * 0.23 + font.realFontHeight * 3), 0xffffffff, Location.CENTER)
@@ -622,7 +622,7 @@ class GuidanceWindow(Window):
 		self._texture_position = [
 			[[0, 0.22]],
 			[[0, 0.22], [0.77, 0.6]],
-			[[0.1, 0.1]],
+			[[0.12, 0.1]],
 			[[0.54, 0.1], [0.08, 0.5], [0.31, 0.5], [0.54, 0.5], [0.77, 0.5], [0.31, 0.1]],
 			[[0.55, 0.3], [0.2, 0.1]],
 			[[0.55, 0.3], [0.2, 0.1]],
