@@ -42,9 +42,9 @@ class EntityDescription(Description):
 		if isinstance(self._entity, Damageable):
 			from entity.entity import Entity
 			assert isinstance(self._entity, Entity) and isinstance(self._entity, Damageable)
-			return [RenderableString('\\#ffaa4499' + self._entity.getPosition().toString()), RenderableString(f'\\#ffee4444HP {self._entity.getHealth():.2f}/{self._entity.getMaxHealth():.2f}')] + self.d
+			return [RenderableString('\\#ffaa4499' + self._entity.getPosition().toString() + (f'\\#ffee0000 UUID -1' if self._entity.uuid == -1 else f'\\#ffeeee00 UUID {self._entity.uuid}')), RenderableString(f'\\#ffee4444HP {self._entity.getHealth():.2f}/{self._entity.getMaxHealth():.2f}')] + self.d
 		else:
-			return [RenderableString('\\#ffaa4499' + self._entity.getPosition().toString())] + self.d
+			return [RenderableString('\\#ffaa4499' + self._entity.getPosition().toString() + (f'\\#ffee0000 UUID -1' if self._entity.uuid == -1 else f'\\#ffeeee00 UUID {self._entity.uuid}'))] + self.d
 
 
 class SkillDescription(Description):

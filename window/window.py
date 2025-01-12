@@ -267,8 +267,6 @@ class StartWindow(Window):
 		self._widgets[3].textColor = PresetColors.textColor.clone()
 		self._widgets[3].textColor.hovering = 0xffeeeeee
 		Music_player.background_play(0)
-		
-		from window.ingame import GuidanceWindow
 	
 	# self._widgets.append(Button(Location.CENTER, 0, 0.45, 0.4, 0.08, RenderableString("\\.00FCE8AD\\01DEBUG"), Description([RenderableString("设置")]), textLocation=Location.CENTER))
 	# self._widgets[4].onMouseDown = lambda x, y, b: b[0] == 1 and game.setWindow(GuidanceWindow().setLastOpen(self)) or True
@@ -289,8 +287,8 @@ class LoadWindow(Window):
 		self._widgets.append(Button(Location.LEFT_TOP, 0, 0, 0.09, 0.12, RenderableString('\\01Back'), Description([RenderableString("返回")]), Location.CENTER))
 		self._widgets[0].onMouseDown = lambda x, y, b: b[0] == 1 and game.setWindow(self.lastOpen) or True
 		if os.path.exists('user') and os.path.exists('user/archive'):
-			def packer(s: str):
-				string = s
+			def packer(s: str, bt: Button, time: int = 3):
+				string, clicks, btn = s, [time], bt
 				
 				def _func(x, y, b):
 					if b[0] == 1:
@@ -299,6 +297,15 @@ class LoadWindow(Window):
 						game.setWorld(World.load(archive.dic))
 						game.setWindow(None)
 						archive.close()
+					elif b[2] == 1:
+						if clicks[0] > 1:
+							clicks[0] -= 1
+							btn.description.d[1] = RenderableString(f"\\#ffee0000右键{clicks[0]}次以删除存档")
+						else:
+							archive = Archive(string)
+							archive.delete()
+							btn.description.d[1] = RenderableString(f"\\#ffee0000存档已删除")
+							btn.active = False
 					return True
 				
 				return _func
@@ -306,8 +313,8 @@ class LoadWindow(Window):
 			dl = os.listdir('user/archive')
 			self.count = len(dl)
 			for i in range(self.count):
-				button = Button(Location.CENTER, 0, -0.4 + i * 0.1, 0.4, 0.08, RenderableString('\\10' + dl[i][:-5]), Description([RenderableString("加载此存档")]), Location.CENTER)
-				button.onMouseDown = packer(dl[i][:-5])
+				button = Button(Location.CENTER, 0, -0.4 + i * 0.1, 0.4, 0.08, RenderableString('\\10' + dl[i][:-5]), Description([RenderableString("加载此存档"), RenderableString("\\#ffee0000右键3次以删除存档")]), Location.CENTER)
+				button.onMouseDown = packer(dl[i][:-5], button)
 				self._widgets.append(button)
 		else:
 			self.count = 0
@@ -321,7 +328,6 @@ class LoadWindow(Window):
 			self.scroll += scr
 			if self.count > 9:
 				self.scroll = utils.frange(self.scroll, 0, self.count - 9)
-				utils.info(self.scroll)
 				for i in range(1, self.count + 1):
 					self._widgets[i].y = -0.4 + 0.1 * (i - self.scroll - 1)
 				self.onResize()
@@ -628,7 +634,7 @@ class EggFactoryWindow(Window):
 				from LLA import ai_decision
 				self._product = 1
 				ai_decision.asyncEgg([j.kw for j in self._selected if j is not None], game.getWorld().getRandom())
-				game.setWindow(EggProductWindow().setLastOpen(self.lastOpen))
+				game.setWindow(EggProductWindow().setWords([j.kw for j in self._selected if j is not None]).setLastOpen(self.lastOpen))
 				confirmButton.active = False
 			return True
 		
@@ -638,8 +644,6 @@ class EggFactoryWindow(Window):
 		if egg_generate.eggGenerated:
 			self._product = egg_generate.eggGenerated
 			egg_generate.eggGenerated = None
-		if interact.keys[pygame.K_ESCAPE].deals():
-			game.setWindow(self.lastOpen)
 	
 	def sortPresent(self):
 		xp = -0.4
@@ -680,7 +684,6 @@ class EggFactoryWindow(Window):
 	def renderBackground(self, delta: float, at: BlockVector = BlockVector()) -> None:
 		self._texture.renderAtInterface(BlockVector())
 		size: BlockVector = renderer.getSize()
-		renderer.renderString(RenderableString('\\.00FCE8AD\\00蛋蛋制造工厂'), int(size.x / 2), int(size.y / 4), 0xff000000, Location.CENTER)
 		sfc = Surface((w := size.x * 0.3, size.y))
 		h = size.y * 0.1
 		sfc.fill((0xff, 0xff, 0xff), (0, size.y * 0.25, w, h))
@@ -688,6 +691,8 @@ class EggFactoryWindow(Window):
 		sfc.fill((0xff, 0xff, 0xff), (0, size.y * 0.65, w, h))
 		sfc.set_alpha(0x88)
 		renderer.getCanvas().blit(sfc, (size.x * 0.7 + 1, 0))
+		renderer.renderString(RenderableString('\\01You are laying'), int(size.x * 0.85), size.y >> 3, 0xffeeeeee, Location.BOTTOM)
+		renderer.renderString(RenderableString('\\01A(An)'), int(size.x * 0.85), size.y >> 3, 0xffeeeeee, Location.TOP)
 
 
 class EggProductWindow(Window):
@@ -696,15 +701,33 @@ class EggProductWindow(Window):
 		self._texture = resourceManager.getOrNew('window/start')
 		self._product = None
 		self._renderable = None
+		self.keywords = []
+		self._widgets.append(Button(Location.BOTTOM, 0, 0, 1, 0.08, RenderableString("\\.00FCE8AD\\00保存"), Description([RenderableString("\\#ffeeee00永远保存我的蛋！")]), textLocation=Location.CENTER))
+		
+		def save(x, y, buttons):
+			if buttons[0] == 1:
+				if self._product is not None:
+					assert isinstance(self._product, Surface)
+					name = f"user/archive/my_" + "_".join(self.keywords) + "_egg.bmp"
+					pygame.image.save(self._product, name)
+					if not game.getWorld(0).ending:
+						from window.ingame import EndPlotWindow
+						game.setWindow(EndPlotWindow())
+					else:
+						game.setWindow(None)
+			return True
+		
+		self._widgets[-1].onMouseDown = save
+	
+	def setWords(self, words: list[str]) -> 'EggProductWindow':
+		self.keywords = words
+		return self
 	
 	def tick(self) -> None:
 		if egg_generate.eggGenerated:
 			self._product = egg_generate.eggGenerated
 			self._renderable = pygame.transform.scale_by(self._product, renderer.getSystemScale() * 0.1)
 			egg_generate.eggGenerated = None
-		if self._product:
-			if interact.keys[pygame.K_ESCAPE].deals():
-				game.setWindow(self.lastOpen)
 	
 	def onResize(self) -> None:
 		super().onResize()
@@ -714,3 +737,4 @@ class EggProductWindow(Window):
 	def render(self, delta: float) -> None:
 		if isinstance(self._renderable, Surface):
 			renderer.getCanvas().blit(self._renderable, (renderer.getCanvas().get_width() - self._renderable.get_width() >> 1, renderer.getCanvas().get_height() - self._renderable.get_height() >> 1))
+			renderer.renderString(RenderableString(f"\\01\\#ff000000Your " + ", ".join(self.keywords) + " egg!"), renderer.getCanvas().get_width() >> 1, renderer.getCanvas().get_height() >> 4, 0xffeeeeee, Location.CENTER)

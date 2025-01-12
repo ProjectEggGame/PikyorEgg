@@ -66,7 +66,7 @@ def asyncWords():
 
 async def getWords():
 	lst = []
-	while len(lst) < 10:
+	while len(lst) < 10 or len(lst[0]) > 25:
 		response = client.chat.completions.create(
 			model="llama3.2",
 			messages=system,  # a list of dictionary contains all chat dictionary

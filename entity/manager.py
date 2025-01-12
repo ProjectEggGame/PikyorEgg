@@ -1,8 +1,3 @@
-from typing import TYPE_CHECKING, Type
-
-if TYPE_CHECKING:
-	from entity.entity import Entity
-
 
 class EntityManager:
 	def __init__(self):

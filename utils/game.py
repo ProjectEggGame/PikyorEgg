@@ -9,6 +9,7 @@ from render.renderer import renderer
 from typing import TYPE_CHECKING, Union
 
 from utils.sync import SynchronizedStorage
+from utils.text import RenderableString
 from utils.vector import Vector
 
 if TYPE_CHECKING:
@@ -112,6 +113,10 @@ class Game:
 			block = self._mainWorld.getBlockAt(self.mouseAtMap.getBlockVector())
 			if block is not None:
 				self.floatWindow.submit(block.getDescription())
+			if interact.left.deals():
+				if target1 is not None:
+					renderer.cameraAt(target1)
+					game.hud.sendMessage(RenderableString(f'\\#cc66ccee视角锁定在：{target1.__class__.__name__} (UUID {target1.uuid}))'))
 		if event is not None:
 			if event.buttons[1] == 1 and self._window.get() is None:
 				renderer.cameraOffset.subtract(Vector(event.rel[0], event.rel[1]).divide(renderer.getMapScale()))

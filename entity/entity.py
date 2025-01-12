@@ -7,7 +7,7 @@ from entity.active_skill import Active
 from entity.manager import entityManager, skillManager
 from entity.skill import Skill
 from utils.util import utils
-from window.window import DeathWindow
+from window.window import DeathWindow, EggFactoryWindow
 
 if TYPE_CHECKING:
 	from block.block import Block
@@ -34,6 +34,7 @@ class Entity(Element):
 		self._position: Vector = position.clone()
 		self._textureSet: list[Texture] = texture
 		self._id: str = entityID
+		self.uuid: int = -1
 	
 	def passTick(self) -> None:
 		"""
@@ -64,6 +65,7 @@ class Entity(Element):
 	def save(self) -> dict:
 		return {
 			"id": self._id,
+			"uuid": self.uuid,
 			"position": self._position.save(),
 			"name": self.name,
 		}
@@ -77,6 +79,7 @@ class Entity(Element):
 		"""
 		entity._id = d["id"]
 		entity.name = d["name"]
+		entity.uuid = d["uuid"] if "uuid" in d else -1
 		entity._position = Vector.load(d["position"])
 		return entity
 
@@ -384,6 +387,7 @@ class MoveableEntity(Entity):
 		entity._velocity = Vector.load(d["velocity"])
 		entity.basicMaxSpeed = d["basicMaxSpeed"]
 		entity.modifiedMaxSpeed = entity.basicMaxSpeed
+		Entity.load(d, entity)
 		return entity
 
 
@@ -515,7 +519,9 @@ class Player(MoveableEntity, Damageable):
 		self.__allSkills: dict[int, type] = skillManager.dic.copy()
 		self.__allSkills.pop(0)
 		self.progress = 1
-		self.skillget = True
+		self.selectingRooster: int | Rooster | None = None
+		self.nearestRooster: Rooster | None = None
+		self.nearestRoosterDistance: float = 100
 	
 	def onDeath(self) -> None:
 		flag = True
@@ -548,6 +554,7 @@ class Player(MoveableEntity, Damageable):
 		data['skills'] = sks
 		data['totalGrowth'] = self.totalGrowth
 		data['progress'] = self.progress
+		data['rooster'] = None if self.selectingRooster is None else self.selectingRooster.uuid
 		return data
 	
 	@classmethod
@@ -556,6 +563,7 @@ class Player(MoveableEntity, Damageable):
 		chicken.growth_value = d['growth_value']
 		chicken.totalGrowth = d['totalGrowth']
 		chicken.progress = d['progress'] if 'progress' in d else 1
+		chicken.selectingRooster = d['rooster'] if 'rooster' in d and d['rooster'] != -1 else None
 		for sk in d['skills']:
 			s: Skill = skillManager.get(sk['id']).load(sk)
 			chicken.__allSkills.pop(sk['id'])
@@ -656,19 +664,41 @@ class Player(MoveableEntity, Damageable):
 			# TODO: debug作弊代码，待删除
 			if interact.keys[pygame.K_q].deals():
 				self.grow(100, self)
+				self.growth_value = 0
+				self.grow(100, self)
+				self.growth_value = 0
+				self.grow(100, self)
 				for i in self.skills.values():
+					while i.upgrade():
+						pass
 					i.coolDown = 0
 				for i in self.activeSkills:
+					while i.upgrade():
+						pass
 					i.coolDown = 0
 				self.pick(100, self)
 			# debug
 			if interact.keys[pygame.K_r].deals():
-				if self.growth_value < 100:
-					game.hud.sendMessage(RenderableString('\\#ffee0000你还没长大，不能下蛋~'))
+				if self.progress > 3:
+					if self.selectingRooster is not None:
+						if abs(self._position.x) > 3 or abs(self._position.y) > 3:
+							game.hud.sendMessage(RenderableString("\\#ffee0000你已经选择了公鸡啦，莫要二心~"))
+							game.hud.sendMessage(RenderableString("\\#ffee0000速速回到你自己的窝里去下蛋）~"))
+						elif abs(self.selectingRooster.getPosition().x) > 3 or abs(self.selectingRooster.getPosition().y) > 3:
+							game.hud.sendMessage(RenderableString("\\#ffee0000你的公鸡太远了，快去把他找回来"))
+						else:
+							game.setWindow(EggFactoryWindow())
+					elif self.nearestRooster is None:
+						game.hud.sendMessage(RenderableString("\\#ffee0000你附近没有单身公鸡，快去找找吧~"))
+					else:
+						self.selectingRooster = self.nearestRooster
+						self.nearestRooster.selected = True
+						self.progress += 1
+						game.hud.sendMessage(RenderableString('\\#ff0000ee你看着你选中的公鸡……'))
+						game.hud.sendMessage(RenderableString('\\#ff0000ee回家下蛋！'))
+						game.hud.sendMessage(RenderableString('\\#ffeeee00\\.ffee6666恭喜你，解锁了新的任务'))
 				else:
-					self.growth_value -= 100
-					game.hud.sendMessage(RenderableString('你成功下了一个蛋~'))
-					game.getWorld().addEntity(random.choice([BlueEgg, RedEgg, GoldEgg])(self._position.clone()))
+					game.hud.sendMessage(RenderableString("\\#ffee0000你还没有接受教诲，别急着找公鸡~"))
 			for i in range(9):
 				push = interact.keys[pygame.K_1 + i].deals() & 1
 				if i >= len(self.activeSkills):
@@ -712,6 +742,15 @@ class Player(MoveableEntity, Damageable):
 	def renderSkill(self, delta: float) -> None:
 		for i in range(len(self.activeSkills)):
 			self.activeSkills[i].render(delta, game.mouseAtMap, i == self.skillSelecting)
+	
+	def render(self, delta: float) -> None:
+		super().render(delta)
+		if self.progress > 4 and abs(self._position.x) < 3 and abs(self._position.y) < 3:
+			from render import font
+			from render.renderer import renderer
+			sfc = font.allFonts[10].get(False, False, False, False).render('按R下蛋！', False, (0xee, 0x66, 0x66), (0, 0, 0))
+			sfc.set_colorkey((0, 0, 0))
+			renderer.renderAtMap(sfc, self.updatePosition().add(Vector(0.5, -0.6)))
 
 
 class Coop(Entity):
@@ -811,20 +850,58 @@ class FakeWitch(MoveableEntity):
 class Rooster(MoveableEntity):
 	def __init__(self, position: Vector, couple):
 		super().__init__('entity.rooster', '鸡', EntityDescription(self, [RenderableString("\\#ff4488ee高傲\\r的\\#ff4488ee公鸡")]), [
-		
+			resourceManager.getOrNew('entity/rooster_1'),
+			resourceManager.getOrNew('entity/rooster_2'),
+			resourceManager.getOrNew('entity/rooster_b1'),
+			resourceManager.getOrNew('entity/rooster_b2'),
+			resourceManager.getOrNew('entity/rooster_l1'),
+			resourceManager.getOrNew('entity/rooster_l2'),
+			resourceManager.getOrNew('entity/rooster_r1'),
+			resourceManager.getOrNew('entity/rooster_r2'),
 		], position, 0.2)
-		self.couple: 'EnemyChicken' = couple
-		self.center: Vector = self.couple.center
+		self.couple: Union['EnemyChicken', None] = couple
+		self.center: Vector = self.couple.center if couple is not None else None
 		self._randomVelocity: Vector = Vector()
 		self.selected: bool = False
 	
 	def tick(self) -> None:
-		if not self.couple._isAlive:
+		if self.couple is not None and not self.couple._isAlive:
 			self.center = None
+			self.couple = None
+			self.description.d[0] = RenderableString("\\#ff4488ee单身\\r的\\#ff4488ee公鸡")
 		if self.center is None:
 			if self.selected:
-				self.setVelocity(game.getWorld().getPlayer().getPosition().subtract(self.getPosition()).normalize().multiply(self._maxSpeed))
-			
+				player = game.getWorld().getPlayer()
+				relative = player.getPosition().subtract(self.getPosition())
+				distance = relative.length()
+				if distance < 1:
+					self.setVelocity(Vector())
+				else:
+					self.setVelocity(relative.multiply((distance - 1) / 2))
+				return
+			else:
+				if self._randomVelocity.lengthManhattan() != 0:
+					self.setVelocity(self._randomVelocity)
+					if game.getWorld().getRandom().random() < 0.03:
+						self._randomVelocity.set(0, 0)
+				elif game.getWorld().getRandom().random() < 0.03:
+					vel = Vector(game.getWorld().getRandom().random() - 0.5, game.getWorld().getRandom().random() - 0.5)
+					if vel.lengthManhattan() != 0:
+						vel.normalize().multiply(self.modifiedMaxSpeed * 0.1)
+						self._randomVelocity = vel
+			player = game.getWorld().getPlayer()
+			if player is None or player.selectingRooster is not None:
+				return
+			if player.nearestRooster is self:
+				distance = player.getPosition().distance(self.getPosition())
+				if distance >= 2:
+					player.nearestRooster = None
+					player.nearestRoosterDistance = 100
+			else:
+				distance = player.getPosition().distance(self.getPosition())
+				if distance < 2 and distance < player.nearestRoosterDistance:
+					player.nearestRooster = self
+					player.nearestRoosterDistance = distance
 		else:
 			if self._position.distanceManhattan(self.center) > 4:
 				self._randomVelocity = (self.center - self._position + Vector(game.getWorld().getRandom().random() * 0.5, game.getWorld().getRandom().random() * 0.5)).normalize().multiply(self._maxSpeed * 0.2)
@@ -838,8 +915,33 @@ class Rooster(MoveableEntity):
 				if vel.lengthManhattan() != 0:
 					vel.normalize().multiply(self.modifiedMaxSpeed * 0.1)
 					self._randomVelocity = vel
-			
-			
+	
+	def render(self, delta: float) -> None:
+		super().render(delta)
+		player = game.getWorld().getPlayer()
+		if player is None or player.selectingRooster is not None:
+			return
+		if player.nearestRooster is self:
+			from render import font
+			from render.renderer import renderer
+			sfc = font.allFonts[10].get(False, False, False, False).render('按R选择公鸡', False, (0, 0xee, 0x66), (0, 0, 0))
+			sfc.set_colorkey((0, 0, 0))
+			renderer.renderAtMap(sfc, self.updatePosition().add(Vector(0.5, -0.6)))
+	
+	def save(self) -> dict:
+		dic = super().save()
+		dic.update({
+			'couple': self.couple.uuid if self.couple is not None else None,
+			'selected': self.selected,
+		})
+		return dic
+	
+	@classmethod
+	def load(cls, d: dict, entity: Union['Entity', None] = None) -> Union['Entity', None]:
+		e = Rooster(Vector.load(d['position']), None)
+		e.selected = d['selected'] if 'selected' in d else False
+		e.couple = d['couple'] if 'couple' in d else None
+		return Entity.load(d, e)
 
 
 # 注册实体
@@ -852,12 +954,13 @@ entityManager.register('entity.egg.red', RedEgg)
 entityManager.register('entity.egg.gold', GoldEgg)
 entityManager.register('deprecated', DeprecatedPlayer)
 entityManager.register('entity.witch', Witch)
+entityManager.register('entity.rooster', Rooster)
 
-for i in range(1, 4):
-	entityManager.register(f'entity.fakewitch{i}', FakeWitch)
+for t in range(1, 4):
+	entityManager.register(f'entity.fakewitch{t}', FakeWitch)
 
-for i in range(0, 4):
-	entityManager.register(f'entity.clue{i}', Clue)
+for t in range(0, 4):
+	entityManager.register(f'entity.clue{t}', Clue)
 
 for t in [
 	resourceManager.getOrNew('player/no_player_1'),
@@ -906,11 +1009,22 @@ for t in [
 	t.getSurface().set_colorkey((0xff, 0xff, 0xff))
 	t.getMapScaledSurface().set_colorkey((0xff, 0xff, 0xff))
 	t.setOffset(Vector(0, -7))
-for t in [
-	resourceManager.getOrNew(f'entity/witch/witch{i}') for i in range(1, 4)
-] + [resourceManager.getOrNew('entity/clue')]:
+for t in \
+	[
+		resourceManager.getOrNew(f'entity/witch/witch{i}') for i in range(1, 4)
+	] + [
+		resourceManager.getOrNew('entity/clue'),
+		resourceManager.getOrNew('entity/rooster_1'),
+		resourceManager.getOrNew('entity/rooster_2'),
+		resourceManager.getOrNew('entity/rooster_b1'),
+		resourceManager.getOrNew('entity/rooster_b2'),
+		resourceManager.getOrNew('entity/rooster_l1'),
+		resourceManager.getOrNew('entity/rooster_l2'),
+		resourceManager.getOrNew('entity/rooster_r1'),
+		resourceManager.getOrNew('entity/rooster_r2'),
+	]:
 	t.getSurface().set_colorkey((0, 0, 0))
 	t.getMapScaledSurface().set_colorkey((0, 0, 0))
-	t.setOffset(Vector(0, -8))
+	t.setOffset(Vector(0, -7))
 
 del t

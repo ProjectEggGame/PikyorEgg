@@ -18,7 +18,6 @@ if TYPE_CHECKING:
 from render.renderable import Renderable
 from utils.vector import Vector, BlockVector
 from block.block import Block, BrickWallBlock, BrickGroundBlock
-from music.music import Music_player
 
 
 class World(Renderable):
@@ -30,6 +29,15 @@ class World(Renderable):
 		self._entityList: set['Entity'] = set['Entity']()
 		self._ground: dict[int, Block] = dict[int, Block]()
 		self._seed: random.Random = random.Random(seed or 0)
+		self.maxUuid: int = 0
+		self.ending: bool = False
+	
+	def clearUuid(self):
+		self.maxUuid = 0
+	
+	def newUuid(self) -> int:
+		self.maxUuid += 1
+		return self.maxUuid - 1
 	
 	@staticmethod
 	def generateDefaultWorld(seed: int | None = None) -> 'World':
@@ -119,6 +127,10 @@ class World(Renderable):
 	
 	def addEntity(self, entity: 'Entity') -> None:
 		self._entityList.add(entity)
+		if entity.uuid == -1:
+			entity.uuid = self.newUuid()
+		else:
+			utils.warn(f"entity的uuid为{entity.uuid}，期待值-1")
 	
 	def removeEntity(self, entity: 'Entity') -> None:
 		self._entityList.remove(entity)
@@ -179,22 +191,58 @@ class World(Renderable):
 		archive.dic['name'] = self._name
 		archive.dic['id'] = self._id
 		archive.dic['player'] = self._player.save()
+		archive.dic['maxUuid'] = self.maxUuid
+		archive.dic['ending'] = self.ending
 		for p, b in self._ground.items():
 			w[p] = b.save()
 		for f in self._entityList:
 			e.append(f.save())
+		utils.info(archive.dic['id'])
 		archive.write()
+		archive.close()
 	
 	@classmethod
 	def load(cls, d: dict) -> 'World':
+		utils.info('id' in d)
 		world = cls(d['id'], d['name'])
 		world._player = entityManager.get('player').load(d['player'])
+		world.maxUuid = d['maxUuid'] if 'maxUuid' in d else 0
+		world.ending = d['ending'] if 'ending' in d else False
 		for i in (dictWorld := d['world']):
 			dictBlock = dictWorld[i]
 			block = blockManager.get(dictBlock['id']).load(dictBlock)
 			world._ground[hash(block.getBlockPosition())] = block
+		from entity.entity import Rooster
+		from entity.enemy import EnemyChicken
+		roosters = []
 		for e in d['entity']:
-			world._entityList.add(entityManager.get(e['id']).load(e))
+			world._entityList.add(e := entityManager.get(e['id']).load(e))
+			if isinstance(e, Rooster):
+				roosters.append(e)
+		for e in roosters:
+			if not isinstance(e.couple, int):
+				e.couple = None
+				e.description.d[0] = RenderableString("\\#ff4488ee单身\\r的\\#ff4488ee公鸡")
+				continue
+			for i in world._entityList:
+				if i.uuid != e.couple:
+					continue
+				if not isinstance(i, EnemyChicken):
+					utils.warn(f'{i.uuid}对应的类型不是母鸡。存档可能损坏')
+					e.couple = None
+				e.couple = i
+				e.center = i.center
+				utils.info(f'{e.couple.uuid}配对成功')
+				break
+			else:
+				utils.warn(f'{e.couple}配对失败。存档可能损坏')
+		if world._player.selectingRooster != -1:
+			for e in roosters:
+				if e.uuid == world._player.selectingRooster:
+					e.selected = True
+					world._player.selectingRooster = e
+				else:
+					e.selected = False
 		return world
 	
 	def __str__(self) -> str:
@@ -369,8 +417,9 @@ class DynamicWorld(World):
 		
 		# 第二段实体
 		for i in range(12):
-			self.addEntity(entityManager.get('enemy.hen')(pos := Vector(center2.x + self._seed.random() * 18 - 9, center2.y + self._seed.random() * 13 - 6)))
+			self.addEntity(hen := entityManager.get('enemy.hen')(pos := Vector(center2.x + self._seed.random() * 18 - 9, center2.y + self._seed.random() * 13 - 6)))
 			self.addEntity(entityManager.get('entity.coop')(pos))
+			self.addEntity(entityManager.get('entity.rooster')(pos, hen))
 
 
 class WitchWorld(World):
@@ -409,5 +458,3 @@ class WitchWorld(World):
 		clue_position = [Vector(-19, 0), Vector(0, 19), Vector(0, -19), Vector(19, 0)]
 		for j in range(0, 4):
 			self.addEntity(entityManager.get(f'entity.clue{j}')(clue_position[j], i=j))
-
-# class BabybuiltWorld(World):

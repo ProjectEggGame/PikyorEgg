@@ -133,7 +133,7 @@ class TaskWindow(Window):
 		self._widgets.append(Button(Location.CENTER, -0.2, 0.06, 0.12, 0.08, RenderableString("\\.00FCE8AD\\01TASK 3"), Description([RenderableString(X[2])]), textLocation=Location.CENTER))
 		self._widgets.append(Button(Location.CENTER, -0.2, 0.15, 0.12, 0.08, RenderableString("\\.00FCE8AD\\01TASK 4"), Description([RenderableString(X[3])]), textLocation=Location.CENTER))
 		self._widgets.append(Button(Location.CENTER, -0.2, 0.24, 0.12, 0.08, RenderableString("\\.00FCE8AD\\01TASK 5"), Description([RenderableString(X[4])]), textLocation=Location.CENTER))
-		self._widgets.append(Button(Location.CENTER, -0.24, -0.21, 0.12, 0.08, RenderableString("\\.00FCE8AD\\01Tutorial"), Description([RenderableString("技能的教程，来学不亏")]), textLocation=Location.CENTER))
+		self._widgets.append(Button(Location.CENTER, -0.2, -0.21, 0.12, 0.08, RenderableString("\\.00FCE8AD\\01Tutorial"), Description([RenderableString("技能的教程，来学不亏")]), textLocation=Location.CENTER))
 		
 		self._widgets[5].onMouseDown = lambda x, y, b: b[0] == 1 and game.setWindow(GuidanceWindow().setLastOpen(self)) or True
 		
@@ -198,12 +198,14 @@ class TaskWindow(Window):
 			self._widgets[2].x = -0.33
 			self._widgets[3].x = -0.33
 			self._widgets[4].x = -0.33
+			self._widgets[5].x = -0.33
 		else:
 			self._widgets[0].x = -0.25
 			self._widgets[1].x = -0.25
 			self._widgets[2].x = -0.25
 			self._widgets[3].x = -0.25
 			self._widgets[4].x = -0.25
+			self._widgets[5].x = -0.25
 		super().onResize()
 	
 	def render(self, delta: float) -> None:
@@ -363,6 +365,8 @@ class PlotWindow(Window):
 			if self.Sentence > 10:
 				self.Sentence = 10
 				game.setWindow(SeedWindow().setLastOpen(self))
+
+
 # game.setWindow(None)
 # game.setWorld(DynamicWorld('DynamicWorld'))
 
@@ -571,65 +575,89 @@ class GuidanceWindow(Window):
 		super().__init__("Guidance")
 		self.page = 0
 		
-		self._texture = [[resourceManager.getOrNew('window/Guidance/page0/show')],
-		                 [resourceManager.getOrNew('window/Guidance/page0/show'),
-		                  resourceManager.getOrNew('window/Guidance/page0/rice')],
-						 [resourceManager.getOrNew('window/Guidance/page0.8/show')],
-		                 [resourceManager.getOrNew('window/Guidance/page1/skill1'),
-		                  resourceManager.getOrNew('window/Guidance/page1/skill2'),
-		                  resourceManager.getOrNew('window/Guidance/page1/skill3'),
-		                  resourceManager.getOrNew('window/Guidance/page1/skill4'),
-		                  resourceManager.getOrNew('window/Guidance/page1/skill5'),
-						  resourceManager.getOrNew('window/Guidance/page1/skill6')],
-						  [resourceManager.getOrNew('window/Guidance/page1.5/show'),
-		                  resourceManager.getOrNew('window/Guidance/page1.5/skill')],
-		                 [resourceManager.getOrNew('window/Guidance/page2/show'),
-		                  resourceManager.getOrNew('window/Guidance/page2/skill')],
-		                 [resourceManager.getOrNew('window/Guidance/page3/show'),
-		                  resourceManager.getOrNew('window/Guidance/page3/skill')],
-		                 [resourceManager.getOrNew('window/Guidance/page4/show'),
-		                  resourceManager.getOrNew('window/Guidance/page4/skill')],
-		                 [resourceManager.getOrNew('window/Guidance/page5/show'),
-		                  resourceManager.getOrNew('window/Guidance/page5/skill1'),
-		                  resourceManager.getOrNew('window/Guidance/page5/skill2')],
-		                 [resourceManager.getOrNew('window/Guidance/page6/1'),
-		                  resourceManager.getOrNew('window/Guidance/page6/2'),
-		                  resourceManager.getOrNew('window/Guidance/page6/3'),
-		                  resourceManager.getOrNew('window/Guidance/page6/4'),
-		                  resourceManager.getOrNew('window/Guidance/page6/5')]]
+		self._texture = [
+			[resourceManager.getOrNew('window/Guidance/page0/show')],
+			[
+				resourceManager.getOrNew('window/Guidance/page0/show'),
+				resourceManager.getOrNew('window/Guidance/page0/rice')
+			],
+			[resourceManager.getOrNew('window/Guidance/page0.8/show')],
+			[
+				resourceManager.getOrNew('window/Guidance/page1/skill1'),
+				resourceManager.getOrNew('window/Guidance/page1/skill2'),
+				resourceManager.getOrNew('window/Guidance/page1/skill3'),
+				resourceManager.getOrNew('window/Guidance/page1/skill4'),
+				resourceManager.getOrNew('window/Guidance/page1/skill5'),
+				resourceManager.getOrNew('window/Guidance/page1/skill6')
+			],
+			[
+				resourceManager.getOrNew('window/Guidance/page1.5/show'),
+				resourceManager.getOrNew('window/Guidance/page1.5/skill')
+			],
+			[
+				resourceManager.getOrNew('window/Guidance/page2/show'),
+				resourceManager.getOrNew('window/Guidance/page2/skill')
+			],
+			[
+				resourceManager.getOrNew('window/Guidance/page3/show'),
+				resourceManager.getOrNew('window/Guidance/page3/skill')
+			],
+			[
+				resourceManager.getOrNew('window/Guidance/page4/show'),
+				resourceManager.getOrNew('window/Guidance/page4/skill')
+			],
+			[
+				resourceManager.getOrNew('window/Guidance/page5/show'),
+				resourceManager.getOrNew('window/Guidance/page5/skill1'),
+				resourceManager.getOrNew('window/Guidance/page5/skill2')
+			],
+			[
+				resourceManager.getOrNew('window/Guidance/page6/1'),
+				resourceManager.getOrNew('window/Guidance/page6/2'),
+				resourceManager.getOrNew('window/Guidance/page6/3'),
+				resourceManager.getOrNew('window/Guidance/page6/4'),
+				resourceManager.getOrNew('window/Guidance/page6/5')
+			]
+		]
 		
-		self._texture_position = [[[0.05, 0.22]], 
-								  [[0.05, 0.22], [0.77, 0.6]],
-								  [[0.19,0.1]],
-		                          [[0.54, 0.1], [0.08, 0.5], [0.31, 0.5], [0.54, 0.5], [0.77, 0.5],[0.31,0.1]],
-		                          [[0.55, 0.3], [0.2, 0.1]],
-								  [[0.55, 0.3], [0.2, 0.1]],
-		                          [[0.55, 0.3], [0.2, 0.1]],
-		                          [[0.55, 0.3], [0.2, 0.1]],
-		                          [[0.55, 0.3], [0.23, 0.08], [0.23, 0.55]],
-		                          [[0.05, 0.3], [0.23, 0.3], [0.41, 0.3], [0.59, 0.3], [0.77, 0.3]]]
+		self._texture_position = [
+			[[0, 0.22]],
+			[[0, 0.22], [0.77, 0.6]],
+			[[0.1, 0.1]],
+			[[0.54, 0.1], [0.08, 0.5], [0.31, 0.5], [0.54, 0.5], [0.77, 0.5], [0.31, 0.1]],
+			[[0.55, 0.3], [0.2, 0.1]],
+			[[0.55, 0.3], [0.2, 0.1]],
+			[[0.55, 0.3], [0.2, 0.1]],
+			[[0.55, 0.3], [0.2, 0.1]],
+			[[0.55, 0.3], [0.23, 0.08], [0.23, 0.55]],
+			[[0.05, 0.3], [0.23, 0.3], [0.41, 0.3], [0.59, 0.3], [0.77, 0.3]]
+		]
 		
-		self._text = [["按E调出任务面板", "可以升级技能", "面板有技能信息", "这里将教学使用方法"],
-		              ["如果你发现无法升级", "那就是成长值不足", "先去吃点米粒吧"],
-					  ["1    2    3    4    5    6","键入1-6可进入准备状态","技能获得顺序随机","数字编号由玩家获得的技能顺序决定","再按相同数字键或鼠标右键退出准备模式"],
-		              ["主动技能：", "   猛啄                  头槌             肾上腺素               疾跑  ","回复               闪现 "],
-					  ["主动技能——回复", "原地回血", "左键键入即可", "冷却时间：40s", "准备时图像："],
-		              ["主动技能——闪现", "可以帮助你跨越一些墙", "对准后点击鼠标左键即可", "冷却时间：40s", "准备时图像："],
-		              ["主动技能——猛啄", "用于近战攻击", "将目标放进黄色箭头内左键入", "可连续使用", "准备时图像："],
-		              ["主动技能——头槌", "远距离攻击", "将目标放进黄圈内左键入", "冷却时间：40s", "准备时图像："],
-		              ["主动技能——肾上腺素", "短暂的免死金牌", "主动技能——疾跑", "顾名思义，跑得更快", "直接左键入", "准备时图像："],
-		              ["至于被动技能：", "爱米        屹立不倒         坚毅            迅捷            揠苗   ", "去面板升级就好啦", "（）不升级容易死"]]
+		self._text = [
+			["按E调出任务面板", "可以升级技能", "面板有技能信息", "这里将教学使用方法"],
+			["如果你发现无法升级", "那就是成长值不足", "先去吃点米粒吧"],
+			["1    2    3    4    5    6", "键入1-6可进入准备状态", "技能获得顺序随机", "数字编号由玩家获得的技能顺序决定", "再按相同数字键或鼠标右键退出准备模式"],
+			["主动技能：", "猛啄", "头槌", "肾上腺素", "闪现", "回复", "迅捷"],
+			["主动技能——回复", "原地回血", "左键使用即可", "冷却时间：40s", "准备时图像："],
+			["主动技能——闪现", "可以帮助你跨越一些墙", "对准后点击鼠标左键即可", "冷却时间：40s", "准备时图像："],
+			["主动技能——猛啄", "用于近战攻击", "黄色箭头为攻击范围", "可连续左键使用", "准备时图像："],
+			["主动技能——头槌", "远距离攻击+传送", "黄圈为攻击范围，", "冷却时间：40s", "准备时图像："],
+			["主动技能——肾上腺素", "短暂的免死金牌", "主动技能——疾跑", "顾名思义，跑得更快", "左键短暂加速", "准备时图像："],
+			["至于被动技能：", "爱米", "坚毅", "揠苗", "屹立不倒", "迅捷", "去面板升级就好啦", "（）不升级容易死"]
+		]
 		
-		self._text_position = [[[0.8, 0.3], [0.8, 0.4], [0.8, 0.5], [0.8, 0.6]],
-		                       [[0.8, 0.3], [0.8, 0.4], [0.8, 0.5]],
-							   [[0.36,0.45],[0.5,0.55],[0.5,0.65],[0.5,0.75],[0.5,0.85]],
-		                       [[0.2, 0.2], [0.5, 0.85],[0.5,0.45]],
-		                       [[0.27, 0.5], [0.27, 0.6], [0.27, 0.7], [0.27, 0.8], [0.65, 0.2]],
-		                       [[0.27, 0.5], [0.27, 0.6], [0.27, 0.7], [0.27, 0.8], [0.65, 0.2]],
-		                       [[0.27, 0.5], [0.27, 0.6], [0.27, 0.7], [0.27, 0.8], [0.65, 0.2]],
-							   [[0.27, 0.5], [0.27, 0.6], [0.27, 0.7], [0.27, 0.8], [0.65, 0.2]],
-		                       [[0.27, 0.35], [0.27, 0.45], [0.27, 0.82], [0.27, 0.92], [0.65, 0.85], [0.65, 0.2]],
-		                       [[0.2, 0.2], [0.5, 0.65], [0.5, 0.75], [0.5, 0.85]]]
+		self._text_position = [
+			[[0.75, 0.3], [0.75, 0.4], [0.75, 0.5], [0.75, 0.6]],
+			[[0.75, 0.3], [0.75, 0.4], [0.75, 0.5]],
+			[[0.3, 0.45], [0.5, 0.55], [0.5, 0.65], [0.5, 0.75], [0.5, 0.85]],
+			[[0.2, 0.2], [0.125, 0.85], [0.375, 0.85], [0.625, 0.85], [0.875, 0.85], [0.375, 0.45], [0.625, 0.45]],
+			[[0.27, 0.5], [0.27, 0.6], [0.27, 0.7], [0.27, 0.8], [0.65, 0.2]],
+			[[0.27, 0.5], [0.27, 0.6], [0.27, 0.7], [0.27, 0.8], [0.65, 0.2]],
+			[[0.27, 0.5], [0.27, 0.6], [0.27, 0.7], [0.27, 0.8], [0.65, 0.2]],
+			[[0.27, 0.5], [0.27, 0.6], [0.27, 0.7], [0.27, 0.8], [0.65, 0.2]],
+			[[0.27, 0.35], [0.27, 0.45], [0.27, 0.82], [0.27, 0.92], [0.65, 0.85], [0.65, 0.2]],
+			[[0.2, 0.2], [0.1, 0.65], [0.3, 0.65], [0.5, 0.65], [0.7, 0.65], [0.9, 0.65], [0.5, 0.75], [0.5, 0.85]]
+		]
 		"""
 		你未来会碰到敌人，怎么办？
 		大开杀戒
@@ -679,13 +707,14 @@ class GuidanceWindow(Window):
 		self._widgets[2].onMouseDown = _2
 	
 	def renderBackground(self, delta: float, at: BlockVector = BlockVector()) -> None:
-		if self._texture[self.page] is not None:
+		page = self.page
+		if self._texture[page] is not None:
 			w, h = renderer.getCanvas().get_size()
-			texture_num = len(self._texture[self.page])
+			texture_num = len(self._texture[page])
 			for i in range(texture_num):
 				size: BlockVector = renderer.getSize()
-				pos = Vector(size.x * self._texture_position[self.page][i][0], size.y * self._texture_position[self.page][i][1])
-				pic = self._texture[self.page][i]
+				pos = Vector(size.x * self._texture_position[page][i][0], size.y * self._texture_position[page][i][1])
+				pic = self._texture[page][i]
 				pic.adaptsUI(True)
 				pic.renderAtInterface(pos)
 		
@@ -701,12 +730,13 @@ class GuidanceWindow(Window):
 				renderer.getCanvas().blit(s, (0, 0))
 	
 	def render(self, delta: float) -> None:
+		page = self.page
 		super().render(delta)
 		size: BlockVector = renderer.getSize()
-		text_num = len(self._text[self.page])
+		text_num = len(self._text[page])
 		
 		for i in range(text_num):
-			renderer.renderString(RenderableString(f'\\.0040304D\\00{self._text[self.page][i]}'), int(size.x * self._text_position[self.page][i][0]), int(size.y * self._text_position[self.page][i][1]), 0xffffffff, Location.CENTER)
+			renderer.renderString(RenderableString(f'\\.0040304D\\00{self._text[page][i]}'), int(size.x * self._text_position[page][i][0]), int(size.y * self._text_position[page][i][1]), 0xffffffff, Location.CENTER)
 	
 	def passRender(self, delta: float, at: Vector | None = None) -> None:
 		s = Surface(renderer.getCanvas().get_size())
@@ -714,6 +744,65 @@ class GuidanceWindow(Window):
 		
 		renderer.getCanvas().blit(s, (0, 0))
 		super().passRender(delta, at)
+
+
+class EndPlotWindow(Window):
+	def __init__(self):
+		super().__init__("Plot")
+		self._texture = resourceManager.getOrNew('window/plot_1')
+		self._texture.systemScaleOffset = 0.0625
+		self._texture.adaptsMap(False)
+		self._texture.adaptsSystem(True)
+		game.getWorld(0).ending = True
+		self.Sentence = 0
+		
+		def _0(x, y, b) -> bool:
+			if self.Sentence < 3:
+				self.Sentence += 1
+			else:
+				game.setWindow(None)
+			return True
+		
+		def _1(x, y, b) -> bool:
+			game.setWindow(None)
+			return True
+		
+		def _2(x, y, b) -> bool:
+			if self.Sentence > 0:
+				self.Sentence -= 1
+			return True
+		
+		self._widgets.append(Button(Location.BOTTOM, 0.22, 0, 0.12, 0.08, RenderableString("\\.00FFFFFF\\01NEXT"), Description([RenderableString("继续")]), textLocation=Location.CENTER))
+		self._widgets[0].onMouseDown = _0
+		self._widgets.append(Button(Location.BOTTOM, 0.38, 0, 0.12, 0.08, RenderableString("\\.00FFFFFF\\01SKIP"), Description([RenderableString("跳过剧情")]), textLocation=Location.CENTER))
+		self._widgets[1].onMouseDown = _1
+		self._widgets.append(Button(Location.BOTTOM, 0.06, 0, 0.12, 0.08, RenderableString("\\.00FFFF\\01BACK"), Description([RenderableString("上一页")]), textLocation=Location.CENTER))
+		self._widgets[2].onMouseDown = _2
+		
+		self._widgets[0].color = PresetColors.plotColor
+		self._widgets[1].color = PresetColors.plotColor
+		self._widgets[2].color = PresetColors.plotColor
+		
+		self._widgets[0].textColor = PresetColors.plotText
+		self._widgets[1].textColor = PresetColors.plotText
+		self._widgets[2].textColor = PresetColors.plotText
+	
+	def render(self, delta: float) -> None:
+		super().render(delta)
+		size: BlockVector = renderer.getSize()
+		if self.Sentence == 0:
+			# 之前是0.62和0.28
+			renderer.renderString(RenderableString('\\.0040304D\\00恭喜你！'), int(size.x * 0.5), int(size.y * 0.4), 0xffffffff, Location.CENTER)
+			renderer.renderString(RenderableString('\\.0040304D\\00你已成功完成所有任务，并顺利产出你的蛋'), int(size.x * 0.5), int(size.y * 0.4 + font.realFontHeight), 0xffffffff, Location.CENTER)
+		if self.Sentence == 1:
+			renderer.renderString(RenderableString('\\.0040304D\\00你用事实证明'), int(size.x * 0.5), int(size.y * 0.4), 0xffffffff, Location.CENTER)
+			renderer.renderString(RenderableString('\\.0040304D\\00你并不是一只一无是处的小鸡'), int(size.x * 0.5), int(size.y * 0.4 + font.realFontHeight), 0xffffffff, Location.CENTER)
+		if self.Sentence == 2:
+			renderer.renderString(RenderableString('\\.0040304D\\00你聪明、睿智、敏捷，'), int(size.x * 0.5), int(size.y * 0.4), 0xffffffff, Location.CENTER)
+			renderer.renderString(RenderableString('\\.0040304D\\00是一个负责任的妈妈'), int(size.x * 0.5), int(size.y * 0.4 + font.realFontHeight), 0xffffffff, Location.CENTER)
+		if self.Sentence == 3:
+			renderer.renderString(RenderableString('\\.0040304D\\00游戏到此告一段落'), int(size.x * 0.5), int(size.y * 0.4), 0xffffffff, Location.CENTER)
+			renderer.renderString(RenderableString('\\.0040304D\\00我们未来见。'), int(size.x * 0.5), int(size.y * 0.4 + font.realFontHeight), 0xffffffff, Location.CENTER)
 
 
 anim1 = [resourceManager.getOrNew(f'window/nurturing/nurturing{t}') for t in range(1, 7)]
@@ -735,71 +824,3 @@ for t in anim2:
 	t.setOffset(Vector(-5, 0))
 
 del t
-
-class EndPlotWindow(Window):
-    def __init__(self):
-        super().__init__("Plot")
-        self._texture = resourceManager.getOrNew('window/plot_1')
-        self._texture.systemScaleOffset = 0.0625
-        self._texture.adaptsMap(False)
-        self._texture.adaptsSystem(True)
-        self.Sentence = 0
-        
-        def _0(x, y, b) -> bool:
-            if self.Sentence < 10:
-                self.Sentence += 1
-            else:
-                game.setWindow(StartWindow().setLastOpen(self))
-            # game.setWindow(None)
-            # game.setWorld(DynamicWorld('DynamicWorld'))
-            return True
-        
-        def _1(x, y, b) -> bool:
-            if self.Sentence < 10:
-                self.Sentence = 10
-            else:
-                game.setWindow(StartWindow().setLastOpen(self))
-            # game.setWindow(None)
-            # game.setWorld(DynamicWorld('DynamicWorld'))
-            return True
-        
-
-        def _2(x, y, b) -> bool:
-            if self.Sentence > 0:
-                self.Sentence -= 1
-            else:
-                game.setwindow(EggFactoryWindow().setLastopen(self))
-            
-            return True
-        
-        self._widgets.append(Button(Location.BOTTOM, 0.22, 0, 0.12, 0.08, RenderableString("\\.00FFFFFF\\01NEXT"), Description([RenderableString("继续")]), textLocation=Location.CENTER))
-        self._widgets[0].onMouseDown = _0
-        self._widgets.append(Button(Location.BOTTOM, 0.38, 0, 0.12, 0.08, RenderableString("\\.00FFFFFF\\01SKIP"), Description([RenderableString("跳过剧情")]), textLocation=Location.CENTER))
-        self._widgets[1].onMouseDown = _1
-        self._widgets.append(Button(Location.BOTTOM, 0.06, 0, 0.12, 0.08, RenderableString("\\.00FFFF\\01BACK"), Description([RenderableString("上一页")]), textLocation=Location.CENTER))
-        self._widgets[2].onMouseDown = _2
-        
-        self._widgets[0].color = PresetColors.plotColor
-        self._widgets[1].color = PresetColors.plotColor
-        self._widgets[2].color = PresetColors.plotColor
-        
-        self._widgets[0].textColor = PresetColors.plotText
-        self._widgets[1].textColor = PresetColors.plotText
-        self._widgets[2].textColor = PresetColors.plotText
-    
-    def render(self, delta: float) -> None:
-        super().render(delta)
-        size: BlockVector = renderer.getSize()
-        if self.Sentence == 0:
-            # 之前是0.62和0.28
-            renderer.renderString(RenderableString('\\.0040304D\\00恭喜你！'), int(size.x * 0.5), int(size.y * 0.4), 0xffffffff, Location.CENTER)
-            renderer.renderString(RenderableString('\\.0040304D\\00你已成功完成所有任务，并顺利产出你的蛋'), int(size.x * 0.5), int(size.y * 0.4 + font.realFontHeight), 0xffffffff, Location.CENTER)
-        if self.Sentence == 1:
-            renderer.renderString(RenderableString('\\.0040304D\\00你用事实证明'), int(size.x * 0.5), int(size.y * 0.4), 0xffffffff, Location.CENTER)
-            renderer.renderString(RenderableString('\\.0040304D\\00你并不是一只一无是处的小鸡'), int(size.x * 0.5), int(size.y * 0.4 + font.realFontHeight), 0xffffffff, Location.CENTER)
-        if self.Sentence == 2:
-            renderer.renderString(RenderableString('\\.0040304D\\00你聪明、睿智、敏捷，'), int(size.x * 0.5), int(size.y * 0.4), 0xffffffff, Location.CENTER)
-            renderer.renderString(RenderableString('\\.0040304D\\00是一个负责任的妈妈'), int(size.x * 0.5), int(size.y * 0.4 + font.realFontHeight), 0xffffffff, Location.CENTER)
-        if self.Sentence == 3:
-            renderer.renderString(RenderableString('\\.0040304D\\00游戏到此告一段落'), int(size.x * 0.5), int(size.y * 0.4), 0xffffffff, Location.CENTER)
-            renderer.renderString(RenderableString('\\.0040304D\\00我们未来见。'), int(size.x * 0.5), int(size.y * 0.4 + font.realFontHeight), 0xffffffff, Location.CENTER)

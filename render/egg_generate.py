@@ -100,7 +100,7 @@ def generateEgg(style: list[int], colors: list[int], egg: int, random: Random):
 	if runes in style:
 		for i in random.sample(styles[runes], random.randint(4, 8)):
 			y = random.randint(12, 43)
-			x = random.randint(-abs(y - 27) - 2, abs(y - 27) + 2) + 28
+			x = random.randint(30 - abs(y - 27), abs(y - 27) + 30)
 			sfc.blit(copySurface(i.getSurface(), colors[style.index(runes)]), (x, y))
 	if second in style:
 		y = random.randint(15, 40)
@@ -127,13 +127,13 @@ def generateEgg(style: list[int], colors: list[int], egg: int, random: Random):
 		while __check(lst, y, 3):
 			y = random.randint(15, 40)
 		lst.append(y)
-		sfc.blit(copySurface(styles[heart].getSurface(), colors[style.index(heart)]), (random.randint(-abs(y - 27) - 4, abs(y - 27)), y))
+		sfc.blit(copySurface(styles[heart].getSurface(), colors[style.index(heart)]), (random.randint(28 - abs(y - 27), 28 + abs(y - 27)), y))
 	if cc in style:
 		y = random.randint(15, 40)
 		while __check(lst, y, 3):
 			y = random.randint(15, 40)
 		lst.append(y)
-		sfc.blit(copySurface(styles[cc].getSurface(), colors[style.index(cc)]), (random.randint(-abs(y - 27) - 3, abs(y - 27)), y))
+		sfc.blit(copySurface(styles[cc].getSurface(), colors[style.index(cc)]), (random.randint(29 - abs(y - 27), 29 + abs(y - 27)), y))
 	if flower in style:
 		y = random.randint(15, 40)
 		x = random.randint(-abs(y - 27), abs(y - 27)) + 28
