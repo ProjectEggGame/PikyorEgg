@@ -714,6 +714,8 @@ class EggProductWindow(Window):
 			if buttons[0] == 1:
 				if self._product is not None:
 					assert isinstance(self._product, Surface)
+					if not os.path.exists("user/archive"):
+						os.makedirs("user/archive")
 					name = f"user/archive/my_" + "_".join(self.keywords) + "_egg.bmp"
 					pygame.image.save(self._product, name)
 					if not game.getWorld(0).ending:
