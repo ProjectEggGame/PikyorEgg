@@ -29,6 +29,7 @@ class World(Renderable):
 		self._entityList: set['Entity'] = set['Entity']()
 		self._ground: dict[int, Block] = dict[int, Block]()
 		self._seed: random.Random = random.Random(seed or 0)
+		self._seedNumber: int = seed or 0
 		self.maxUuid: int = 0
 		self.ending: bool = False
 	
@@ -193,6 +194,7 @@ class World(Renderable):
 		archive.dic['player'] = self._player.save()
 		archive.dic['maxUuid'] = self.maxUuid
 		archive.dic['ending'] = self.ending
+		archive.dic['seed_num'] = self._seedNumber
 		for p, b in self._ground.items():
 			w[p] = b.save()
 		for f in self._entityList:
@@ -208,6 +210,8 @@ class World(Renderable):
 		world._player = entityManager.get('player').load(d['player'])
 		world.maxUuid = d['maxUuid'] if 'maxUuid' in d else 0
 		world.ending = d['ending'] if 'ending' in d else False
+		world._seedNumber = d['seed_num'] if 'seed_num' in d else 0
+		world._seed.seed(world._seedNumber)
 		for i in (dictWorld := d['world']):
 			dictBlock = dictWorld[i]
 			block = blockManager.get(dictBlock['id']).load(dictBlock)
@@ -241,6 +245,7 @@ class World(Renderable):
 				if e.uuid == world._player.selectingRooster:
 					e.selected = True
 					world._player.selectingRooster = e
+					e.description.d[0] = RenderableString("\\#ffeeee00你\\r的\\#ff4488ee公鸡")
 				else:
 					e.selected = False
 		return world

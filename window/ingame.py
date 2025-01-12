@@ -260,7 +260,7 @@ class PlotWindow(Window):
 	def __init__(self):
 		super().__init__("Plot")
 		self._texture = resourceManager.getOrNew('window/plot_1')
-		self._texture.systemScaleOffset = 0.0625
+		self._texture.systemScaleOffset = 0.064
 		self._texture.adaptsMap(False)
 		self._texture.adaptsSystem(True)
 		self.Sentence = 0
@@ -343,7 +343,7 @@ class PlotWindow(Window):
 			renderer.renderString(RenderableString('\\.0040304D\\00游戏中你可能会用到以下快捷键：'), int(size.x * 0.5), int(size.y * 0.2 - font.realFontHeight*1.3), 0xffffffff, Location.CENTER)
 			renderer.renderString(RenderableString('\\.0040304D\\00人物移动 WASD 同时按Crtl可加速'), int(size.x * 0.5), int(size.y * 0.23 + font.realFontHeight * 0), 0xffffffff, Location.CENTER)
 			renderer.renderString(RenderableString('\\.0040304D\\00状态面板 E'), int(size.x * 0.5), int(size.y * 0.23 + font.realFontHeight * 1), 0xffffffff, Location.CENTER)
-			renderer.renderString(RenderableString('\\.0040304D\\00任务面板 Tab'), int(size.x * 0.5), int(size.y * 0.23 + font.realFontHeight * 2), 0xffffffff, Location.CENTER)
+			renderer.renderString(RenderableString('\\.0040304D\\00任务面板与\\#ffee0000技能教程\\#ffeeeeee Tab'), int(size.x * 0.5), int(size.y * 0.23 + font.realFontHeight * 2), 0xffffffff, Location.CENTER)
 			renderer.renderString(RenderableString('\\.0040304D\\00暂停并打开暂停菜单 Esc'), int(size.x * 0.5), int(size.y * 0.23 + font.realFontHeight * 3), 0xffffffff, Location.CENTER)
 			renderer.renderString(RenderableString('\\.0040304D\\00锁定/解锁视角 Space'), int(size.x * 0.5), int(size.y * 0.23 + font.realFontHeight * 4), 0xffffffff, Location.CENTER)
 			renderer.renderString(RenderableString('\\.0040304D\\00移动视角 中键按住拖动'), int(size.x * 0.5), int(size.y * 0.23+ font.realFontHeight * 5), 0xffffffff, Location.CENTER)
@@ -749,7 +749,7 @@ class EndPlotWindow(Window):
 	def __init__(self):
 		super().__init__("Plot")
 		self._texture = resourceManager.getOrNew('window/plot_1')
-		self._texture.systemScaleOffset = 0.0625
+		self._texture.systemScaleOffset = 0.064
 		self._texture.adaptsMap(False)
 		self._texture.adaptsSystem(True)
 		game.getWorld(0).ending = True

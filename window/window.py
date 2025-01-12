@@ -291,6 +291,8 @@ class LoadWindow(Window):
 				string, clicks, btn = s, [time], bt
 				
 				def _func(x, y, b):
+					if not btn.active:
+						return True
 					if b[0] == 1:
 						archive = Archive(string)
 						archive.read()
@@ -304,6 +306,7 @@ class LoadWindow(Window):
 						else:
 							archive = Archive(string)
 							archive.delete()
+							btn.description.d[0] = RenderableString(f"\\#ffee0000无法加载已删除的存档")
 							btn.description.d[1] = RenderableString(f"\\#ffee0000存档已删除")
 							btn.active = False
 					return True
@@ -311,6 +314,7 @@ class LoadWindow(Window):
 				return _func
 			
 			dl = os.listdir('user/archive')
+			dl = [i for i in dl if i.endswith(".json")]
 			self.count = len(dl)
 			for i in range(self.count):
 				button = Button(Location.CENTER, 0, -0.4 + i * 0.1, 0.4, 0.08, RenderableString('\\10' + dl[i][:-5]), Description([RenderableString("加载此存档"), RenderableString("\\#ffee0000右键3次以删除存档")]), Location.CENTER)
@@ -552,7 +556,8 @@ class DeathWindow(Window):
 	def __init__(self):
 		super().__init__("You Died!")
 		self._widgets.append(Button(Location.CENTER, 0, 0.1, 0.4, 0.08, RenderableString('\\01Restart'), Description([RenderableString("复活")]), Location.CENTER))
-		self._widgets[0].onMouseDown = lambda x, y, b: b[0] == 1 and (game.setWindow(None) or game.getWorld().setPlayer(entityManager.get('player')(Vector()))) or True
+		from world.world import DynamicWorld
+		self._widgets[0].onMouseDown = lambda x, y, b: b[0] == 1 and (game.setWorld(DynamicWorld(game.getWorld(0)._name, game.getWorld(0)._seedNumber)) or game.setWindow(None)) or True
 		self._widgets.append(Button(Location.CENTER, 0, 0.2, 0.4, 0.08, RenderableString('\\01Load'), Description([RenderableString("加载存档")]), Location.CENTER))
 		self._widgets[1].onMouseDown = lambda x, y, b: b[0] == 1 and game.setWindow(LoadWindow().setLastOpen(self)) or True
 		self._widgets.append(Button(Location.CENTER, 0, 0.3, 0.4, 0.08, RenderableString('\\01Exit'), Description([RenderableString('退出游戏')]), Location.CENTER))
@@ -739,3 +744,5 @@ class EggProductWindow(Window):
 		if isinstance(self._renderable, Surface):
 			renderer.getCanvas().blit(self._renderable, (renderer.getCanvas().get_width() - self._renderable.get_width() >> 1, renderer.getCanvas().get_height() - self._renderable.get_height() >> 1))
 			renderer.renderString(RenderableString(f"\\01\\#ff000000Your " + ", ".join(self.keywords) + " egg!"), renderer.getCanvas().get_width() >> 1, renderer.getCanvas().get_height() >> 4, 0xffeeeeee, Location.CENTER)
+		else:
+			renderer.renderString(RenderableString("\\#ff000000亲爱的AI正在准备你的鸡蛋"), renderer.getCanvas().get_width() >> 1, renderer.getCanvas().get_height() >> 3, 0xffeeeeee, Location.CENTER)

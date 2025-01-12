@@ -11,7 +11,7 @@ class Utils:
 		self._lock = Lock()
 		if self._lock.locked():
 			self._lock.release()
-		self.logLevel = 0
+		self.logLevel = 4
 	
 	@staticmethod
 	def __copyFromConfigs(dic: dict[str, any], key: str, else_: any, result_or_judgement: dict[any, any] | Callable[[any], any] | None, warningMessage: str | None = None) -> any:
@@ -33,7 +33,7 @@ class Utils:
 			return else_
 	
 	def readConfig(self, config: dict) -> None:
-		self.logLevel = self.__copyFromConfigs(config, 'logLevel', 0, {'trace': 0, 'debug': 1, 'info': 2, 'warn': 3, 'error': 4}, 'Invalid log level: {}')
+		self.logLevel = self.__copyFromConfigs(config, 'logLevel', 4, {'trace': 0, 'debug': 1, 'info': 2, 'warn': 3, 'error': 4}, 'Invalid log level: {}')
 	
 	def writeConfig(self) -> dict:
 		match self.logLevel:

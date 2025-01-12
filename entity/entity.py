@@ -372,7 +372,7 @@ class MoveableEntity(Entity):
 			return self._renderPosition.clone()
 		ld = self.lastDelta
 		if ld > delta:
-			delta = ld
+			delta = (ld + 1) / 2
 		self._renderPosition = self._position + self.__velocity * delta
 		return self._renderPosition.clone()
 	
@@ -696,8 +696,10 @@ class Player(MoveableEntity, Damageable):
 					elif self.nearestRooster is None:
 						game.hud.sendMessage(RenderableString("\\#ffee0000你附近没有单身公鸡，快去找找吧~"))
 					else:
-						self.selectingRooster = self.nearestRooster
-						self.nearestRooster.selected = True
+						near = self.nearestRooster
+						self.selectingRooster = near
+						near.description.d[0] = RenderableString("\\#ffeeee00你\\r的\\#ff4488ee公鸡")
+						near.selected = True
 						self.progress += 1
 						game.hud.sendMessage(RenderableString('\\#ff0000ee你看着你选中的公鸡……'))
 						game.hud.sendMessage(RenderableString('\\#ff0000ee回家下蛋！'))
@@ -737,7 +739,7 @@ class Player(MoveableEntity, Damageable):
 					game.setWindow(BuildingWindow())
 					game.getWorld().addEntity(entityManager.get('entity.coop')(self._position.clone()))
 				else:
-						game.hud.sendMessage(RenderableString('\\#ffee0000请在家里搭窝，不然蛋会被捣蛋的狐狸偷走~'))
+					game.hud.sendMessage(RenderableString('\\#ffee0000请在家里搭窝，不然蛋会被捣蛋的狐狸偷走~'))
 		if self.moveable == 0:
 			self.setVelocity(v.normalize().multiply(self._maxSpeed))
 		else:

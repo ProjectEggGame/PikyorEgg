@@ -172,7 +172,7 @@ class EnemyChicken(Enemy):
 				resourceManager.getOrNew("entity/enemy/hen_6"),
 				resourceManager.getOrNew("entity/enemy/hen_3"),
 				resourceManager.getOrNew("entity/enemy/hen_4"),
-			], position, 100, 0.3)
+			], position, 100, 0.25)
 		self.center: Vector = centralPosition.clone() if centralPosition is not None else position.clone()
 		self._attacked: bool = False
 	

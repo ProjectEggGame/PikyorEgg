@@ -455,7 +455,7 @@ class SeedWindow(InputWindow):
 		
 		if os.path.exists('user') and os.path.exists('user/archive'):
 			dl = os.listdir('user/archive')
-			self._existNames = [i[:-5] for i in dl]
+			self._existNames = [i[:-5] for i in dl if i.endswith(".json")]
 		
 		def confirm(x, y, buttons):
 			if buttons[0] == 1 and self._widgets[-1].active:
