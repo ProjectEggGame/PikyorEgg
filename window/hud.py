@@ -144,7 +144,7 @@ class Hud(Renderable):
 		for s in player.activeSkills:
 			pos.x += s.render(delta, pos, player.skillSelecting, True)
 		
-		while len(self.messages) != 0 and game.tickCount - self.messages[0][0] > 80:
+		while len(self.messages) != 0 and game.tickCount - self.messages[0][0] > 120:
 			self.messages.popleft()
 		yMessage = h >> 3
 		xCenter = w >> 1

@@ -456,13 +456,13 @@ class Rice(Entity):
 
 class Stick(Entity):
 	def __init__(self, position: Vector):
-		super().__init__('entity.stick', '树枝', EntityDescription(self, [RenderableString("\\#FFFFD700坚硬的树枝")]), [resourceManager.getOrNew('entity/stick')], position)
+		super().__init__('entity.stick', '树枝', EntityDescription(self, [RenderableString("\\#FFFFD700\\/坚硬的树枝"), RenderableString("\\#ffffd700用来搭窝")]), [resourceManager.getOrNew('entity/stick')], position)
 	
 	def tick(self) -> None:
 		player = game.getWorld().getPlayer()
 		if player is not None and player.getPosition().distanceManhattan(self.getPosition()) <= 0.6:
 			Music_player.sound_play(1)
-			player.pick(1, self)
+			player.pick(3, self)
 			game.getWorld().removeEntity(self)
 	
 	@classmethod
@@ -706,20 +706,18 @@ class Player(MoveableEntity, Damageable):
 						game.hud.sendMessage(RenderableString('\\#ffeeee00\\.ffee6666恭喜你，解锁了新的任务'))
 				else:
 					game.hud.sendMessage(RenderableString("\\#ffee0000你还没有接受教诲，别急着找公鸡~"))
+			if interact.right.deals():
+				self.skillSelecting = -1
 			for i in range(9):
 				push = interact.keys[pygame.K_1 + i].deals() & 1
 				if i >= len(self.activeSkills):
 					continue
 				if push:
 					if self.skillSelecting == i:
+						self.activeSkills[self.skillSelecting].onUse(game.mouseAtMap)
 						self.skillSelecting = -1
 					else:
 						self.skillSelecting = i
-			if interact.right.deals():
-				self.skillSelecting = -1
-			if self.skillSelecting != -1 and interact.left.deals():
-				self.activeSkills[self.skillSelecting].onUse(game.mouseAtMap)
-				self.skillSelecting = -1
 			if interact.keys[pygame.K_e].deals():
 				from window.ingame import StatusWindow
 				game.setWindow(StatusWindow())
@@ -804,7 +802,7 @@ class RedEgg(Entity):
 class Witch(MoveableEntity):
 	def __init__(self, position: Vector):
 		src = resourceManager.getOrNew('entity/witch/witch')
-		super().__init__('entity.witch', '老巫婆鸡', EntityDescription(self, [RenderableString('鸡长老'), RenderableString('    \\#ffbb0000确定真假之前，避开为妙')]), [src, src, src, src, src, src, src, src], position, 0.005)
+		super().__init__('entity.witch', '老巫婆鸡', EntityDescription(self, [RenderableString('鸡长老'), RenderableString("    \\#ff994488\\/四个老巫鸡，是真是假？"), RenderableString('    \\#ffbb0000\\/确定真假之前，避开为妙'), RenderableString("    \\#ffeeeeee\\/寻找线索，解开真相")]), [src, src, src, src, src, src, src, src], position, 0.005)
 		self._randomVelocity = Vector()
 	
 	def tick(self) -> None:
@@ -813,8 +811,8 @@ class Witch(MoveableEntity):
 			game.getWorld(0).setPlayer(player)
 			game.setWorld(0)
 			player.position = Vector(0, 0)
-			
 			player.nurture()
+			self.description.d = [RenderableString("真·老巫鸡")]
 		
 		if self._randomVelocity.lengthManhattan() != 0:
 			if game.getWorld().getRandom().random() < 0.01:
@@ -831,18 +829,19 @@ class Witch(MoveableEntity):
 class FakeWitch(MoveableEntity):
 	def __init__(self, position: Vector, i):
 		src = resourceManager.getOrNew(f'entity/witch/witch{i}')
-		super().__init__(f'entity.fakewitch{i}', '老巫婆鸡', EntityDescription(self, [RenderableString('鸡长老'), RenderableString('    \\#ffbb0000确定真假之前，避开为妙')]), [src, src, src, src, src, src, src, src], position, 0.005)
+		super().__init__(f'entity.fakewitch{i}', '老巫婆鸡', EntityDescription(self, [RenderableString('鸡长老'), RenderableString("\\#ff994488\\/    四个老巫鸡，是真是假？"), RenderableString("\\#ffbb0000\\/    确定真假之前，避开为妙"), RenderableString("\\#ffeeeeee\\/    寻找线索，解开真相")]), [src, src, src, src, src, src, src, src], position, 0.005)
 		self._randomVelocity = Vector()
 		self.i = i
 		self.flag = [True] * 3
 	
 	def tick(self) -> None:
 		player = game.getWorld().getPlayer()
-		if player is not None and player.getPosition().distanceManhattan(self.getPosition()) <= 0.3 and self.flag[self.i-1]:
+		if player is not None and player.getPosition().distanceManhattan(self.getPosition()) <= 0.3 and self.flag[self.i - 1]:
 			game.hud.sendMessage(RenderableString('\\#ffeeee00\\.ffee6666你被骗了，这不是真正的老巫婆鸡'))
 			game.hud.sendMessage(RenderableString('\\#ffeeee00\\.ffee6666你还被它重伤了！'))
-			player.damage(300, self)
-			self.flag[self.i-1] = False
+			player._health -= 40
+			self.flag[self.i - 1] = False
+			self.description.d = [RenderableString("\\#ffee0000假·老巫鸡"), RenderableString("\\#ffee0000\\/    假的老巫鸡！")]
 		
 		if self._randomVelocity.lengthManhattan() != 0:
 			if game.getWorld().getRandom().random() < 0.01:

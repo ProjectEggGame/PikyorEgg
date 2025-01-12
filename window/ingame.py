@@ -210,37 +210,33 @@ class TaskWindow(Window):
 	
 	def render(self, delta: float) -> None:
 		super().render(delta)
+		size: BlockVector = renderer.getSize()
 		if self.looking == 1:
-			size: BlockVector = renderer.getSize()
-			renderer.renderString(RenderableString('\\.ffEFE4B0\\00任务1：'), int((0.58 if renderer.is4to3.get() else 0.56) * size.x), (size.y >> 1) - font.realFontHeight, 0xff000000, Location.BOTTOM)
+			renderer.renderString(RenderableString('\\.ffEFE4B0\\00任务1：' if self.progress <= 1 else '\\.ffEFE4B0\\00已完成任务1：'), int((0.58 if renderer.is4to3.get() else 0.56) * size.x), (size.y >> 1) - font.realFontHeight, 0xff000000, Location.BOTTOM)
 			renderer.renderString(RenderableString('\\.ffEFE4B0\\00胸有大志，吃100颗米粒！'), int((0.58 if renderer.is4to3.get() else 0.56) * size.x), size.y >> 1, 0xff000000, Location.TOP)
 			renderer.renderString(RenderableString('\\.ffEFE4B0\\10\\#ffee0000会有技能随机掉落'), int((0.58 if renderer.is4to3.get() else 0.56) * size.x), (size.y >> 1) + font.realFontHeight, 0xff000000, Location.TOP)
 		
 		if self.looking == 2:
-			size: BlockVector = renderer.getSize()
-			renderer.renderString(RenderableString('\\.ffEFE4B0\\00任务2：'), int((0.58 if renderer.is4to3.get() else 0.56) * size.x), (size.y >> 1) - font.realFontHeight, 0xff000000, Location.BOTTOM)
-			renderer.renderString(RenderableString('\\.ffEFE4B0\\00年少有为，织鸡窝！'), int((0.58 if renderer.is4to3.get() else 0.56) * size.x),size.y >> 1, 0xff000000, Location.TOP)
-			renderer.renderString(RenderableString('\\.ffEFE4B0\\10\\#ffee0000100树枝+H键可以给你带来一个大大的鸡窝'), int((0.58 if renderer.is4to3.get() else 0.56) * size.x),  (size.y >> 1) + font.realFontHeight, 0xff000000, Location.TOP)
+			renderer.renderString(RenderableString('\\.ffEFE4B0\\00任务2：' if self.progress <= 2 else '\\.ffEFE4B0\\00已完成任务2：'), int((0.58 if renderer.is4to3.get() else 0.56) * size.x), (size.y >> 1) - font.realFontHeight, 0xff000000, Location.BOTTOM)
+			renderer.renderString(RenderableString('\\.ffEFE4B0\\00年少有为，织鸡窝！'), int((0.58 if renderer.is4to3.get() else 0.56) * size.x), size.y >> 1, 0xff000000, Location.TOP)
+			renderer.renderString(RenderableString('\\.ffEFE4B0\\10\\#ffee0000100树枝+H键可以给你带来一个大大的鸡窝'), int((0.58 if renderer.is4to3.get() else 0.56) * size.x), (size.y >> 1) + font.realFontHeight, 0xff000000, Location.TOP)
 		
 		if self.looking == 3:
-			size: BlockVector = renderer.getSize()
-			renderer.renderString(RenderableString('\\.ffEFE4B0\\00任务3：'), int((0.58 if renderer.is4to3.get() else 0.56) * size.x), (size.y >> 1) - font.realFontHeight, 0xff000000, Location.BOTTOM)
+			renderer.renderString(RenderableString('\\.ffEFE4B0\\00任务3：' if self.progress <= 3 else '\\.ffEFE4B0\\00已完成任务3：'), int((0.58 if renderer.is4to3.get() else 0.56) * size.x), (size.y >> 1) - font.realFontHeight, 0xff000000, Location.BOTTOM)
 			renderer.renderString(RenderableString('\\.ffEFE4B0\\00老巫婆鸡，指点迷津！'), int((0.58 if renderer.is4to3.get() else 0.56) * size.x), size.y >> 1, 0xff000000, Location.TOP)
 			renderer.renderString(RenderableString('\\.ffEFE4B0\\10\\#ffee0000你也许有看到一个炫酷的传送门，3秒定律'), int((0.58 if renderer.is4to3.get() else 0.56) * size.x), (size.y >> 1) + font.realFontHeight, 0xff000000, Location.TOP)
 		
 		if self.looking == 4:
-			size: BlockVector = renderer.getSize()
-			renderer.renderString(RenderableString('\\.ffEFE4B0\\00任务4：'), int((0.58 if renderer.is4to3.get() else 0.56) * size.x), (size.y >> 1) - font.realFontHeight, 0xff000000, Location.BOTTOM)
+			renderer.renderString(RenderableString('\\.ffEFE4B0\\00任务4：' if self.progress <= 4 else '\\.ffEFE4B0\\00已完成任务4：'), int((0.58 if renderer.is4to3.get() else 0.56) * size.x), (size.y >> 1) - font.realFontHeight, 0xff000000, Location.BOTTOM)
 			renderer.renderString(RenderableString('\\.ffEFE4B0\\00你需要获得公鸡的受精！'), int((0.58 if renderer.is4to3.get() else 0.56) * size.x), size.y >> 1, 0xff000000, Location.BOTTOM)
 			renderer.renderString(RenderableString('\\.ffEFE4B0\\10\\#ffee0000杀死一只母鸡可以让公鸡恢复单身狗'), int((0.58 if renderer.is4to3.get() else 0.56) * size.x), (size.y >> 1) + font.realFontHeight, 0xff000000, Location.TOP)
 		
 		if self.looking == 5:
-			size: BlockVector = renderer.getSize()
-			renderer.renderString(RenderableString('\\.ffEFE4B0\\00任务5：'), int((0.58 if renderer.is4to3.get() else 0.56) * size.x), (size.y >> 1) - font.realFontHeight, 0xff000000, Location.BOTTOM)
-			renderer.renderString(RenderableString('\\.ffEFE4B0\\00快带公鸡回家下蛋'), int((0.58 if renderer.is4to3.get() else 0.56) * size.x), size.y >> 1,  0xff000000, Location.TOP)
-			renderer.renderString(RenderableString('\\.ffEFE4B0\\10\\#ffee0000你可以给鸡宝宝选择不同的属性'), int((0.58 if renderer.is4to3.get() else 0.56) * size.x), (size.y >> 1) + font.realFontHeight, 0xff000000, Location.TOP)
+			renderer.renderString(RenderableString('\\.ffEFE4B0\\00任务5：' if self.progress <= 5 else '\\.ffEFE4B0\\00已完成任务5：'), int((0.58 if renderer.is4to3.get() else 0.56) * size.x), (size.y >> 1) - font.realFontHeight, 0xff000000, Location.BOTTOM)
+			renderer.renderString(RenderableString('\\.ffEFE4B0\\00快带公鸡回家下蛋'), int((0.58 if renderer.is4to3.get() else 0.56) * size.x), size.y >> 1, 0xff000000, Location.TOP)
+			renderer.renderString(RenderableString('\\.ffEFE4B0\\10\\#ffee0000你可以给鸡蛋选择不同的描述'), int((0.58 if renderer.is4to3.get() else 0.56) * size.x), (size.y >> 1) + font.realFontHeight, 0xff000000, Location.TOP)
 		
-		renderer.renderString(RenderableString('\\.ffEFE4B0\\10Tab键返回'), int((0.58 if renderer.is4to3.get() else 0.56) * size.x), size.y * 0.8, 0xff000000, Location.TOP)
+		renderer.renderString(RenderableString('\\.ffEFE4B0\\10左侧点击选择任务，Tab键返回'), int((0.58 if renderer.is4to3.get() else 0.56) * size.x), int(size.y * 0.8), 0xff000000, Location.BOTTOM)
 	
 	def passRender(self, delta: float, at: Vector | None = None) -> None:
 		s = Surface(renderer.getCanvas().get_size())
@@ -339,24 +335,25 @@ class PlotWindow(Window):
 			renderer.renderString(RenderableString('\\.0040304D\\00你的最终目标是逆天改命，'), int(size.x * 0.5), int(size.y * 0.4), 0xffffffff, Location.CENTER)
 			renderer.renderString(RenderableString('\\.0040304D\\00生一个蛋，并孵出一只小鸡！'), int(size.x * 0.5), int(size.y * 0.4 + font.realFontHeight), 0xffffffff, Location.CENTER)
 		if self.Sentence == 9:
-			renderer.renderString(RenderableString('\\.0040304D\\00游戏中你可能会用到以下快捷键：'), int(size.x * 0.5), int(size.y * 0.2 - font.realFontHeight*1.3), 0xffffffff, Location.CENTER)
+			renderer.renderString(RenderableString('\\.0040304D\\00游戏中你可能会用到以下快捷键：'), int(size.x * 0.5), int(size.y * 0.2 - font.realFontHeight * 1.3), 0xffffffff, Location.CENTER)
 			renderer.renderString(RenderableString('\\.0040304D\\00人物移动 WASD 同时按Crtl可加速'), int(size.x * 0.5), int(size.y * 0.23 + font.realFontHeight * 0), 0xffffffff, Location.CENTER)
 			renderer.renderString(RenderableString('\\.0040304D\\00状态面板 E'), int(size.x * 0.5), int(size.y * 0.23 + font.realFontHeight * 1), 0xffffffff, Location.CENTER)
-			renderer.renderString(RenderableString('\\.0040304D\\00任务面板与\\#ffee0000技能教程\\#ffeeeeee Tab'), int(size.x * 0.5), int(size.y * 0.23 + font.realFontHeight * 2), 0xffffffff, Location.CENTER)
+			renderer.renderString(RenderableString('\\.0040304D\\00\\#ffee0000任务面板、游戏进程与技能教程\\#ffeeeeee Tab'), int(size.x * 0.5), int(size.y * 0.23 + font.realFontHeight * 2), 0xffffffff, Location.CENTER)
 			renderer.renderString(RenderableString('\\.0040304D\\00暂停并打开暂停菜单 Esc'), int(size.x * 0.5), int(size.y * 0.23 + font.realFontHeight * 3), 0xffffffff, Location.CENTER)
 			renderer.renderString(RenderableString('\\.0040304D\\00锁定/解锁视角 Space'), int(size.x * 0.5), int(size.y * 0.23 + font.realFontHeight * 4), 0xffffffff, Location.CENTER)
-			renderer.renderString(RenderableString('\\.0040304D\\00移动视角 中键按住拖动'), int(size.x * 0.5), int(size.y * 0.23+ font.realFontHeight * 5), 0xffffffff, Location.CENTER)
+			renderer.renderString(RenderableString('\\.0040304D\\00移动视角 中键按住拖动'), int(size.x * 0.5), int(size.y * 0.23 + font.realFontHeight * 5), 0xffffffff, Location.CENTER)
 			renderer.renderString(RenderableString('\\.0040304D\\00缩放地图 滚轮'), int(size.x * 0.5), int(size.y * 0.23 + font.realFontHeight * 6), 0xffffffff, Location.CENTER)
 			renderer.renderString(RenderableString('\\.0040304D\\00米粒树枝作弊按键 Q'), int(size.x * 0.5), int(size.y * 0.23 + font.realFontHeight * 7), 0xffffffff, Location.CENTER)
 		if self.Sentence == 10:
 			renderer.renderString(RenderableString('\\.0040304D\\00忘记了也没关系，可以键入Enter'), int(size.x * 0.5), int(size.y * 0.4), 0xffffffff, Location.CENTER)
 			renderer.renderString(RenderableString('\\.0040304D\\00问问知道关于游戏一切的ai系统'), int(size.x * 0.5), int(size.y * 0.4 + font.realFontHeight), 0xffffffff, Location.CENTER)
+			renderer.renderString(RenderableString('\\.0040304D\\00或者\\#ff4488ee把鼠标移上去\\#ffeeeeee看看提示'), int(size.x * 0.5), int(size.y * 0.4 + (font.realFontHeight << 1)), 0xffffffff, Location.CENTER)
 		if self.Sentence == 11:
 			renderer.renderString(RenderableString('\\.0040304D\\00那么，话不多说'), int(size.x * 0.5), int(size.y * 0.4), 0xffffffff, Location.CENTER)
 			renderer.renderString(RenderableString('\\.0040304D\\00游戏开始！'), int(size.x * 0.5), int(size.y * 0.4 + font.realFontHeight), 0xffffffff, Location.CENTER)
-
-		renderer.renderString(RenderableString(f'\\.0040304D\\01Page {self.Sentence+1} / 12'), int(size.x * 0.9), int(size.y * 0.1), 0xffffffff, Location.CENTER)
-
+		
+		renderer.renderString(RenderableString(f'\\.0040304D\\01Page {self.Sentence + 1} / 12'), int(size.x * 0.9), int(size.y * 0.1), 0xffffffff, Location.CENTER)
+	
 	def tick(self) -> None:
 		if interact.keys[pygame.K_ESCAPE].deals():
 			self.Sentence += 1
@@ -634,13 +631,13 @@ class GuidanceWindow(Window):
 		self._text = [
 			["按E调出任务面板", "可以升级技能", "面板有技能信息", "这里将教学使用方法"],
 			["如果你发现无法升级", "那就是成长值不足", "先去吃点米粒吧"],
-			["1    2    3    4    5    6", "键入1-6可进入准备状态", "技能获得顺序随机", "数字编号由玩家获得的技能顺序决定", "再按相同数字键或鼠标右键退出准备模式"],
+			["1    2    3    4    5    6", "键入1-6可进入准备状态，再次点击释放", "技能获得顺序随机", "数字编号由玩家获得的技能顺序决定", "鼠标右键退出准备模式"],
 			["主动技能：", "猛啄", "头槌", "肾上腺素", "闪现", "回复", "迅捷"],
-			["主动技能——回复", "原地回血", "左键使用即可", "冷却时间：40s", "准备时图像："],
-			["主动技能——闪现", "可以帮助你跨越一些墙", "对准后点击鼠标左键即可", "冷却时间：40s", "准备时图像："],
-			["主动技能——猛啄", "用于近战攻击", "黄色箭头为攻击范围", "可连续左键使用", "准备时图像："],
+			["主动技能——回复", "原地回血", "回血与激情！", "冷却时间：40s", "准备时图像："],
+			["主动技能——闪现", "可以帮助你跨越一些墙", "对准后使用即可", "冷却时间：40s", "准备时图像："],
+			["主动技能——猛啄", "用于近战攻击", "黄色箭头为攻击范围", "可连续使用", "准备时图像："],
 			["主动技能——头槌", "远距离攻击+传送", "黄圈为攻击范围，", "冷却时间：40s", "准备时图像："],
-			["主动技能——肾上腺素", "短暂的免死金牌", "主动技能——疾跑", "顾名思义，跑得更快", "左键短暂加速", "准备时图像："],
+			["主动技能——肾上腺素", "短暂的免死金牌", "主动技能——疾跑", "顾名思义，跑得更快", "使用后短暂加速", "准备时图像："],
 			["至于被动技能：", "爱米", "坚毅", "揠苗", "屹立不倒", "迅捷", "去面板升级就好啦", "（）不升级容易死"]
 		]
 		

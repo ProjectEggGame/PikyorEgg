@@ -357,8 +357,9 @@ class PauseWindow(Window):
 		self._widgets[1].onMouseDown = lambda x, y, b: b[0] == 1 and game.setWindow(SettingsWindow().setLastOpen(self)) or True
 		self._widgets.append(Button(Location.CENTER, 0, -0.1, 0.4, 0.08, RenderableString('\\01Load'), Description([RenderableString("\\#ffee0000放弃保存\\r并读取存档")]), Location.CENTER))
 		self._widgets[2].onMouseDown = lambda x, y, b: b[0] == 1 and game.setWindow(LoadWindow().setLastOpen(self)) or True
-		self._widgets.append(Button(Location.CENTER, 0, 0, 0.4, 0.08, RenderableString('测试按钮'), Description([]), Location.CENTER))
-		self._widgets[3].onMouseDown = lambda x, y, b: b[0] == 1 and game.setWindow(EggFactoryWindow().setLastOpen(self)) or True
+		self._widgets.append(Button(Location.CENTER, 0, 0, 0.4, 0.08, RenderableString('\\01Task Window'), Description([]), Location.CENTER))
+		from window.ingame import TaskWindow
+		self._widgets[3].onMouseDown = lambda x, y, b: b[0] == 1 and game.setWindow(TaskWindow().setLastOpen(self)) or True
 		self._widgets.append(Button(Location.CENTER, 0, 0.1, 0.4, 0.08, RenderableString('\\01Save'), Description([RenderableString("保存游戏")]), Location.CENTER))
 		
 		def _4(x, y, b) -> bool:
