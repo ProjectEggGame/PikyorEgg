@@ -44,7 +44,10 @@ class music_player:
             #播放新音频
             pygame.mixer.music.load(music.music_list[i])
             pygame.mixer.music.play(loop)
-            pygame.mixer.music.set_pos(self.pausetime[i])
+            try:
+                pygame.mixer.music.set_pos(self.pausetime[i])
+            except Exception:
+                print("回复暂停音频有误，从头播放")
             
             self.musicplaying = i 
             pygame.mixer.music.set_volume(self.volume_music)

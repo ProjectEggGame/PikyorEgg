@@ -693,6 +693,7 @@ class EggFactoryWindow(Window):
 		renderer.getCanvas().blit(sfc, (size.x * 0.7 + 1, 0))
 		renderer.renderString(RenderableString('\\01You are laying'), int(size.x * 0.85), size.y >> 3, 0xffeeeeee, Location.BOTTOM)
 		renderer.renderString(RenderableString('\\01A(An)'), int(size.x * 0.85), size.y >> 3, 0xffeeeeee, Location.TOP)
+		renderer.renderString(RenderableString('\\01Egg'), int(size.x * 0.85), int(size.y * 0.85), 0xffeeeeee, Location.BOTTOM)
 
 
 class EggProductWindow(Window):

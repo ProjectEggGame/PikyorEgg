@@ -266,7 +266,7 @@ class PlotWindow(Window):
 		self.Sentence = 0
 		
 		def _0(x, y, b) -> bool:
-			if self.Sentence < 10:
+			if self.Sentence < 11:
 				self.Sentence += 1
 			else:
 				game.setWindow(SeedWindow().setLastOpen(self))
@@ -275,8 +275,8 @@ class PlotWindow(Window):
 			return True
 		
 		def _1(x, y, b) -> bool:
-			if self.Sentence < 10:
-				self.Sentence = 10
+			if self.Sentence < 11:
+				self.Sentence = 11
 			else:
 				game.setWindow(SeedWindow().setLastOpen(self))
 			# game.setWindow(None)
@@ -340,30 +340,29 @@ class PlotWindow(Window):
 			renderer.renderString(RenderableString('\\.0040304D\\00你的最终目标是逆天改命，'), int(size.x * 0.5), int(size.y * 0.4), 0xffffffff, Location.CENTER)
 			renderer.renderString(RenderableString('\\.0040304D\\00生一个蛋，并孵出一只小鸡！'), int(size.x * 0.5), int(size.y * 0.4 + font.realFontHeight), 0xffffffff, Location.CENTER)
 		if self.Sentence == 9:
-			renderer.renderString(RenderableString('\\.0040304D\\00游戏中你可能会用到以下快捷键：'), int(size.x * 0.5), int(size.y * 0.2 - font.realFontHeight), 0xffffffff, Location.CENTER)
-			renderer.renderString(RenderableString('\\.0040304D\\10人物移动 WASD'), int(size.x * 0.3), int(size.y * 0.2 + font.realFontHeight * 1), 0xffffffff, Location.CENTER)
-			renderer.renderString(RenderableString('\\.0040304D\\10状态面板 E'), int(size.x * 0.3), int(size.y * 0.2 + font.realFontHeight * 2), 0xffffffff, Location.CENTER)
-			renderer.renderString(RenderableString('\\.0040304D\\10任务面板 Tab'), int(size.x * 0.3), int(size.y * 0.2 + font.realFontHeight * 3), 0xffffffff, Location.CENTER)
-			renderer.renderString(RenderableString('\\.0040304D\\10暂停并打开暂停菜单 Esc'), int(size.x * 0.3), int(size.y * 0.2 + font.realFontHeight * 4), 0xffffffff, Location.CENTER)
-			renderer.renderString(RenderableString('\\.0040304D\\10询问AI游戏助手 Enter'), int(size.x * 0.3), int(size.y * 0.2 + font.realFontHeight * 5), 0xffffffff, Location.CENTER)
-			renderer.renderString(RenderableString('\\.0040304D\\10锁定/解锁视角 Space'), int(size.x * 0.3), int(size.y * 0.2 + font.realFontHeight * 6), 0xffffffff, Location.CENTER)
-			renderer.renderString(RenderableString('\\.0040304D\\10做窝 H'), int(size.x * 0.3), int(size.y * 0.2 + font.realFontHeight * 7), 0xffffffff, Location.CENTER)
-			renderer.renderString(RenderableString('\\.0040304D\\10下蛋 R'), int(size.x * 0.3), int(size.y * 0.2 + font.realFontHeight * 8), 0xffffffff, Location.CENTER)
-			renderer.renderString(RenderableString('\\.0040304D\\10选定主动技能 1~9数字键'), int(size.x * 0.6), int(size.y * 0.2 + font.realFontHeight * 1), 0xffffffff, Location.CENTER)
-			renderer.renderString(RenderableString('\\.0040304D\\10取消选定技能 右键或相同数字键'), int(size.x * 0.6), int(size.y * 0.2 + font.realFontHeight * 2), 0xffffffff, Location.CENTER)
-			renderer.renderString(RenderableString('\\.0040304D\\10释放选定的技能 左键  '), int(size.x * 0.6), int(size.y * 0.2 + font.realFontHeight * 3), 0xffffffff, Location.CENTER)
-			renderer.renderString(RenderableString('\\.0040304D\\10移动视角 中键按住拖动'), int(size.x * 0.6), int(size.y * 0.2 + font.realFontHeight * 4), 0xffffffff, Location.CENTER)
-			renderer.renderString(RenderableString('\\.0040304D\\10缩放地图 滚轮'), int(size.x * 0.6), int(size.y * 0.2 + font.realFontHeight * 5), 0xffffffff, Location.CENTER)
-			renderer.renderString(RenderableString('\\.0040304D\\10米粒树枝作弊按键 Q'), int(size.x * 0.6), int(size.y * 0.2 + font.realFontHeight * 6), 0xffffffff, Location.CENTER)
+			renderer.renderString(RenderableString('\\.0040304D\\00游戏中你可能会用到以下快捷键：'), int(size.x * 0.5), int(size.y * 0.2 - font.realFontHeight*1.3), 0xffffffff, Location.CENTER)
+			renderer.renderString(RenderableString('\\.0040304D\\00人物移动 WASD'), int(size.x * 0.5), int(size.y * 0.23 + font.realFontHeight * 0), 0xffffffff, Location.CENTER)
+			renderer.renderString(RenderableString('\\.0040304D\\00状态面板 E'), int(size.x * 0.5), int(size.y * 0.23 + font.realFontHeight * 1), 0xffffffff, Location.CENTER)
+			renderer.renderString(RenderableString('\\.0040304D\\00任务面板 Tab'), int(size.x * 0.5), int(size.y * 0.23 + font.realFontHeight * 2), 0xffffffff, Location.CENTER)
+			renderer.renderString(RenderableString('\\.0040304D\\00暂停并打开暂停菜单 Esc'), int(size.x * 0.5), int(size.y * 0.23 + font.realFontHeight * 3), 0xffffffff, Location.CENTER)
+			renderer.renderString(RenderableString('\\.0040304D\\00锁定/解锁视角 Space'), int(size.x * 0.5), int(size.y * 0.23 + font.realFontHeight * 4), 0xffffffff, Location.CENTER)
+			renderer.renderString(RenderableString('\\.0040304D\\00移动视角 中键按住拖动'), int(size.x * 0.5), int(size.y * 0.23+ font.realFontHeight * 5), 0xffffffff, Location.CENTER)
+			renderer.renderString(RenderableString('\\.0040304D\\00缩放地图 滚轮'), int(size.x * 0.5), int(size.y * 0.23 + font.realFontHeight * 6), 0xffffffff, Location.CENTER)
+			renderer.renderString(RenderableString('\\.0040304D\\00米粒树枝作弊按键 Q'), int(size.x * 0.5), int(size.y * 0.23 + font.realFontHeight * 7), 0xffffffff, Location.CENTER)
 		if self.Sentence == 10:
+			renderer.renderString(RenderableString('\\.0040304D\\00忘记了也没关系，可以键入Enter'), int(size.x * 0.5), int(size.y * 0.4), 0xffffffff, Location.CENTER)
+			renderer.renderString(RenderableString('\\.0040304D\\00问问知道关于游戏一切的ai系统'), int(size.x * 0.5), int(size.y * 0.4 + font.realFontHeight), 0xffffffff, Location.CENTER)
+		if self.Sentence == 11:
 			renderer.renderString(RenderableString('\\.0040304D\\00那么，话不多说'), int(size.x * 0.5), int(size.y * 0.4), 0xffffffff, Location.CENTER)
 			renderer.renderString(RenderableString('\\.0040304D\\00游戏开始！'), int(size.x * 0.5), int(size.y * 0.4 + font.realFontHeight), 0xffffffff, Location.CENTER)
-	
+
+		renderer.renderString(RenderableString(f'\\.0040304D\\01Page {self.Sentence+1} / 12'), int(size.x * 0.9), int(size.y * 0.1), 0xffffffff, Location.CENTER)
+
 	def tick(self) -> None:
 		if interact.keys[pygame.K_ESCAPE].deals():
 			self.Sentence += 1
-			if self.Sentence > 10:
-				self.Sentence = 10
+			if self.Sentence > 11:
+				self.Sentence = 11
 				game.setWindow(SeedWindow().setLastOpen(self))
 
 
